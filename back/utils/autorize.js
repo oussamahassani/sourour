@@ -1,5 +1,5 @@
 const { expressjwt: jwt } = require("express-jwt");
-const secret = "sisir_chikon_ho";
+const secret = process.env.JWT_SECRET;
 
 // Middleware d'autorisation basé sur permission unique
 function authorize(requiredPermission) {

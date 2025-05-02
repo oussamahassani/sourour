@@ -13,7 +13,23 @@ const defaultPermissions = [
   { name: "managecustomer" },
   { name: "viewBrDATA" },
   { name: "viewProdact" },
-
+  { name: "viewDashboard" },
+  { name: "createPaymentPurchaseInvoice" },
+  { name: "viewPaymentPurchaseInvoice" },
+  { name: "updateSetting" },
+  { name: "viewSetting" },
+  { name: "createSaleInvoice" },
+  { name: "viewSaleInvoice" },
+  { name: "createReturnSaleInvoice" },
+  { name: "viewReturnSaleInvoice" },
+  { name: "deleteReturnSaleInvoice" },
+  { name: "createPaymentSaleInvoice" },
+  { name: "viewPaymentSaleInvoice" },
+  { name: "createReturnPurchaseInvoice" },
+  { name: "viewReturnPurchaseInvoice" },
+  { name: "deleteReturnPurchaseInvoice" },
+  { name: "createPurchaseInvoice" },
+  { name: "viewPurchaseInvoice" },
 
 ];
 
