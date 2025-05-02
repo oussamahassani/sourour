@@ -21,53 +21,45 @@ function CustomTable({ list, total, status }) {
     {
       title: "Image",
       dataIndex: "imageUrl",
-      render: (imageUrl) => (
-        <img style={{ maxWidth: "40px" }} alt="product" src={imageUrl} />
+      render: (imageUrl) => (imageUrl ?
+        <img style={{ maxWidth: "40px" }} alt="product" src={imageUrl} /> : ""
       ),
     },
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "_id",
+      key: "_id",
     },
-    {
-      title: "SKU",
-      dataIndex: "sku",
-      key: "sku",
-    },
+
     {
       title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name, { id }) => <Link to={`/product/${id}`}>{name}</Link>,
+      dataIndex: "article",
+      key: "namarticlee",
+      render: (article, { _id }) => <Link to={`/product/${_id}`}>{article}</Link>,
     },
-    {
-      title: "Unit Messurement",
-      dataIndex: "unit_measurement",
-      key: "unit_measurement",
-    },
+ 
     {
       title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
+      dataIndex: "stock",
+      key: "stock",
     },
     {
       title: "Purchase price",
-      dataIndex: "purchase_price",
-      key: "purchase_price",
+      dataIndex: "prix_achat",
+      key: "prix_achat",
       responsive: ["md"],
     },
     {
       title: "Sale price",
-      dataIndex: "sale_price",
-      key: "sale_price",
+      dataIndex: "prix_vente",
+      key: "prix_vente",
       responsive: ["md"],
     },
     {
       title: "Category",
-      dataIndex: "product_category",
-      key: "product_category",
-      render: (product_category) => product_category?.name,
+      dataIndex: "categorie",
+      key: "categorie",
+    
     },
     {
       title: "Unit Type",
@@ -76,15 +68,15 @@ function CustomTable({ list, total, status }) {
     },
 
     {
-      title: "Reorder QTY",
-      dataIndex: "reorder_quantity",
-      key: "reorder_quantity",
+      title: "Reorder Stcok",
+      dataIndex: "alerte_stock",
+      key: "alerte_stock",
     },
     {
       title: "Action",
-      dataIndex: "sku",
-      key: "sku",
-      render: (sku, quantity) => <GenerateBarcodePopUp sku={sku ? sku : 0} />,
+      dataIndex: "_id",
+      key: "_id",
+      render: (_id, quantity) => <GenerateBarcodePopUp sku={_id ? _id : 0} />,
     },
   ];
 

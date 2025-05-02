@@ -1,4 +1,4 @@
-import { Button, Card, Col, Form, Input, Row, Typography } from "antd";
+import { Button,Select, Card, Col, Form, Input, Row, Typography } from "antd";
 
 import { Fragment, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -68,7 +68,7 @@ const AddCust = () => {
 							<Form.Item
 								style={{ marginBottom: "10px" }}
 								label='Name'
-								name='name'
+								name='nom'
 								rules={[
 									{
 										required: true,
@@ -77,11 +77,82 @@ const AddCust = () => {
 								]}>
 								<Input />
 							</Form.Item>
-
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Last Name'
+								name='prenom'
+								rules={[
+									{
+										required: true,
+										message: "Please input customer Last name!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Email'
+								name='email'
+								rules={[
+									{
+										required: true,
+										message: "Please input customer email!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Plafond credit'
+								name='plafond_credit'
+								rules={[
+									{
+										required: true,
+										message: "Please input plafond credit!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Entreprise'
+								name='entreprise'
+								rules={[
+									
+								]}>
+								<Input />
+							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Matricule'
+								name='matricule'
+								rules={[
+									
+								]}>
+								<Input />
+							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Cin'
+								name='cin'
+								rules={[
+									
+								]}>
+								<Input />
+							</Form.Item>
+							{/*<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Commercial assigne'
+								name='commercial_assigne'
+								rules={[
+									
+								]}>
+								<Input />
+							</Form.Item>*/}
 							<Form.Item
 								style={{ marginBottom: "10px" }}
 								label='Phone'
-								name='phone'
+								name='telephone'
 								rules={[
 									{
 										required: true,
@@ -94,7 +165,7 @@ const AddCust = () => {
 							<Form.Item
 								style={{ marginBottom: "10px" }}
 								label='Address'
-								name='address'
+								name='adresse'
 								rules={[
 									{
 										required: true,
@@ -103,6 +174,40 @@ const AddCust = () => {
 								]}>
 								<Input />
 							</Form.Item>
+ <Form.Item
+				style={{ marginBottom: "15px" }}
+				name="validation_admin"
+				label="Select Validation Type "
+				rules={[
+				  {
+					required: true,
+					message: "Please select Validation !",
+				  },
+				]}
+			  >
+				<Select
+				  name="validation_admin"
+				
+				  placeholder="validation_admin"
+				  optionFilterProp="children"
+				  filterOption={(input, option) =>
+					option.children.includes(input)
+				  }
+				  filterSort={(optionA, optionB) =>
+					optionA.children
+					  .toLowerCase()
+					  .localeCompare(optionB.children.toLowerCase())
+				  }
+				>
+				 <Select.Option key={false} value={false}>
+						{" non valider"}
+					  </Select.Option>
+					  <Select.Option key={true} value={true}>
+						{"valider"}
+					  </Select.Option>
+			
+				</Select>
+			  </Form.Item>
 
 							{/* Customer due droped */}
 

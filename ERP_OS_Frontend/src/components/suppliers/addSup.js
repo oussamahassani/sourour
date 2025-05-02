@@ -71,7 +71,7 @@ const AddSup = () => {
 							<Form.Item
 								style={{ marginBottom: "10px" }}
 								label='Name'
-								name='name'
+								name='nomF'
 								rules={[
 									{
 										required: true,
@@ -80,11 +80,34 @@ const AddSup = () => {
 								]}>
 								<Input />
 							</Form.Item>
-
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Last Name'
+								name='prenomF'
+								rules={[
+									{
+										required: true,
+										message: "Please input Last Name!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Entreprise'
+								name='entreprise'
+								rules={[
+									{
+										required: true,
+										message: "Please input supplier name!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
 							<Form.Item
 								style={{ marginBottom: "10px" }}
 								label='Phone'
-								name='phone'
+								name='telephone'
 								rules={[
 									{
 										required: true,
@@ -97,7 +120,7 @@ const AddSup = () => {
 							<Form.Item
 								style={{ marginBottom: "10px" }}
 								label='Address'
-								name='address'
+								name='adresse'
 								rules={[
 									{
 										required: true,
@@ -106,7 +129,31 @@ const AddSup = () => {
 								]}>
 								<Input />
 							</Form.Item>
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Email'
+								name='email'
+								rules={[
+									{
+										required: true,
+										message: "Please input supplier email!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
 
+							<Form.Item
+								style={{ marginBottom: "10px" }}
+								label='Matricule'
+								name='matricule'
+								rules={[
+									{
+										required: true,
+										message: "Please input supplier matricule!",
+									},
+								]}>
+								<Input />
+							</Form.Item>
 							{/* //Due amount droped */}
 
 							<Form.Item

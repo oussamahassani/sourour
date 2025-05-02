@@ -13,7 +13,6 @@ import {
 
 import { Fragment, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loadAllDesignation } from "../../redux/actions/designation/getDesignationAction";
 import { addStaff } from "../../redux/actions/user/addStaffAciton";
 import { getRoles } from "../role/roleApis";
 
@@ -24,11 +23,8 @@ const AddUser = () => {
   const { Option } = Select;
   const [list, setList] = useState(null);
 
-  // const [j_date, setJ_date] = useState(moment());
-  // const [l_date, setL_date] = useState(moment());
 
   // useseletor to get designations from redux
-  const designation = useSelector((state) => state.designations?.list);
 
   useEffect(() => {
     getRoles()
@@ -36,9 +32,7 @@ const AddUser = () => {
       .catch((error) => console.log(error));
   }, []);
 
-  useEffect(() => {
-    dispatch(loadAllDesignation());
-  }, []);
+
 
   const [form] = Form.useForm();
 
@@ -97,12 +91,12 @@ const AddUser = () => {
             >
               <Form.Item
                 style={{ marginBottom: "10px" }}
-                label="User Name"
-                name="username"
+                label="full name "
+                name="full_name"
                 rules={[
                   {
                     required: true,
-                    message: "Please input username!",
+                    message: "Please inputfull name!",
                   },
                 ]}
               >
@@ -111,12 +105,12 @@ const AddUser = () => {
 
               <Form.Item
                 style={{ marginBottom: "10px" }}
-                label="Password"
-                name="password"
+                label="department"
+                name="department"
                 rules={[
                   {
                     required: true,
-                    message: "Please input your password !",
+                    message: "Please input your department !",
                   },
                 ]}
               >
@@ -125,12 +119,12 @@ const AddUser = () => {
 
               <Form.Item
                 style={{ marginBottom: "10px" }}
-                label="Email"
-                name="email"
+                label="type contrat"
+                name="type_contrat"
                 rules={[
                   {
                     required: true,
-                    message: "Please input email!",
+                    message: "Please input type contrat!",
                   },
                 ]}
               >
@@ -140,7 +134,7 @@ const AddUser = () => {
               <Form.Item
                 style={{ marginBottom: "10px" }}
                 label="Joining Date"
-                name="join_date"
+                name="date_hire"
                 rules={[
                   {
                     required: true,
@@ -153,8 +147,8 @@ const AddUser = () => {
 
               <Form.Item
                 style={{ marginBottom: "10px" }}
-                label="Leave Date"
-                name="leave_date"
+                label="Fin contrat Date"
+                name="date_fin_contrat"
                 rules={[
                   {
                     required: true,
@@ -166,59 +160,13 @@ const AddUser = () => {
               </Form.Item>
 
               <Form.Item
-                rules={[
-                  {
-                    required: true,
-                    message: "Pleases Select Type!",
-                  },
-                ]}
-                label="Role"
-                name={"role"}
-                style={{ marginBottom: "20px" }}
-              >
-                <Select
-                  loading={!list}
-                  optionFilterProp="children"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                  mode="single"
-                  allowClear
-                  style={{
-                    width: "100%",
-                  }}
-                  placeholder="Please select"
-                >
-                  {list &&
-                    list.map((role) => (
-                      <Option key={role.name}>{role.name}</Option>
-                    ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
                 style={{ marginBottom: "10px" }}
-                label="Id No"
-                name="id_no"
+                label="Number conges"
+                name="jours_conges_restants"
                 rules={[
                   {
                     required: true,
-                    message: "Please input id no",
-                  },
-                ]}
-              >
-                <Input placeholder="OE-012" />
-              </Form.Item>
-
-              <Form.Item
-                style={{ marginBottom: "10px" }}
-                label="Phone"
-                name="phone"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please input phone",
+                    message: "Please input conges Number",
                   },
                 ]}
               >
@@ -227,7 +175,7 @@ const AddUser = () => {
               <Form.Item
                 style={{ marginBottom: "10px" }}
                 label="Address"
-                name="address"
+                name="adresse"
                 rules={[
                   {
                     required: true,
@@ -251,53 +199,22 @@ const AddUser = () => {
               >
                 <InputNumber />
               </Form.Item>
-
               <Form.Item
                 style={{ marginBottom: "10px" }}
-                label="Blood Group"
-                name="blood_group"
+                label="Num securite sociale"
+                name="num_securite_sociale"
                 rules={[
                   {
                     required: true,
-                    message: "Please input blood group",
+                    message: "Please input num securite sociale",
                   },
                 ]}
               >
-                <Input />
+                <InputNumber />
               </Form.Item>
 
-              <Form.Item
-                rules={[
-                  {
-                    required: true,
-                    message: "Pleases Select Designation!",
-                  },
-                ]}
-                label="Designation"
-                name={"designation_id"}
-                style={{ marginBottom: "20px" }}
-              >
-                <Select
-                  loading={!designation}
-                  optionFilterProp="children"
-                  showSearch
-                  filterOption={(input, option) =>
-                    option.children.toLowerCase().includes(input.toLowerCase())
-                  }
-                  mode="single"
-                  allowClear
-                  style={{
-                    width: "100%",
-                  }}
-                  placeholder="Please select"
-                >
-                  {designation &&
-                    designation.map((desg) => (
-                      <Option key={desg.id}>{desg.name}</Option>
-                    ))}
-                </Select>
-              </Form.Item>
-
+              
+  
               <Form.Item
                 style={{ marginBottom: "10px" }}
                 wrapperCol={{

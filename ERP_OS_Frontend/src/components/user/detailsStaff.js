@@ -26,7 +26,7 @@ const DetailStaff = () => {
       dispatch(deleteStaff(id));
 
       setVisible(false);
-      toast.warning(`User Name : ${user.username} is removed `);
+      toast.warning(`User Name : ${user.full_name} is removed `);
       return navigate("/hr/staffs");
     } catch (error) {
       console.log(error.message);
@@ -60,13 +60,13 @@ const DetailStaff = () => {
                 <h5>
                   <i className="bi bi-person-lines-fill"></i>
                   <span className="mr-left">
-                    ID : {user.id} | {user.username}
+                    ID : {user._id} | {user.full_name}
                   </span>
                 </h5>
                 <div className="text-end">
                   <Link
                     className="m-2"
-                    to={`/hr/staffs/${user.id}/update`}
+                    to={`/hr/staffs/${user._id}/update`}
                     state={{ data: user }}
                   >
                     <Button
@@ -99,46 +99,41 @@ const DetailStaff = () => {
               </div>
               <div className="card-body m-3">
                 <p>
-                  <Typography.Text strong>ID No :</Typography.Text> {user.id_no}
+                  <Typography.Text strong>Social Num :</Typography.Text> {user.num_securite_sociale}
                 </p>
                 <p>
-                  <Typography.Text strong>Role :</Typography.Text> {user.role}
+                  <Typography.Text strong>Department :</Typography.Text> {user.department}
                 </p>
                 <p>
-                  <Typography.Text strong>email :</Typography.Text> {user.email}
+                  <Typography.Text strong>Type contrat :</Typography.Text> {user.type_contrat}
                 </p>
                 <p>
                   <Typography.Text strong>salary :</Typography.Text>{" "}
                   {user.salary}
                 </p>
                 <p>
-                  <Typography.Text strong>Designation ID :</Typography.Text>{" "}
-                  {user.designation_id}
+                  <Typography.Text strong>Congee:</Typography.Text>{" "}
+                  {user.jours_conges_restants}
                 </p>
                 <p>
                   <Typography.Text strong>department :</Typography.Text>{" "}
                   {user.department}
                 </p>
-                <p>
-                  <Typography.Text strong>phone :</Typography.Text> {user.phone}
-                </p>
+             
                 <p>
                   <Typography.Text strong>address :</Typography.Text>{" "}
-                  {user.address}
+                  {user.adresse}
                 </p>
-                <p>
-                  <Typography.Text strong>Blood Group :</Typography.Text>{" "}
-                  {user.blood_group}
-                </p>
+      
 
                 <p>
                   <Typography.Text strong>Joining Date</Typography.Text>{" "}
-                  {moment(user.join_date).format("YYYY-MM-DD")}
+                  {moment(user.date_hire).format("YYYY-MM-DD")}
                 </p>
 
                 <p>
                   <Typography.Text strong>Leave Date</Typography.Text>{" "}
-                  {moment(user.leave_date).format("YYYY-MM-DD")}
+                  {moment(user.date_fin_contrat).format("YYYY-MM-DD")}
                 </p>
               </div>
             </Card>

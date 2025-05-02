@@ -13,8 +13,11 @@ const initialState = {
 };
 
 const customerReducer = (state = initialState, action) => {
+  console.log( action.payload)
   switch (action.type) {
+  
     case CUSTOMERS:
+
       return { ...state, list: action.payload };
     case ADD_CUSTOMER:
       if (!Array.isArray(state.list)) {

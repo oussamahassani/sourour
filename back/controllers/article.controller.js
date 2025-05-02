@@ -3,6 +3,7 @@ const Article = require('../models/Article');
 // Ajouter un nouvel article
 exports.ajouterArticle = async (req, res) => {
     try {
+        console.log(req.body)
         const article = new Article(req.body);
         await article.save();
         res.status(201).json({ message: "Article ajouté avec succès", article });

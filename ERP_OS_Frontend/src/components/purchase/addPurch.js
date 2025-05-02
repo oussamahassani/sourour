@@ -274,8 +274,8 @@ const AddPurch = () => {
 									}>
 									{allSuppliers &&
 										allSuppliers.map((sup) => (
-											<Option key={sup.id} value={sup.id}>
-												{sup.name}
+											<Option key={sup._id} value={sup._id}>
+												{sup.nomF}
 											</Option>
 										))}
 								</Select>

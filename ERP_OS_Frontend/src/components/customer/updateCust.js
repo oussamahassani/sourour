@@ -1,4 +1,4 @@
-import { Alert, Button, Col, Form, Input, Row, Typography } from "antd";
+import { Alert, Button, Col, Form, Input, Row,Select, Typography } from "antd";
 import axios from "axios";
 import React, { useState } from "react";
 import { Navigate, useLocation, useParams } from "react-router-dom";
@@ -14,7 +14,7 @@ const updateCustomer = async (id, values) => {
         Accept: "application/json",
         "Content-Type": "application/json;charset=UTF-8",
       },
-      url: `customer/${id}`,
+      url: `clients/${id}`,
       data: {
         ...values,
       },
@@ -38,10 +38,11 @@ function UpdateCust() {
 
   const cust = data;
   const [initValues, setInitValues] = useState({
-    name: cust.name,
-    phone: cust.phone,
-    address: cust.address,
-    due_amount: cust.due_amount,
+    nom: cust.nom,
+    prenom:cust.prenom,
+    telephone: cust.telephone,
+    adresse: cust.adresse,
+    validation_admin: cust.validation_admin,
   });
 
   const onFinish = (values) => {
@@ -116,7 +117,7 @@ function UpdateCust() {
                   style={{ marginBottom: "10px" }}
                   fields={[{ name: "Name" }]}
                   label="Name"
-                  name="name"
+                  name="nom"
                   rules={[
                     {
                       required: true,
@@ -126,11 +127,38 @@ function UpdateCust() {
                 >
                   <Input />
                 </Form.Item>
+                <Form.Item
+                  style={{ marginBottom: "10px" }}
+                  fields={[{ name: "Name" }]}
+                  label="Prenom"
+                  name="prenom"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please input customer prenom!",
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  style={{ marginBottom: "10px" }}
+                  label="Adresse"
+                  name="adresse"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please input customer adresse!",
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
 
                 <Form.Item
                   style={{ marginBottom: "10px" }}
                   label="Phone"
-                  name="phone"
+                  name="telephone"
                   rules={[
                     {
                       required: true,
@@ -142,33 +170,39 @@ function UpdateCust() {
                 </Form.Item>
 
                 <Form.Item
-                  style={{ marginBottom: "10px" }}
-                  label="Address"
-                  name="address"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please input customer Address!",
-                    },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-
-                <Form.Item
-                  style={{ marginBottom: "10px" }}
-                  label="Due Amount"
-                  name="due_amount"
-                  rules={[
-                    {
-                      type: Number,
-                      required: true,
-                      message: "Please input customer amount!",
-                    },
-                  ]}
-                >
-                  <Input type="number" />
-                </Form.Item>
+				style={{ marginBottom: "15px" }}
+				name="validation_admin"
+				label="Select Validation Type "
+				rules={[
+				  {
+					required: true,
+					message: "Please select Validation !",
+				  },
+				]}
+			  >
+				<Select
+				  name="validation_admin"
+				
+				  placeholder="validation_admin"
+				  optionFilterProp="children"
+				  filterOption={(input, option) =>
+					option.children.includes(input)
+				  }
+				  filterSort={(optionA, optionB) =>
+					optionA.children
+					  .toLowerCase()
+					  .localeCompare(optionB.children.toLowerCase())
+				  }
+				>
+				 <Select.Option key={false} value={false}>
+						{" non valider"}
+					  </Select.Option>
+					  <Select.Option key={true} value={true}>
+						{"valider"}
+					  </Select.Option>
+			
+				</Select>
+			  </Form.Item>
 
                 <Form.Item
                   style={{ marginBottom: "10px" }}

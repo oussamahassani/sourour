@@ -12,7 +12,7 @@ export const loadSupplier = (id) => {
   //dispatching with an call back function and returning that
   return async (dispatch) => {
     try {
-      const data = await axios.get(`supplier/${id}`);
+      const data = await axios.get(`fournisseurs/${id}`);
       //dispatching data
       dispatch(detailSuppliers(data));
       return data;

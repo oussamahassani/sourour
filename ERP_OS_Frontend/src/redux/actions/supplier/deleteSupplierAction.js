@@ -18,7 +18,7 @@ export const deleteSupplier = (id) => {
 					Accept: "application/json",
 					"Content-Type": "application/json;charset=UTF-8",
 				},
-				url: `supplier/${id}`,
+				url: `fournisseurs/${id}`,
 				data: {
 					status: false,
 				},

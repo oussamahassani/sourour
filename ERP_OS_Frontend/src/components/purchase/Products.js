@@ -64,8 +64,8 @@ export default function Products({
                     >
                       {Array.isArray(allProducts) &&
                         allProducts.map((p) => (
-                          <Select.Option key={p.id} value={p.id}>
-                            {p.name}
+                          <Select.Option key={p._id} value={p._id}>
+                            {p.article}
                           </Select.Option>
                         ))}
                     </Select>

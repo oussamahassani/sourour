@@ -195,6 +195,15 @@ const Test = ({ color }) => {
       children: [
         {
           label: (
+            <NavLink to="/hr/staffsAdmin">
+              <span>AdminStaffs</span>
+            </NavLink>
+          ),
+          key: "staffsAdmin",
+          icon: <UsergroupAddOutlined />,
+        },
+        {
+          label: (
             <NavLink to="/hr/staffs">
               <span>Staffs</span>
             </NavLink>
@@ -211,15 +220,7 @@ const Test = ({ color }) => {
           key: "roleAndPermissions",
           icon: <UserSwitchOutlined />,
         },
-        {
-          label: (
-            <NavLink to="/designation/">
-              <span>Designation</span>
-            </NavLink>
-          ),
-          key: "designation",
-          icon: <UserSwitchOutlined />,
-        },
+     
       ],
     },
     {

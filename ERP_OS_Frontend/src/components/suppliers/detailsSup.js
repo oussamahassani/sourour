@@ -31,7 +31,7 @@ const DetailsSup = () => {
       dispatch(deleteSupplier(id));
 
       setVisible(false);
-      toast.warning(`Supplier : ${supplier.name} is removed `);
+      toast.warning(`Supplier : ${supplier.nomF} is removed `);
       return navigate("/supplier");
     } catch (error) {
       console.log(error.message);
@@ -67,14 +67,14 @@ const DetailsSup = () => {
                 <h5>
                   <i className="bi bi-person-lines-fill"></i>
                   <span className="mr-left">
-                    ID : {supplier.id} | {supplier.name}
+                    ID : {supplier._id} | {supplier.nomF}
                   </span>
                 </h5>
                 </div>
                 <div className="text-end w-50">
                   <Link
                     className="me-3 d-inline-block"
-                    to={`/supplier/${supplier.id}/update`}
+                    to={`/supplier/${supplier._id}/update`}
                     state={{ data: supplier }}
                   >
                     <Button
@@ -107,7 +107,7 @@ const DetailsSup = () => {
               <div className="mt-3 mb-3">
                 <p>
                   <Typography.Text className="font-semibold">
-                    Phone Number : {supplier.phone}
+                    Email  : {supplier.email}
                   </Typography.Text>{" "}
                 </p>
 
@@ -115,12 +115,12 @@ const DetailsSup = () => {
                   <Typography.Text className="font-semibold">
                     Address :
                   </Typography.Text>{" "}
-                  {supplier.address}
+                  {supplier.adresse}
                 </p>
 
                 <p>
-                  <Typography.Text strong>Due Amount :</Typography.Text>{" "}
-                  {supplier.due_amount}
+                  <Typography.Text strong>Phone :</Typography.Text>{" "}
+                  {supplier.telephone}
                 </p>
               </div>
               <hr />

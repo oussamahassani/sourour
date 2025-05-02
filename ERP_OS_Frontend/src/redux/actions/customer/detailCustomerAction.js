@@ -12,7 +12,7 @@ export const loadSingleCustomer = (id) => {
   //dispatching with an call back function and returning that
   return async (dispatch) => {
     try {
-      const data = await axios.get(`customer/${id}`);
+      const data = await axios.get(`clients/${id}`);
       //dispatching data
       dispatch(detailCustomer(data));
       return data;

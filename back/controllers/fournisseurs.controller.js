@@ -35,7 +35,7 @@ exports.listeFournisseurs = async (req, res) => {
   try {
     // Récupérer tous les fournisseurs
     const fournisseurs = await Fournisseur.find();
-    res.status(200).json({ fournisseurs });
+    res.status(200).json( fournisseurs );
   } catch (error) {
     console.error("Erreur lors de la récupération des fournisseurs", error);
     res.status(500).json({ error: "Erreur lors de la récupération des fournisseurs" });
@@ -52,7 +52,7 @@ exports.getFournisseurById = async (req, res) => {
       return res.status(404).json({ error: "Fournisseur non trouvé" });
     }
 
-    res.status(200).json({ fournisseur });
+    res.status(200).json(fournisseur );
   } catch (error) {
     console.error("Erreur lors de la récupération du fournisseur", error);
     res.status(500).json({ error: "Erreur serveur" });

@@ -57,13 +57,13 @@ const DetailsProd = () => {
                 <h5>
                   <i className="bi bi-person-lines-fill"></i>
                   <span className="mr-left">
-                    ID : {product.id} | {product.name}
+                    ID : {product._id} | {product.article}
                   </span>
                 </h5>
                 <div className="text-end">
                   <Link
                     className="m-2"
-                    to={`/product/${product.id}/update`}
+                    to={`/product/${product._id}/update`}
                     state={{ data: product }}>
                     <Button
                       type="primary"
@@ -96,21 +96,21 @@ const DetailsProd = () => {
                     <h5> Product Information :</h5>
                     <p>
                       <Typography.Text strong>Quantity :</Typography.Text>{" "}
-                      {product.quantity}
+                      {product.stock}
                     </p>
 
                     <p>
                       <Typography.Text strong>Purchase Price :</Typography.Text>{" "}
-                      {product.purchase_price}
+                      {product.prix_achat}
                     </p>
 
                     <p>
                       <Typography.Text strong>Sale Price :</Typography.Text>{" "}
-                      {product.sale_price}
+                      {product.prix_vente}
                     </p>
                     <p>
-                      <Typography.Text strong>Unit Type :</Typography.Text>{" "}
-                      {product.unit_type}
+                      <Typography.Text strong>Categorie:</Typography.Text>{" "}
+                      {product.categorie}
                     </p>
                   </div>
                 </Col>

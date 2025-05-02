@@ -18,7 +18,7 @@ export const addSupplier = (values) => {
 					Accept: "application/json",
 					"Content-Type": "application/json;charset=UTF-8",
 				},
-				url: `supplier/`,
+				url: `fournisseurs/`,
 				data: {
 					...values,
 				},

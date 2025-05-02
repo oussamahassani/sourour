@@ -13,7 +13,7 @@ export const loadSuppliers = ({ page, limit, status }) => {
 	return async (dispatch) => {
 		try {
 			const { data } = await axios.get(
-				`supplier?status=${status}&page=${page}&count=${limit}`
+				`fournisseurs?status=${status}&page=${page}&count=${limit}`
 			);
 			//dispatching data
 			dispatch(getSuppliers(data));

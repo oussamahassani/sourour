@@ -29,7 +29,7 @@ const DetailCust = () => {
       dispatch(deleteCustomer(id));
 
       setVisible(false);
-      toast.warning(`Customer : ${customer.name} is removed `);
+      toast.warning(`Customer : ${customer.nom} is removed `);
       return navigate("/customer");
     } catch (error) {
       console.log(error.message);
@@ -58,19 +58,19 @@ const DetailCust = () => {
 
       <div className="mr-top">
         {customer ? (
-          <Fragment key={customer.id}>
+          <Fragment key={customer._id}>
             <Card bordered={false} style={{}}>
               <div className="card-header d-flex justify-content-between m-3">
                 <h5>
                   <i className="bi bi-person-lines-fill"></i>
                   <span className="mr-left">
-                    ID : {customer.id} | {customer.name}
+                    ID : {customer._id} | {customer.nom}
                   </span>
                 </h5>
                 <div className="text-end">
                   <Link
                     className="m-2"
-                    to={`/customer/${customer.id}/update`}
+                    to={`/customer/${customer._id}/update`}
                     state={{ data: customer }}
                   >
                     <Button
@@ -102,22 +102,22 @@ const DetailCust = () => {
                 </div>
               </div>
               <div className="card-body m-2">
-                <p>
+                   <p>
                   <Typography.Text strong>Phone Number :</Typography.Text>{" "}
-                  {customer.phone}
+                  {customer.telephone}
                 </p>
 
                 <p>
                   <Typography.Text strong>Address :</Typography.Text>{" "}
-                  {customer.address}
+                  {customer.adresse}
                 </p>
 
                 <p>
-                  <Typography.Text strong>Due Amount :</Typography.Text>{" "}
-                  {customer.due_amount}
+                  <Typography.Text strong>Email :</Typography.Text>{" "}
+                  {customer.email}
                 </p>
               </div>
-              <CustomerInvoiceList
+          <CustomerInvoiceList
                 list={customer?.saleInvoice}
                 linkTo="/sale"
               />
@@ -125,7 +125,9 @@ const DetailCust = () => {
                 list={customer?.allReturnSaleInvoice}
               />
               <CustomerTransactionList list={customer?.allTransaction} />
-            </Card>
+              
+             
+              </Card>
           </Fragment>
         ) : (
           <Loader />

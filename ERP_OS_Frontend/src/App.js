@@ -16,6 +16,7 @@ import Purchase from "./components/purchase/purchase";
 import Login from "./components/user/Login";
 import Logout from "./components/user/Logout";
 import UserList from "./components/user/user";
+import AdminUserList from "./components/admin/user"
 
 import "./assets/styles/main.css";
 import "./assets/styles/responsive.css";
@@ -33,7 +34,10 @@ import AddSupPaymentByInvoice from "./components/Payment/SupplierPaymentByInvoic
 import GetAllPurch from "./components/purchase/getAllPurch";
 import GetAllSale from "./components/sale/getAllSale";
 import DetailStaff from "./components/user/detailsStaff";
+import AdminUserDetail from "./components/admin/detailsStaff"
+
 import UpdateStaff from "./components/user/updateStaff";
+
 
 // import Register from "./components/user/Register";
 import { Layout } from "antd";
@@ -42,9 +46,7 @@ import BalanceSheet from "./components/account/balanceSheet";
 import DetailAccount from "./components/account/detailAccount";
 import IncomeStatement from "./components/account/incomeStatement";
 import TrialBalance from "./components/account/trialBalance";
-import Designation from "./components/designation/designation";
-import DetailDesignation from "./components/designation/detailDesignation";
-import UpdateDesignation from "./components/designation/updateDesignation";
+
 import Main from "./components/layouts/Main";
 import DetailProductCategory from "./components/productCategory/detailProductCategory";
 import ProductCategory from "./components/productCategory/productCategory";
@@ -132,6 +134,10 @@ function App() {
             <Route path="/auth/logout" exact element={<Logout />} />
             {/*         <Route path='/auth/register' exact element={<Register />} /> */}
             <Route path="/hr/staffs" exact element={<UserList />} />
+            <Route path="/hr/staffsAdmin" exact element={<AdminUserList />} />
+            <Route path="/hr/staffsAdmin/:id" exact element={<AdminUserDetail />} />
+
+            
             <Route path="/hr/staffs/:id" exact element={<DetailStaff />} />
             <Route path="/hr/staffs/:id/update" element={<UpdateStaff />} />
 
@@ -152,13 +158,7 @@ function App() {
               element={<BalanceSheet />}
             />
             <Route path="/account/income" exact element={<IncomeStatement />} />
-            <Route path="/designation" exact element={<Designation />} />
-            <Route path="/designation/:id" element={<DetailDesignation />} />
-            <Route
-              path="/designation/:id/update"
-              element={<UpdateDesignation />}
-            />
-
+         
             <Route path="/pos" exact element={<Pos />} />
 
             <Route path="/invoice-setting" exact element={<InvoiceSetting />} />

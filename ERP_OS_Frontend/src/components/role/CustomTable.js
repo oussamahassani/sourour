@@ -11,8 +11,8 @@ const CustomTable = ({ role }) => {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "_id",
+      key: "_id",
     },
     {
       title: "Name",

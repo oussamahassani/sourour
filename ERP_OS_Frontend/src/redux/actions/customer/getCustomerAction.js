@@ -13,10 +13,11 @@ export const loadAllCustomer = ({ page, limit, status }) => {
 	return async (dispatch) => {
 		try {
 			const { data } = await axios.get(
-				`customer?status=${status}&page=${page}&count=${limit}`
+				`clients?status=${status}&page=${page}&count=${limit}`
 			);
+			console.log(data)
 			//dispatching data
-			dispatch(getCustomer(data));
+			dispatch(getCustomer(data.clients));
 		} catch (error) {
 			console.log(error.message);
 		}

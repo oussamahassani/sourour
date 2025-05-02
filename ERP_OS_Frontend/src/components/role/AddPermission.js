@@ -31,11 +31,10 @@ const AddPermission = () => {
 
   const onFinish = async (values) => {
     const { permission_id } = values;
-
     try {
       const data = {
-        role_id: parseInt(id),
-        permission_id: permission_id.map(Number),
+        role_id: id,
+        permission_id: permission_id,
       };
 
       const resp = await addPermission(data); //permision func
@@ -141,7 +140,7 @@ const AddPermission = () => {
                 >
                   {permissions &&
                     permissions.map((permission) => (
-                      <Option key={permission.id}>{permission.name}</Option>
+                      <Option key={permission._id}>{permission.name}</Option>
                     ))}
                 </Select>
               </Form.Item>

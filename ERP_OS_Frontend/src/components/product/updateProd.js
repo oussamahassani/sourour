@@ -39,10 +39,10 @@ function UpdateProd() {
 
   const prod = data;
   const [initValues, setInitValues] = useState({
-    name: prod.name,
-    quantity: prod.quantity,
-    purchase_price: prod.purchase_price,
-    sale_price: prod.sale_price,
+    article: prod.article,
+    prix_achat: prod.prix_achat,
+    prix_vente: prod.prix_vente,
+    stock: prod.stock,
   });
 
   const onFinish = (values) => {
@@ -115,7 +115,7 @@ function UpdateProd() {
                     style={{ marginBottom: "10px" }}
                     fields={[{ name: "Name" }]}
                     label="Name"
-                    name="name"
+                    name="article"
                     rules={[
                       {
                         required: true,
@@ -129,7 +129,7 @@ function UpdateProd() {
                   <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Quantity"
-                    name="quantity"
+                    name="stock"
                     rules={[
                       {
                         required: true,
@@ -143,7 +143,7 @@ function UpdateProd() {
                   <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Purchase Price"
-                    name="purchase_price"
+                    name="prix_vente"
                     rules={[
                       {
                         required: true,
@@ -157,7 +157,7 @@ function UpdateProd() {
                   <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Sale Price"
-                    name="sale_price"
+                    name="prix_achat"
                     rules={[
                       {
                         type: Number,

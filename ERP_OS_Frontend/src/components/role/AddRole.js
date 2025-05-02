@@ -21,8 +21,8 @@ function CustomTable({ list }) {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
+      key: "index",
+      render: (text, record, index) => index + 1,
     },
     {
       title: "Name",
@@ -38,7 +38,7 @@ function CustomTable({ list }) {
     },
     {
       title: "Action",
-      dataIndex: "id",
+      dataIndex: "_id",
       key: "action",
       render: (id) => (
         <Link to={`/role/${id}/`}>

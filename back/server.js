@@ -2,6 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
+const role = require('./routes/roleRoutes');
+const rolePermission = require('./routes/rolePermission');
+const AdminRouter = require('./routes/adminRoutes');
+const UserRouter = require('./routes/rhRoutes');
+const ClientRoute = require('./routes/clientRoute');
+const fournisseurtRoute = require('./routes/fournisseursRoutes');
+const produittRoute = require('./routes/articleRoutes');
+
+const initPermissions = require("./initPermission");
+
 const cors = require('cors');
 
 const app = express();
@@ -17,7 +27,11 @@ const connectDB = async () => {
     try {
         console.log(process.env.MONGO_URI)
         mongoose.connect("mongodb://127.0.0.1:27017/your-db-name")
-            .then(res => console.log('✅ Connexion à MongoDB réussie'))
+            .then(res => {console.log('✅ Connexion à MongoDB réussie')
+              //  initPermissions(); // initialise les permissions une seule fois
+
+            
+    })
             .catch(err => console.log(err))
 
     } catch (err) {
@@ -31,6 +45,14 @@ connectDB();
 
 // Routes d'authentification
 app.use('/api/auth', authRoutes);
+app.use('/role', role);
+app.use('/role-permission', rolePermission);
+app.use('/admin', AdminRouter);
+app.use('/user', UserRouter);
+app.use('/', ClientRoute);
+app.use('/', fournisseurtRoute);
+app.use('/product', produittRoute);
+
 
 // Middleware de gestion des erreurs globales
 app.use((err, req, res, next) => {

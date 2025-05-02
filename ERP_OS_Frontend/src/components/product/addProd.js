@@ -37,18 +37,19 @@ const AddProd = () => {
   const onFinish = async (values) => {
     try {
       let formData = new FormData();
-      formData.append("image", fileList[0].originFileObj);
-      formData.append("name", values.name);
-      formData.append("quantity", values.quantity);
-      formData.append("volume", values.volume);
-      formData.append("purchase_price", values.purchase_price);
-      formData.append("sale_price", values.sale_price);
-      formData.append("product_category_id", values.product_category_id);
-      formData.append("sku", values.sku);
-      formData.append("unit_type", values.unit_type);
-      formData.append("reorder_quantity", values.reorder_quantity);
-      formData.append("unit_measurement", values.unit_measurement);
+      if(fileList[0]){
+        formData.append("image", fileList[0].originFileObj);
 
+      }
+      formData.append("article", values.name);
+      formData.append("description", values.quantity);
+      formData.append("prix_achat", values.purchase_price);
+      formData.append("prix_vente", values.sale_price);
+      formData.append("taux_marge", values.taux_marge);
+      
+      formData.append("categorie", values.product_category_id);
+      formData.append("stock", values.sku);
+      formData.append("alerte_stock", values.reorder_quantity);
       const resp = await dispatch(addProduct(formData));
 
       if (resp.message === "success") {
@@ -138,7 +139,6 @@ const AddProd = () => {
               >
                 <Select
                   name="product_category_id"
-                  loading={!category}
                   showSearch
                   placeholder="Select Category"
                   optionFilterProp="children"
@@ -150,59 +150,33 @@ const AddProd = () => {
                       .toLowerCase()
                       .localeCompare(optionB.children.toLowerCase())
                   }
-                >
-                  {category &&
-                    category.map((cate) => (
-                      <Select.Option key={cate.id} value={cate.id}>
-                        {cate.name}
+                >  
+                <Select.Option key={"Chauffage"} value={"Chauffage"}>
+                {"Chauffage"}
+              </Select.Option>
+              <Select.Option key={"Fourniture"} value={"Fourniture"}>
+                {"Fourniture"}
+              </Select.Option>
+              <Select.Option key={"Piècedétachée"} value={"Piècedétachée"}>
+                {"Pièce détachée"}
+              </Select.Option>
+                      <Select.Option key={"Climatiseur"} value={"Climatiseur"}>
+                        {"Climatiseur"}
                       </Select.Option>
-                    ))}
+                 
                 </Select>
               </Form.Item>
 
-              <Form.Item
-                style={{ marginBottom: "15px" }}
-                name="unit_type"
-                label="Select Unit Type "
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select unit type!",
-                  },
-                ]}
-              >
-                <Select
-                  name="unit_type"
-                  loading={!category}
-                  showSearch
-                  placeholder="Select Unit Type"
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    option.children.includes(input)
-                  }
-                  filterSort={(optionA, optionB) =>
-                    optionA.children
-                      .toLowerCase()
-                      .localeCompare(optionB.children.toLowerCase())
-                  }
-                >
-                  {unitType &&
-                    unitType.map((unit) => (
-                      <Select.Option key={unit} value={unit}>
-                        {unit}
-                      </Select.Option>
-                    ))}
-                </Select>
-              </Form.Item>
+    
 
               <Form.Item
                 style={{ marginBottom: "15px" }}
-                label="Unit Measurement"
-                name="unit_measurement"
+                label="Taux marge"
+                name="taux_marge"
                 rules={[
                   {
                     required: true,
-                    message: "Please input Unit Messurement!",
+                    message: "Please input taux marge!",
                   },
                 ]}
               >
@@ -298,7 +272,7 @@ const AddProd = () => {
                   },
                 ]}
               >
-                <Input />
+                <Input type="number" />
               </Form.Item>
 
               <Form.Item

@@ -23,7 +23,6 @@ import {
 	useParams
 } from "react-router-dom";
 import { toast } from "react-toastify";
-import { loadAllDesignation } from "../../redux/actions/designation/getDesignationAction";
 import PageTitle from "../page-header/PageHeader";
 import { getRoles } from "../role/roleApis";
 
@@ -36,7 +35,7 @@ const updateStaff = async (id, values) => {
         Accept: "application/json",
         "Content-Type": "application/json;charset=UTF-8",
       },
-      url: `user/${id}`,
+      url: `user/employees/${id}`,
       data: {
         ...values,
       },
@@ -59,23 +58,21 @@ function UpdateStaff() {
   //Loading Old data from URL
   const location = useLocation();
   const { data } = location.state;
-  const designation = useSelector((state) => state.designations?.list);
-  useEffect(() => {
-    dispatch(loadAllDesignation());
-  }, []);
+
 
   const user = data;
   const [initValues, setInitValues] = useState({
-    username: user.username,
-    email: user.email,
-    role: user.role,
-    address: user.address,
-    phone: user.phone,
-    designation_id: user.designation_id,
-    blood_group: user.blood_group,
+    full_name: user.full_name,
     department: user.department,
+    date_hires: user.date_hire,
+    date_fin_contrats: user.date_fin_contrat,
     id_no: user.id_no,
+    adresse: user.adresse,
     salary: user.salary,
+    type_contrat: user.type_contrat,
+    observations: user.observations,
+ 
+
     status: user.status,
   });
 
@@ -170,13 +167,13 @@ function UpdateStaff() {
                 >
                   <Form.Item
                     style={{ marginBottom: "10px" }}
-                    fields={[{ name: "Name" }]}
-                    label="Userame"
-                    name="username"
+                    fields={[{ name: "full_name" }]}
+                    label="full name"
+                    name="full_name"
                     rules={[
                       {
                         required: true,
-                        message: "Please input User name!",
+                        message: "Please input User full name!",
                       },
                     ]}
                   >
@@ -185,63 +182,29 @@ function UpdateStaff() {
 
                   <Form.Item
                     style={{ marginBottom: "10px" }}
-                    label="Change Password"
-                    name="password"
+                    label="Change department"
+                    name="department"
                     rules={[
                       {
                         required: true,
-                        message: "Please input New Password!",
+                        message: "Please input New department!",
                       },
                     ]}
                   >
                     <Input />
                   </Form.Item>
 
-                  {role === "admin" ? (
-                    <Form.Item
-                      rules={[
-                        {
-                          required: true,
-                          message: "Pleases Select Type!",
-                        },
-                      ]}
-                      label="Staff Type "
-                      name={"role"}
-                      style={{ marginBottom: "20px" }}
-                    >
-                      <Select
-                        optionFilterProp="children"
-                        showSearch
-                        filterOption={(input, option) =>
-                          option.children
-                            .toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        mode="single"
-                        allowClear
-                        style={{
-                          width: "100%",
-                        }}
-                        placeholder="Please select"
-                      >
-                        {list &&
-                          list.map((role) => (
-                            <Option key={role.name}>{role.name}</Option>
-                          ))}
-                      </Select>
-                    </Form.Item>
-                  ) : (
-                    ""
-                  )}
+               
+              
 
                   <Form.Item
                     style={{ marginBottom: "10px" }}
-                    label="Email"
-                    name="email"
+                    label="salary"
+                    name="salary"
                     rules={[
                       {
                         required: true,
-                        message: "Please input email!",
+                        message: "Please input salary!",
                       },
                     ]}
                   >
@@ -251,7 +214,7 @@ function UpdateStaff() {
                   <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Joining Date"
-                    name="join_date"
+                    name="date_hire"
                     rules={[
                       {
                         required: true,
@@ -259,13 +222,13 @@ function UpdateStaff() {
                       },
                     ]}
                   >
-                    <DatePicker />
+                    <DatePicker className="date-picker" />
                   </Form.Item>
 
                   <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Leave Date"
-                    name="leave_date"
+                    name="date_fin_contrat"
                     rules={[
                       {
                         required: true,
@@ -273,40 +236,28 @@ function UpdateStaff() {
                       },
                     ]}
                   >
-                    <DatePicker />
+                    <DatePicker className="date-picker" />
                   </Form.Item>
 
                   <Form.Item
                     style={{ marginBottom: "10px" }}
-                    label="Id No"
-                    name="id_no"
+                    label="Day conges"
+                    name="jours_conges_restants"
                     rules={[
                       {
                         required: true,
-                        message: "Please input id no",
+                        message: "Please input Day conges",
                       },
                     ]}
                   >
-                    <Input placeholder="OE-012" />
+                    <Input placeholder="10" />
                   </Form.Item>
 
-                  <Form.Item
-                    style={{ marginBottom: "10px" }}
-                    label="Phone"
-                    name="phone"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input phone",
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
+         
                   <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Address"
-                    name="address"
+                    name="adresse"
                     rules={[
                       {
                         required: true,
@@ -317,67 +268,23 @@ function UpdateStaff() {
                     <Input />
                   </Form.Item>
 
-                  <Form.Item
-                    style={{ marginBottom: "10px" }}
-                    label="Salary"
-                    name="salary"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please input salary",
-                      },
-                    ]}
-                  >
-                    <InputNumber />
-                  </Form.Item>
+       
 
                   <Form.Item
                     style={{ marginBottom: "10px" }}
-                    label="Blood Group"
-                    name="blood_group"
+                    label=" observations"
+                    name="observations"
                     rules={[
                       {
                         required: true,
-                        message: "Please input blood group",
+                        message: "Please input observations",
                       },
                     ]}
                   >
                     <Input />
                   </Form.Item>
 
-                  <Form.Item
-                    rules={[
-                      {
-                        required: true,
-                        message: "Pleases Select Designation!",
-                      },
-                    ]}
-                    label="Designation"
-                    name={"designation_id"}
-                    style={{ marginBottom: "20px" }}
-                  >
-                    <Select
-                      loading={!designation}
-                      optionFilterProp="children"
-                      showSearch
-                      filterOption={(input, option) =>
-                        option.children
-                          .toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      mode="single"
-                      allowClear
-                      style={{
-                        width: "100%",
-                      }}
-                      placeholder="Please select"
-                    >
-                      {designation &&
-                        designation.map((desg) => (
-                          <Option key={desg.id}>{desg.name}</Option>
-                        ))}
-                    </Select>
-                  </Form.Item>
+                
 
                   <Form.Item
                     style={{ marginBottom: "10px" }}

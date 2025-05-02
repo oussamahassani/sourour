@@ -6,7 +6,7 @@ const EmployeeSchema = new mongoose.Schema({
     id_employee: { type: mongoose.Schema.Types.ObjectId, auto: true },
 
     // Identifiant de l'utilisateur associé à l'employé (lié à un utilisateur dans un autre modèle)
-    id_u: { type: mongoose.Schema.Types.ObjectId, required: true },
+    id_u: { type: mongoose.Schema.Types.ObjectId},
 
     // Nom complet de l'employé
     full_name: { type: String, required: true },

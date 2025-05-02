@@ -20,18 +20,23 @@ function CustomTable({ list }) {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "_id",
+      key: "_id",
     },
     {
-      title: "Name",
-      dataIndex: "username",
-      key: "username",
+      title: "Full name",
+      dataIndex: "full_name",
+      key: "full_name",
     },
     {
-      title: "Role",
-      dataIndex: "role",
-      key: "role",
+      title: "Department",
+      dataIndex: "department",
+      key: "department",
+    },
+    {
+      title: "Adresse",
+      dataIndex: "adresse",
+      key: "adresse",
     },
     {
       title: "Created at",
@@ -41,7 +46,7 @@ function CustomTable({ list }) {
     },
     {
       title: "Action",
-      dataIndex: "id",
+      dataIndex: "_id",
       key: "action",
       render: (id) => (
         <Link to={`/hr/staffs/${id}/`}>

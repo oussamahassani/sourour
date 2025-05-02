@@ -16,32 +16,27 @@ function CustomTable({ list, total, status }) {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "_id",
+      key: "_id",
     },
     {
       title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name, { id }) => <Link to={`/supplier/${id}`}>{name}</Link>,
+      dataIndex: "nomF",
+      key: "nomF",
+      render: (name, { _id }) => <Link to={`/supplier/${_id}`}>{name}</Link>,
     },
     {
       title: "Phone",
-      dataIndex: "phone",
-      key: "phone",
+      dataIndex: "telephone",
+      key: "telephone",
     },
     {
       title: "Address",
-      dataIndex: "address",
-      key: "address",
+      dataIndex: "adresse",
+      key: "adresse",
       responsive: ["md"],
     },
-    // {
-    //   title: "Due Amount",
-    //   dataIndex: "due_amount",
-    //   key: "due_amount",
-    //   responsive: ["md"],
-    // },
+ 
   ];
 
   useEffect(() => {

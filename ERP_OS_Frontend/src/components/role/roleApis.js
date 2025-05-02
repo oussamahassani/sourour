@@ -88,7 +88,8 @@ export const addPermission = async (values) => {
 
 // Get Permsiion
 export const loadPermission = async () => {
-	const { data } = await axios.get(`permission?query=all`);
+	console.log("role/premission/all/permission?query=all")
+	const { data } = await axios.get("role/premission/all?query=all");
 	return data;
 };
 

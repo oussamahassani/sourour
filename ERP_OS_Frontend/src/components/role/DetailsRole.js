@@ -55,7 +55,7 @@ const DetailRole = () => {
 
       <div className="mr-top">
         {role ? (
-          <Fragment key={role.id}>
+          <Fragment key={role._id}>
             <Card bordered={false} className="card-custom">
               <div className="card-header d-flex justify-content-between ">
                 <h5>
@@ -67,7 +67,7 @@ const DetailRole = () => {
                 <div className="text-end">
                   <Link
                     className="m-2"
-                    to={`/role/permit/${role.id}`}
+                    to={`/role/permit/${role._id}`}
                     state={{ data: role }}
                   >
                     <Button

@@ -19,7 +19,6 @@ const ClientSchema = new mongoose.Schema({
   telephone: {
     type: String,
     trim: true,
-    match: [/^\d{8,15}$/, 'Veuillez entrer un numéro de téléphone valide']
   },
   adresse: {
     type: String,
@@ -46,12 +45,12 @@ const ClientSchema = new mongoose.Schema({
     trim: true
   },
   cin: {
-    type: Number,
+    type: String,
     required: true
   },
   commercial_assigne: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Utilisateur', // Assurez-vous que le modèle 'Utilisateur' existe
+    ref: 'Utilisateurs', // Assurez-vous que le modèle 'Utilisateur' existe
     default: null
   }
 });

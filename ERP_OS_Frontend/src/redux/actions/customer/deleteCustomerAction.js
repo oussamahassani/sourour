@@ -18,7 +18,7 @@ export const deleteCustomer = (id) => {
 					Accept: "application/json",
 					"Content-Type": "application/json;charset=UTF-8",
 				},
-				url: `customer/${id}`,
+				url: `clients/${id}`,
 				data: {
 					status: false,
 				},

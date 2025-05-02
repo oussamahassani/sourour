@@ -29,7 +29,7 @@ export const addUser = (values) => {
 			localStorage.setItem("access-token", data.token);
 			localStorage.setItem("role", data.role);
 			localStorage.setItem("user", data.username);
-			localStorage.setItem("id", data.id);
+			localStorage.setItem("id", data.userId);
 			localStorage.setItem("isLogged", true);
 			toast.success(" Login Successfully Done");
 

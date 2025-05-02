@@ -1,5 +1,5 @@
 const Client = require('../models/Client');
-
+const User = require('../models/Utilisateurs');
 // 📌 Ajouter un client
 exports.ajouterClient = async (req, res) => {
   try {
@@ -8,6 +8,11 @@ exports.ajouterClient = async (req, res) => {
       plafond_credit, validation_admin, entreprise,
       matricule, cin, commercial_assigne
     } = req.body;
+    const nouvelUtilisateur = new User({ nom, prenom, telephone, email, motDePasse:"12346", role:"Utilisateur" });
+    const utilisateurSauvegarde = await nouvelUtilisateur.save();
+
+    // 👇 ID à utiliser pour une autre collection
+    const commercial_assignes = utilisateurSauvegarde._id;
 
     const newClient = new Client({
       nom,
@@ -20,7 +25,7 @@ exports.ajouterClient = async (req, res) => {
       entreprise,
       matricule,
       cin,
-      commercial_assigne
+      commercial_assigne:commercial_assignes
     });
 
     await newClient.save();
@@ -52,7 +57,7 @@ exports.getClientById = async (req, res) => {
       return res.status(404).json({ error: "Client non trouvé" });
     }
 
-    res.status(200).json({ client });
+    res.status(200).json( client );
   } catch (error) {
     console.error("Erreur lors de la récupération du client :", error);
     res.status(500).json({ error: "Erreur serveur" });

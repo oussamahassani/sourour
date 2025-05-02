@@ -15,7 +15,7 @@ const updateSupplier = async (id, values) => {
         Accept: "application/json",
         "Content-Type": "application/json;charset=UTF-8",
       },
-      url: `supplier/${id}`,
+      url: `fournisseurs/${id}`,
       data: {
         ...values,
       },
@@ -39,10 +39,11 @@ function UpdateSup() {
 
   const sup = data;
   const [initValues, setInitValues] = useState({
-    name: sup.name,
-    phone: sup.phone,
-    address: sup.address,
-    due_amount: sup.due_amount,
+    nomF: sup.nomF,
+    prenomF:sup.prenomF,
+    telephone: sup.telephone,
+    adresse: sup.adresse,
+    matricule: sup.matricule,
   });
 
   const onFinish = (values) => {
@@ -116,7 +117,7 @@ function UpdateSup() {
                       style={{ marginBottom: "10px" }}
                       fields={[{ name: "Name" }]}
                       label='Name'
-                      name='name'
+                      name='nomF'
                       rules={[
                         {
                           required: true,
@@ -126,11 +127,24 @@ function UpdateSup() {
                     >
                       <Input />
                     </Form.Item>
-
+                    <Form.Item
+                      style={{ marginBottom: "10px" }}
+                      fields={[{ name: "Name" }]}
+                      label='Last Name'
+                      name='prenomF'
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please input supplier Last name!",
+                        },
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
                     <Form.Item
                       style={{ marginBottom: "10px" }}
                       label='Phone'
-                      name='phone'
+                      name='telephone'
                       rules={[
                         {
                           required: true,
@@ -144,7 +158,7 @@ function UpdateSup() {
                     <Form.Item
                       style={{ marginBottom: "10px" }}
                       label='Address'
-                      name='address'
+                      name='adresse'
                       rules={[
                         {
                           required: true,
@@ -157,13 +171,13 @@ function UpdateSup() {
 
                     <Form.Item
                       style={{ marginBottom: "10px" }}
-                      label='Due Amount'
-                      name='due_amount'
+                      label='Matricule'
+                      name='matricule'
                       rules={[
                         {
                           type: Number,
                           required: true,
-                          message: "Please input supplier amount!",
+                          message: "Please input supplier matricule!",
                         },
                       ]}
                     >
