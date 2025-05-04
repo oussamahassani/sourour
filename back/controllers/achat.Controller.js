@@ -15,8 +15,22 @@ exports.ajouterAchat = async (req, res) => {
 // Lister tous les achats
 exports.listeAchats = async (req, res) => {
   try {
-    const achats = await Achat.find().populate('id_article id_fournisseur id_utilisateur id_paiement id_document');
-    res.status(200).json({ achats });
+    let achats = await Achat.find()
+    .populate('id_article')
+    .populate('id_fournisseur')
+    .populate('id_utilisateur')
+
+for (let achat of achats) {
+    if (achat.id_paiement) {
+        await achat.populate('id_paiement');
+    }
+  }
+  for (let achat of achats) {
+    if (achat.id_document) {
+        await achat.populate('id_document');
+    }
+  }
+    res.status(200).json(achats );
   } catch (error) {
     console.error("Erreur lors de la récupération des achats :", error);
     res.status(500).json({ error: "Erreur serveur lors de la récupération des achats" });
@@ -27,13 +41,19 @@ exports.listeAchats = async (req, res) => {
 exports.getAchatById = async (req, res) => {
   try {
     const { id } = req.params;
-    const achat = await Achat.findById(id).populate('id_article id_fournisseur id_utilisateur id_paiement id_document');
+    const achat = await Achat.findById(id).populate('id_article id_fournisseur id_utilisateur');
 
     if (!achat) {
       return res.status(404).json({ error: "Achat non trouvé" });
     }
+    if (achat.id_paiement) {
+      await achat.populate('id_paiement');
+  }
+  if (achat.id_document) {
+    await achat.populate('id_document');
+}
 
-    res.status(200).json({ achat });
+    res.status(200).json( achat );
   } catch (error) {
     console.error("Erreur lors de la récupération de l'achat :", error);
     res.status(500).json({ error: "Erreur serveur" });

@@ -56,15 +56,7 @@ const Test = ({ color }) => {
           key: "suppliers",
           icon: <UserOutlined />,
         },
-        {
-          label: (
-            <NavLink to="/purchase">
-              <span>New Purchase</span>
-            </NavLink>
-          ),
-          key: "newPurchase",
-          icon: <CheckOutlined />,
-        },
+  
         {
           label: (
             <NavLink to="/purchaselist">
@@ -90,15 +82,7 @@ const Test = ({ color }) => {
           key: "customers",
           icon: <UserOutlined />,
         },
-        {
-          label: (
-            <NavLink to="/sale">
-              <span>New Sale</span>
-            </NavLink>
-          ),
-          key: "newSale",
-          icon: <CheckOutlined />,
-        },
+   
         {
           label: (
             <NavLink to="/salelist">
@@ -124,61 +108,10 @@ const Test = ({ color }) => {
           key: "accountList",
           icon: <UnorderedListOutlined />,
         },
-        {
-          label: (
-            <NavLink to="/transaction/create">
-              <span>New Transaction</span>
-            </NavLink>
-          ),
-          key: "newTransaction",
-          icon: <CheckOutlined />,
-        },
-        {
-          label: (
-            <NavLink to="/transaction/">
-              <span>Transaction List</span>
-            </NavLink>
-          ),
-          key: "transactionList",
-          icon: <UnorderedListOutlined />,
-        },
+     
       ],
     },
-    {
-      label: "REPORT",
-      key: "reportSection",
-      icon: <FundOutlined />,
-      children: [
-        {
-          label: (
-            <NavLink to="/account/trial-balance">
-              <span>Trial Balance</span>
-            </NavLink>
-          ),
-          key: "trialBalance",
-          icon: <FileDoneOutlined />,
-        },
-        {
-          label: (
-            <NavLink to="/account/balance-sheet">
-              <span>Balance Sheet</span>
-            </NavLink>
-          ),
-          key: "balanceSheet",
-          icon: <FileOutlined />,
-        },
-        {
-          label: (
-            <NavLink to="/account/income">
-              <span>Income Statement</span>
-            </NavLink>
-          ),
-          key: "incomeStatement",
-          icon: <FileSyncOutlined />,
-        },
-      ],
-    },
-
+   
     {
       label: "HR",
       key: "hrSection",
@@ -214,32 +147,9 @@ const Test = ({ color }) => {
 
       ],
     },
-    {
-      label: (
-        <NavLink to="/pos">
-          <span>POS</span>
-        </NavLink>
-      ),
-      key: "pos",
-      icon: <ShoppingCartOutlined />,
-    },
+ 
 
-    {
-      label: "SETTINGS",
-      key: "settings",
-      icon: <SettingOutlined />,
-      children: [
-        {
-          label: (
-            <NavLink to="/invoice-setting">
-              <span>Invoice Settings</span>
-            </NavLink>
-          ),
-          key: "invoiceSetting",
-          icon: <SettingOutlined />,
-        },
-      ],
-    },
+  
   ];
 
   return (

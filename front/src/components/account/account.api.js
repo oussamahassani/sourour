@@ -70,7 +70,7 @@ export const updateAccount = async (id, values) => {
 				Accept: "application/json",
 				"Content-Type": "application/json;charset=UTF-8",
 			},
-			url: `account/${id}`,
+			url: `intervention/all/report/${id}`,
 			data: {
 				...values,
 			},

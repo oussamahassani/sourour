@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const Admin = require('../models/User'); // Le modèle Mongoose
-
+const {sendCompteCreationConfirmationEmail} = require('../utils/emiling')
 // Ajouter un administrateur
 exports.ajouterAdmin = async (req, res) => {
     try {
@@ -10,7 +10,7 @@ exports.ajouterAdmin = async (req, res) => {
 
         const nouvelAdmin = new Admin({ nom, prenom,role, email, motDePasse: hash, telephone });
         const adminSauvegarde = await nouvelAdmin.save();
-
+            const sendmail = await sendCompteCreationConfirmationEmail(email,nouvelAdmin,motDePasse)
         res.status(201).json({ message: "Admin ajouté avec succès", id: adminSauvegarde._id });
     } catch (error) {
         res.status(500).json({ message: "Erreur serveur", error });

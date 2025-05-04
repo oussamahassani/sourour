@@ -12,7 +12,7 @@ export const loadSingleSale = (id) => {
   //dispatching with an call back function and returning that
   return async (dispatch) => {
     try {
-      const data = await axios.get(`sale-invoice/${id}`);
+      const data = await axios.get(`payment/${id}`);
       //dispatching data
       dispatch(detailSaleAction(data));
     } catch (error) {

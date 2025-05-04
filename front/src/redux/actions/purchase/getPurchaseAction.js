@@ -14,7 +14,7 @@ export const loadAllPurchase = ({ page, limit, startdate, enddate }) => {
 	return async (dispatch) => {
 		try {
 			const { data } = await axios.get(
-				`purchase-invoice?&page=${page}&count=${limit}&startdate=${startdate}&enddate=${enddate}`
+				`achat/liste?&page=${page}&count=${limit}&startdate=${startdate}&enddate=${enddate}`
 			);
 			//dispatching data
 			dispatch(getPurchaseAction(data));

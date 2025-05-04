@@ -9,9 +9,6 @@ import { loadSingleCustomer } from "../../redux/actions/customer/detailCustomerA
 import Loader from "../loader/loader";
 import PageTitle from "../page-header/PageHeader";
 
-import CustomerInvoiceList from "../Card/CustomerInvoiceList";
-import CustomerReturnInvoiceList from "./ListCard/CustomerReturnInvoiceList";
-import CustomerTransactionList from "./ListCard/CustomerTransactionList";
 
 //PopUp
 
@@ -117,14 +114,7 @@ const DetailCust = () => {
                   {customer.email}
                 </p>
               </div>
-          <CustomerInvoiceList
-                list={customer?.saleInvoice}
-                linkTo="/sale"
-              />
-              <CustomerReturnInvoiceList
-                list={customer?.allReturnSaleInvoice}
-              />
-              <CustomerTransactionList list={customer?.allTransaction} />
+          
               
              
               </Card>

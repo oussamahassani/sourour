@@ -1,7 +1,6 @@
 import PageTitle from "../page-header/PageHeader";
 
 import { Navigate } from "react-router-dom";
-import AddSale from "./addSale";
 
 const Sale = (props) => {
 	const isLogged = Boolean(localStorage.getItem("isLogged"));
@@ -13,7 +12,6 @@ const Sale = (props) => {
 	return (
 		<div>
 			<PageTitle title='Back' />
-			<AddSale />
 		</div>
 	);
 };

@@ -16,7 +16,12 @@ const UpdateAccount = ({ account, id }) => {
 
 	const [accounts, setAccounts] = useState(null);
 	const [initValues, setInitValues] = useState({
-		name: account,
+		technicianName: account.technicianName,
+		address: account.address,
+		interventionType: account.interventionType,
+		description: account.description,
+
+
 	});
 
 	useEffect(() => {
@@ -100,12 +105,12 @@ const UpdateAccount = ({ account, id }) => {
 					autoComplete='off'>
 					<Form.Item
 						style={{ marginBottom: "10px" }}
-						name='name'
-						label='Name'
+						name='technicianName'
+						label='TechnicianName'
 						rules={[
 							{
 								required: true,
-								message: "Please input debit account!",
+								message: "Please input technicianName!",
 							},
 						]}>
 						<Input />
@@ -113,37 +118,43 @@ const UpdateAccount = ({ account, id }) => {
 
 					<Form.Item
 						style={{ marginBottom: "10px" }}
-						name='account_id'
-						label='Account Type'
+						name='address'
+						label='Address Intervention '
 						rules={[
 							{
 								required: true,
-								message: "Please input debit account!",
+								message: "Please input address Intervention!",
 							},
 						]}>
-						<Select
-							loading={!accounts}
-							showSearch
-							style={{
-								width: 200,
-							}}
-							placeholder='Select Account Type'
-							optionFilterProp='children'
-							filterOption={(input, option) => option.children.includes(input)}
-							filterSort={(optionA, optionB) =>
-								optionA.children
-									.toLowerCase()
-									.localeCompare(optionB.children.toLowerCase())
-							}>
-							{accounts &&
-								accounts.map((acc) => (
-									<Select.Option key={acc.id} value={acc.id}>
-										{acc.name}
-									</Select.Option>
-								))}
-						</Select>
-					</Form.Item>
+										<Input />
 
+					</Form.Item>
+					<Form.Item
+						style={{ marginBottom: "10px" }}
+						name='interventionType'
+						label='Intervention Type  '
+						rules={[
+							{
+								required: true,
+								message: "Please input  Type Intervention!",
+							},
+						]}>
+										<Input />
+
+					</Form.Item>
+					<Form.Item
+						style={{ marginBottom: "10px" }}
+						name='description'
+						label='Description   '
+						rules={[
+							{
+								required: true,
+								message: "Please input  description Intervention!",
+							},
+						]}>
+										<Input />
+
+					</Form.Item>
 					<Form.Item
 						style={{ marginBottom: "10px" }}
 						wrapperCol={{

@@ -15,7 +15,7 @@ export const loadAllSale = ({ page, limit, startdate, enddate, user }) => {
 	return async (dispatch) => {
 		try {
 			const { data } = await axios.get(
-				`sale-invoice?&page=${page}&count=${limit}&startdate=${startdate}&enddate=${enddate}&user=${user}`
+				`payment?&page=${page}&count=${limit}&startdate=${startdate}&enddate=${enddate}&user=${user}`
 			);
 
 			//dispatching data

@@ -9,7 +9,7 @@ import { message } from "antd";
 
 const initialState = {
 	list: null,
-	account: null,
+	intervention: null,
 };
 
 const accountReducer = (state = initialState, action) => {
@@ -25,7 +25,7 @@ const accountReducer = (state = initialState, action) => {
 			return { ...state, list };
 
 		case ACCOUNT_DETAILS:
-			return { ...state, account: action.payload };
+			return { ...state, intervention: action.payload.intervention };
 
 		case DELETE_ACCOUNT:
 			const filterAccount = state.list.filter(

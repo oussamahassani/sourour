@@ -18,14 +18,9 @@ import { useEffect, useState } from "react";
 import { CSVLink } from "react-csv";
 import { useDispatch, useSelector } from "react-redux";
 import { loadAllSale } from "../../redux/actions/sale/getSaleAction";
-import { loadAllStaff } from "../../redux/actions/user/getStaffAction";
-import DashboardCard from "../Card/DashboardCard";
-import SaleReportPrint from "../Invoice/SaleReport";
 import PageTitle from "../page-header/PageHeader";
 
-// //Date fucntinalities
-// let startdate = moment(new Date()).format("YYYY-MM-DD");
-// let enddate = moment(new Date()).add(1, "day").format("YYYY-MM-DD");
+
 
 function CustomTable({ list, total, startdate, enddate, count, user }) {
   const [columnItems, setColumnItems] = useState([]);
@@ -35,71 +30,38 @@ function CustomTable({ list, total, startdate, enddate, count, user }) {
   const columns = [
     {
       title: "Invoice No",
-      dataIndex: "id",
-      key: "id",
-      render: (name, { id }) => <Link to={`/sale/${id}`}>{id}</Link>,
+      dataIndex: "_id",
+      key: "_id",
+      render: (name, { _id }) => <Link to={`/sale/${_id}`}>{_id}</Link>,
     },
     {
       title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date) => moment(date).format("ll"),
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (createdAt) => moment(createdAt).format("ll"),
     },
     {
-      title: "Customer Name ",
-      dataIndex: `customer`,
-      key: "customer_id",
-      render: (customer) => customer?.name,
+      title: "Total Paye ",
+      dataIndex: `totalPaye`,
+      key: "totalPaye",
+      render: (totalPaye) => totalPaye,
     },
 
     {
-      title: "Total Amount",
-      dataIndex: "total_amount",
-      key: "total_amount",
+      title: "reste A Payer",
+      dataIndex: "resteAPayer",
+      key: "resteAPayer",
     },
     {
-      title: "Discount",
-      dataIndex: "discount",
-      key: "discount",
+      title: "Responsable",
+      dataIndex: "responsable",
+      key: "responsable",
     },
-    {
-      title: "Due Amount",
-      dataIndex: "due_amount",
-      key: "due_amount",
-      responsive: ["md"],
-    },
-    {
-      title: "Paid Amount",
-      dataIndex: "paid_amount",
-      key: "paid_amount",
-      responsive: ["md"],
-    },
+
 
     //Update Supplier Name here
 
-    {
-      title: "Profit",
-      dataIndex: "profit",
-      key: "profit",
-      responsive: ["md"],
-    },
-    {
-      title: "Sale Person",
-      dataIndex: "user",
-      key: "user",
-      render: (user) => user?.username,
-      responsive: ["md"],
-    },
-    {
-      title: "Action",
-      dataIndex: "id",
-      key: "payment",
-      render: (id) => (
-        <Link to={`/payment/customer/${id}`}>
-          <button className="btn btn-dark btn-sm">Payment</button>
-        </Link>
-      ),
-    },
+
   ];
 
   useEffect(() => {
@@ -185,12 +147,9 @@ const GetAllSale = (props) => {
 		moment().endOf("month").format("YYYY-MM-DD")
 	);
 
-	useEffect(() => {
-		dispatch(loadAllStaff({ status: true }));
-	}, [dispatch]);
 
 
-  const { RangePicker } = DatePicker;
+
   const totalCount = total?._count?.id;
 
   useEffect(() => {
@@ -269,58 +228,8 @@ const GetAllSale = (props) => {
 			<PageTitle title={"Back"} />
 			<div className='card card-custom mt-1'>
 				<div className='card-body'>
-					<h5 className='d-inline-flex'>Sale Invoice List</h5>
-					<div className='card-title d-flex flex-column flex-md-row align-items-center justify-content-md-center mt-1 py-2'>
-						<div>
-							<Form
-								onFinish={onSearchFinish}
-								form={form}
-								layout={"inline"}
-								onFinishFailed={() => setLoading(false)}>
-								<Form.Item name='user'>
-									<Select
-										loading={!userList}
-										placeholder='Sale Person'
-										style={{ width: 200 }}
-										allowClear>
-										<Select.Option value=''>All</Select.Option>
-										{userList &&
-											userList.map((i) => (
-												<Select.Option value={i.id}>{i.username}</Select.Option>
-											))}
-									</Select>
-								</Form.Item>
-								<div className=' me-2'>
-									<RangePicker
-										onCalendarChange={onCalendarChange}
-										defaultValue={[
-											moment().startOf("month"),
-											moment().endOf("month"),
-										]}
-										className='range-picker'
-									/>
-								</div>
-
-
-                <Form.Item>
-                  <Button
-                    onClick={() => setLoading(true)}
-                    loading={loading}
-                    type="primary"
-                    htmlType="submit"
-                    size="small"
-                  >
-                    <SearchOutlined />
-                  </Button>
-                </Form.Item>
-              </Form>
-            </div>
-          </div>
-          <DashboardCard
-            information={total?._sum}
-            count={total?._count}
-            isCustomer={true}
-          />
+				
+     
           <br />
           <div>
             <div>
@@ -365,14 +274,7 @@ const GetAllSale = (props) => {
                     />
                   </div>
 
-                  <div>
-                    <SaleReportPrint
-                      data={list}
-                      date={{ startdate, enddate }}
-                      user={user}
-                      total={total?._sum}
-                    />
-                  </div>
+                 
                 </div>
               )}
             </div>

@@ -3,7 +3,6 @@ import { Button,Select, Card, Col, Form, Input, Row, Typography } from "antd";
 import { Fragment, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addCustomer } from "../../redux/actions/customer/addCustomerAciton";
-import UploadMany from "../Card/UploadMany";
 import styles from "./AddCust.module.css";
 
 const AddCust = () => {
@@ -18,7 +17,8 @@ const AddCust = () => {
 
 	const onFinish = async (values) => {
 		try {
-			const resp = await dispatch(addCustomer(values));
+             const id= localStorage.getItem('id')
+			const resp = await dispatch(addCustomer({...values , commercial_assigne:id}));
 			if (resp.message === "success") {
 				setLoading(false);
 				form.resetFields();
@@ -226,20 +226,7 @@ const AddCust = () => {
 						</Form>
 					</Card>
 				</Col>
-				<Col
-					xs={24}
-					sm={24}
-					md={24}
-					lg={11}
-					xl={11}
-					className='column-design rounded'>
-					<Card bordered={false} className={styles.importCsvCard}>
-						<Title level={4} className='m-2 text-center'>
-							Import From CSV
-						</Title>
-						<UploadMany urlPath={"customer"} />
-					</Card>
-				</Col>
+			
 			</Row>
 		</Fragment>
 	);

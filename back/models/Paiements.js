@@ -1,55 +1,94 @@
 const mongoose = require('mongoose');
 
-// Schéma pour un paiement
-const PaiementSchema = new mongoose.Schema({
-    // Identifiant unique du paiement
-    idP: { type: mongoose.Schema.Types.ObjectId, auto: true },
-
-    // Identifiant de l'acheteur
-    idACH: { type: mongoose.Schema.Types.ObjectId, required: true },
-
-    // Identifiant du vendeur
-    idV: { type: mongoose.Schema.Types.ObjectId, required: true },
-
-    // Méthode de paiement (carte bancaire, PayPal, etc.)
-    methode_paiement: { type: String, required: true },
-
-    // Numéro de transaction
-    numero_transaction: { type: String, required: true },
-
-    // Banque de traitement du paiement
-    banque: { type: String, required: true },
-
-    // Montant total du paiement
-    montant: { type: Number, required: true },
-
-    // Montant déjà payé
-    montant_deja_paye: { type: Number, default: 0 },
-
-    // Statut du paiement (en attente, effectué, échoué, etc.)
-    statut_paiement: { type: String, required: true },
-
-    // Date du paiement
-    date_paiement: { type: Date, default: Date.now },
-
-    // Validation de l'administrateur
-    validation_admin: { type: Boolean, default: false },
-
-    // Type de paiement (initial, acompte, solde, etc.)
-    type: { type: String, required: true },
-
-    // Reste à payer
-    reste: { type: Number, required: true },
-
-    // Date de la prochaine relance (si applicable)
-    date_prochaine_relance: { type: Date },
-
-    // Nombre de relances effectuées
-    nombre_relances: { type: Number, default: 0 },
-
-    // Identifiant du compte associé au paiement
-    id_compte: { type: mongoose.Schema.Types.ObjectId, required: true }
+const paiementSchema = new mongoose.Schema({
+  reference: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  datePaiement: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
+  responsable: {
+    type: String,
+    required: true
+  },
+  fournisseur: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Fournisseur',
+    required: true
+  },
+  totalAPayer: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  paiements: [{
+    date: {
+      type: Date,
+      required: true
+    },
+    montantPaye: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    modePaiement: {
+      type: String,
+      required: true
+    },
+    statut: {
+      type: String,
+      enum: ['Payé', 'Partiellement payé', 'En attente'],
+      default: 'Payé'
+    }
+  }],
+  totalPaye: {
+    type: Number,
+    default: 0
+  },
+  resteAPayer: {
+    type: Number,
+    default: 0
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-// Exporter le modèle pour utilisation dans d'autres fichiers
-module.exports = mongoose.model('Paiement', PaiementSchema);
+// Middleware pour calculer les totaux avant de sauvegarder
+paiementSchema.pre('save', function(next) {
+  this.totalPaye = this.paiements.reduce((sum, paiement) => sum + paiement.montantPaye, 0);
+  this.resteAPayer = this.totalAPayer - this.totalPaye;
+  this.updatedAt = Date.now();
+
+  next();
+});
+
+// Méthode pour ajouter un paiement
+paiementSchema.methods.ajouterPaiement = function(paiementData) {
+  this.paiements.push(paiementData);
+  this.totalPaye += paiementData.montantPaye;
+  this.resteAPayer = this.totalAPayer - this.totalPaye;
+  return this.save();
+};
+
+// Méthode pour supprimer un paiement
+paiementSchema.methods.supprimerPaiement = function(paiementId) {
+  const paiement = this.paiements.id(paiementId);
+  if (!paiement) throw new Error('Paiement non trouvé');
+  
+  this.totalPaye -= paiement.montantPaye;
+  this.resteAPayer = this.totalAPayer - this.totalPaye;
+  paiement.remove();
+  return this.save();
+};
+
+module.exports = mongoose.model('Paiement', paiementSchema);

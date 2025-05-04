@@ -79,7 +79,7 @@ const HomeLayout = ({ children }) => (
           textAlign: "center",
         }}
       >
-        Omega Solution ©2022 Smart ERP
+    
       </Footer>
     </Layout>
   </Layout>

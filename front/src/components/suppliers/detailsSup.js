@@ -11,9 +11,7 @@ import PageTitle from "../page-header/PageHeader";
 import "./suppliers.css";
 
 import { CSVLink } from "react-csv";
-import SupplierInvoiceTable from "../Card/SupplierInvoiceList";
-import SupplierReturnInvoiceList from "./ListCard/SupplierReturnInvoiceList";
-import SupplierTransactionList from "./ListCard/SupplierTransactionList";
+
 
 //PopUp
 
@@ -140,14 +138,7 @@ const DetailsSup = () => {
                   </div>
                 )}
               </div>
-              <SupplierInvoiceTable
-                list={supplier.purchaseInvoice}
-                linkTo="/purchase"
-              />
-              <SupplierReturnInvoiceList
-                list={supplier?.allReturnPurchaseInvoice}
-              />
-              <SupplierTransactionList list={supplier?.allTransaction} />
+             
             </Card>
           </Fragment>
         ) : (

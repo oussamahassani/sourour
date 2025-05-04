@@ -23,19 +23,17 @@ import "./assets/styles/responsive.css";
 import Customer from "./components/customer/customer";
 import DetailCust from "./components/customer/detailCust";
 import UpdateCust from "./components/customer/updateCust";
-import Pos from "./components/pos/pos";
 import DetailSale from "./components/sale/detailSale";
 import Sale from "./components/sale/sale";
 
 import Page404 from "./components/404/404Page";
 import Dashboard from "./components/Dashboard/Graph/Dashboard";
-import AddCustPaymentByInvoice from "./components/Payment/CustomerPaymentByInvoice";
-import AddSupPaymentByInvoice from "./components/Payment/SupplierPaymentByInvoice";
+
 import GetAllPurch from "./components/purchase/getAllPurch";
 import GetAllSale from "./components/sale/getAllSale";
 import DetailStaff from "./components/user/detailsStaff";
 import AdminUserDetail from "./components/admin/detailsStaff"
-
+import UpdateAdminStaff from "./components/admin/updateStaff"
 import UpdateStaff from "./components/user/updateStaff";
 
 
@@ -49,15 +47,10 @@ import TrialBalance from "./components/account/trialBalance";
 
 import Main from "./components/layouts/Main";
 
-import AddReturnPurchase from "./components/purchase/addReturnPurchase";
 import AddPermission from "./components/role/AddPermission";
 import DetailRole from "./components/role/DetailsRole";
 import RoleList from "./components/role/role";
-import AddReturnSale from "./components/sale/addReturnSale";
-import InvoiceSetting from "./components/settings/invoiceSetting";
-import AddTransaction from "./components/transaction/AddTransaction";
-import DetailTransaction from "./components/transaction/detailTransaction";
-import Transaction from "./components/transaction/transaction";
+
 const { Sider } = Layout;
 
 function App() {
@@ -83,37 +76,17 @@ function App() {
             <Route path="/purchase" exact element={<Purchase />} />
             <Route path="/purchaselist" exact element={<GetAllPurch />} />
             <Route path="/purchase/:id" element={<DetailsPurch />} />
-            <Route
-              path="/purchase/return/:id"
-              element={<AddReturnPurchase />}
-            />
 
+           
             <Route path="/customer" exact element={<Customer />} />
             <Route path="/customer/:id" element={<DetailCust />} />
             <Route path="/customer/:id/update" element={<UpdateCust />} />
 
-            <Route path="/sale" exact element={<Sale />} />
             <Route path="/salelist" exact element={<GetAllSale />} />
             <Route path="/sale/:id" element={<DetailSale />} />
-            <Route path="/sale/:id/update" element={<UpdateProd />} />
-            <Route path="/sale/return/:id" element={<AddReturnSale />} />
-            <Route
-              path="/payment/supplier/:pid"
-              exact
-              element={<AddSupPaymentByInvoice />}
-            />
-            <Route
-              path="/payment/customer/:pid"
-              exact
-              element={<AddCustPaymentByInvoice />}
-            />
-            <Route path="/transaction" exact element={<Transaction />} />
-            <Route
-              path="/transaction/create"
-              exact
-              element={<AddTransaction />}
-            />
-            <Route path="/transaction/:id" element={<DetailTransaction />} />
+         
+       
+       
 
             <Route path="/auth/login" exact element={<Login />} />
             <Route path="/auth/logout" exact element={<Logout />} />
@@ -121,8 +94,9 @@ function App() {
             <Route path="/hr/staffs" exact element={<UserList />} />
             <Route path="/hr/staffsAdmin" exact element={<AdminUserList />} />
             <Route path="/hr/staffsAdmin/:id" exact element={<AdminUserDetail />} />
+            <Route path="/hr/adminstaffs/:id/update" element={<UpdateAdminStaff />} />
 
-
+            
             <Route path="/hr/staffs/:id" exact element={<DetailStaff />} />
             <Route path="/hr/staffs/:id/update" element={<UpdateStaff />} />
 
@@ -144,9 +118,7 @@ function App() {
             />
             <Route path="/account/income" exact element={<IncomeStatement />} />
 
-            <Route path="/pos" exact element={<Pos />} />
 
-            <Route path="/invoice-setting" exact element={<InvoiceSetting />} />
           </Routes>
         </Main>
       </BrowserRouter>

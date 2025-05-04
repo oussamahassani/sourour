@@ -21,28 +21,28 @@ function CustomTable({ list, total }) {
   const columns = [
     {
       title: "ID",
-      dataIndex: "id",
-      key: "id",
-      render: (id) => <Link to={`/account/${id}`}>{id}</Link>,
+      dataIndex: "_id",
+      key: "_id",
+      render: (_id) => <Link to={`/account/${_id}`}>{_id}</Link>,
     },
-    // {
-    // 	title: "Date",
-    // 	dataIndex: "date",
-    // 	key: "date",
-    // 	render: (date) => moment(date).format("ll"),
-    // },
-
-    {
-      title: "Account",
-      dataIndex: "name",
-      key: "name",
+     {
+     	title: "Date",
+     	dataIndex: "date",
+    	key: "date",
+     	render: (date) => moment(date).format("ll"),
     },
 
     {
-      title: "Account Type ",
-      dataIndex: "account",
-      key: "account",
-      render: (account) => account?.name,
+      title: "clientName",
+      dataIndex: "clientName",
+      key: "clientName",
+    },
+
+    {
+      title: "address ",
+      dataIndex: "address",
+      key: "address",
+      render: (address) => address,
       responsive: ["md"],
     },
   ];

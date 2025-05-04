@@ -12,7 +12,7 @@ export const loadAllAccount = () => {
 	//dispatching with an call back function and returning that
 	return async (dispatch) => {
 		try {
-			const { data } = await axios.get(`account?query=sa`);
+			const { data } = await axios.get(`intervention/all/report?query=sa`);
 			//dispatching data
 			dispatch(getAllAccount(data));
 		} catch (error) {

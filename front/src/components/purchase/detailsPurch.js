@@ -8,12 +8,10 @@ import { toast } from "react-toastify";
 import { deletePurchase } from "../../redux/actions/purchase/deletePurchaseAction";
 import { loadSinglePurchase } from "../../redux/actions/purchase/detailPurchaseAction";
 import CardComponent from "../Card/card.components";
-import PurchaseProductListCard from "../Card/purchaseInvoice/PurchaseProductListCard";
-import ReturnPurchaseInvoiceList from "../Card/purchaseInvoice/ReturnPurchaseInvoiceList";
-import TransactionPurchaseList from "../Card/purchaseInvoice/TransactionPurchaseList";
-import PurchaseInvoice from "../Invoice/PurchaseInvoice";
+
 import Loader from "../loader/loader";
 import PageTitle from "../page-header/PageHeader";
+import axios from "axios";
 
 const DetailsPurch = () => {
 	const { id } = useParams();
@@ -22,23 +20,36 @@ const DetailsPurch = () => {
 	//dispatch
 	const dispatch = useDispatch();
 	const purchase = useSelector((state) => state.purchases.purchase);
-	const {
-		status,
-		totalPaidAmount,
-		totalReturnAmount,
-		dueAmount,
-		singlePurchaseInvoice,
-		returnPurchaseInvoice,
-		transactions,
-	} = purchase ? purchase : {};
 
+	const onValidate = async () => {
+		  try {
+			await axios({
+			  method: "put",
+			  headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json;charset=UTF-8",
+			  },
+			  url: `achat/${purchase._id}`,
+			  data: {
+				...purchase,validation_admin:true
+			  },
+			});
+			return "success";
+			// return data;
+		  } catch (error) {
+			console.log(error.message);
+		  }
+		  	  toast.success("Achat details is updated");
+				return navigate("/purchaselist");
+
+	}
 	//Delete Supplier
 	const onDelete = () => {
 		try {
 			dispatch(deletePurchase(id));
 
 			setVisible(false);
-			toast.warning(`Purchase : ${singlePurchaseInvoice.id} is removed `);
+			toast.warning(`Purchase : ${purchase.id} is removed `);
 			return navigate("/purchaselist");
 		} catch (error) {
 			console.log(error.message);
@@ -65,24 +76,26 @@ const DetailsPurch = () => {
 		<div>
 			<PageTitle title=' Back ' />
 			<div className='mr-top'>
-				{singlePurchaseInvoice ? (
-					<Fragment key={singlePurchaseInvoice.id}>
+				{purchase ? (
+					<Fragment key={purchase.id}>
 						<Card bordered={false} className='criclebox h-full'>
 							<div className='card-header d-flex justify-content-between'>
 								<h5>
 									<i className='bi bi-person-lines-fill'></i>
 									<span className='mr-left'>
-										ID : {singlePurchaseInvoice.id} |
+										ID : {purchase._id} |
 									</span>
 								</h5>
 								<div className='card-header d-flex justify-content-between'>
 									<div className='me-2'>
-										<Link to={`/purchase/return/${id}`}>
-											<Button type='primary' shape='round'>
+									
+										{!purchase.validation_admin && 
+											<Button type='primary' shape='round' onClick={onValidate}>
 												{" "}
-												Return Product{" "}
+												Validate Purchase{" "}
 											</Button>
-										</Link>
+}
+									
 									</div>
 									<div className='me-2'>
 										<Popover
@@ -104,9 +117,7 @@ const DetailsPurch = () => {
 												icon={<DeleteOutlined />}></Button>
 										</Popover>
 									</div>
-									<div className={"text-end me-2"}>
-										<PurchaseInvoice data={singlePurchaseInvoice} />
-									</div>
+									
 								</div>
 							</div>
 							<div className='card-body'>
@@ -119,57 +130,34 @@ const DetailsPurch = () => {
 													Purchase Date :
 												</Typography.Text>{" "}
 												<strong>
-													{moment(singlePurchaseInvoice.date).format("ll")}
+													{moment(purchase.date_achat).format("ll")}
 												</strong>
 											</p>
 
 											<p>
 												<Typography.Text strong>Total Amount :</Typography.Text>{" "}
-												<strong>{singlePurchaseInvoice.total_amount} </strong>
+												<strong>{purchase.prix_achatTTC} </strong>
 											</p>
 											<p>
-												<Typography.Text strong>Discount :</Typography.Text>{" "}
-												<strong>{singlePurchaseInvoice.discount}</strong>
+												<Typography.Text strong>Quantity :</Typography.Text>{" "}
+												<strong>{purchase.quantité}</strong>
 											</p>
 											<p>
-												<Typography.Text strong>Paid Amount :</Typography.Text>{" "}
-												<strong>{singlePurchaseInvoice.paid_amount}</strong>
+												<Typography.Text strong>TVA :</Typography.Text>{" "}
+												<strong>{purchase.TVA}</strong>
 											</p>
 
 											<p>
-												<Typography.Text strong>Due Amount :</Typography.Text>{" "}
+												<Typography.Text strong>HT :</Typography.Text>{" "}
 												<strong className='text-danger'>
 													{" "}
-													{singlePurchaseInvoice.due_amount}
+													{purchase.prix_achatHT}
 												</strong>
 											</p>
 										</CardComponent>
 									</Col>
 									<Col span={12}>
-										<Badge.Ribbon
-											text={status}
-											color={status === "PAID" ? "green" : "red"}>
-											<CardComponent title=' New Invoice Information'>
-												<p>
-													<Typography.Text strong>
-														Total Paid Amount :
-													</Typography.Text>{" "}
-													<strong>{totalPaidAmount}</strong>
-												</p>
-
-												<p>
-													<Typography.Text strong>
-														Total Return Amount:
-													</Typography.Text>{" "}
-													<strong>{totalReturnAmount}</strong>
-												</p>
-
-												<p>
-													<Typography.Text strong>Due Amount :</Typography.Text>{" "}
-													<strong style={{ color: "red" }}>{dueAmount}</strong>
-												</p>
-											</CardComponent>
-										</Badge.Ribbon>
+								
 										<div className='mt-1'>
 											<CardComponent>
 												<p>
@@ -177,13 +165,13 @@ const DetailsPurch = () => {
 														Supplier Memo No :
 													</Typography.Text>{" "}
 													<strong>
-														{singlePurchaseInvoice.supplier_memo_no}
+														{purchase.id_fournisseur?.nomF}
 													</strong>
 												</p>
 
 												<p>
-													<Typography.Text strong>Note :</Typography.Text>{" "}
-													<strong>{singlePurchaseInvoice.note}</strong>
+													<Typography.Text strong>Mat :</Typography.Text>{" "}
+													<strong>{purchase.id_fournisseur?.matricule}</strong>
 												</p>
 											</CardComponent>
 										</div>
@@ -191,12 +179,7 @@ const DetailsPurch = () => {
 								</Row>
 								<br />
 
-								<PurchaseProductListCard
-									list={singlePurchaseInvoice.purchaseInvoiceProduct}
-								/>
-								<ReturnPurchaseInvoiceList list={returnPurchaseInvoice} />
-
-								<TransactionPurchaseList list={transactions} />
+								
 							</div>
 						</Card>
 					</Fragment>

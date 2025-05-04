@@ -18,8 +18,8 @@ const purchaseReducer = (state = initialState, action) => {
 		case PURCHASES:
 			return {
 				...state,
-				list: action.payload.allPurchaseInvoice,
-				total: action.payload.aggregations,
+				list: action.payload,
+				total: action.payload.length,
 			};
 		case ADD_PURCHASE:
 			if (!Array.isArray(state.list)) {
@@ -30,6 +30,7 @@ const purchaseReducer = (state = initialState, action) => {
 			return { ...state, list };
 
 		case PURCHASE_DETAILS:
+			console.log(action.payload.data)
 			return { ...state, purchase: action.payload.data };
 
 		case DELETE_PURCHASE:

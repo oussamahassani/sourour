@@ -14,7 +14,7 @@ export const loadSingleAccount = (id) => {
 		try {
 			const { data } = await axios({
 				method: "get",
-				url: `account/${id}`,
+				url: `intervention/all/report/${id}`,
 			});
 
 			dispatch(detailAccountAction(data));

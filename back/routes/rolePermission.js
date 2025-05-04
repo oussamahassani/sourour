@@ -12,27 +12,27 @@ const rolePermissionRoutes = express.Router();
 
 rolePermissionRoutes.post(
   "/",
- // authorize("createRolePermission"),
+  authorize("createRolePermission"),
   createRolePermission
 );
 rolePermissionRoutes.get(
   "/",
-//  authorize("viewRolePermission"),
+ authorize("viewRolePermission"),
   getAllRolePermission
 );
 rolePermissionRoutes.get(
   "/:id",
- // authorize("viewRolePermission"),
+  authorize("viewRolePermission"),
   getSingleRolePermission
 );
 rolePermissionRoutes.put(
   "/:id",
-  //authorize("updateRolePermission"),
+  authorize("updateRolePermission"),
   updateRolePermission
 );
 rolePermissionRoutes.delete(
   "/:id",
-  //authorize("deleteRolePermission"),
+  authorize("deleteRolePermission"),
   deleteSingleRolePermission
 );
 

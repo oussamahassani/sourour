@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 
 const AchatSchema = new mongoose.Schema({
   id_article: { type: mongoose.Schema.Types.ObjectId, ref: 'Article', required: false },
-  id_fournisseur: { type: mongoose.Schema.Types.ObjectId, ref: 'Fournisseur', required: false },
-  id_utilisateur: { type: mongoose.Schema.Types.ObjectId, ref: 'Utilisateur', required: false },
+  id_fournisseur: { type: mongoose.Schema.Types.ObjectId, ref: 'fournisseur', required: false },
+  id_utilisateur: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   prix_achatHT: { type: Number, required: false },
   date_achat: { type: Date, required: false },
   type_achat: { type: String, enum: ['Direct', 'Commandé'], required: false },

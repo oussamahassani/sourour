@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const AchatController = require('../controllers/achat.controller');
+const AchatController = require('../controllers/achat.Controller');
 
 // Route pour ajouter un achat
 router.post('/ajouter', AchatController.ajouterAchat);

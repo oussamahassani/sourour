@@ -20,8 +20,8 @@ roleRoutes.get("/:id", getSingleRole);
 //authorize("updateRole")
 roleRoutes.put("/:id",  updateSingleRole);
 
-// authorize("viewPermission")
-roleRoutes.get("/premission/all", getAllPermission);
+// 
+roleRoutes.get("/premission/all",authorize("viewPermission"), getAllPermission);
 
 roleRoutes.patch("/:id", authorize("deleteRole"), deleteSingleRole);
 

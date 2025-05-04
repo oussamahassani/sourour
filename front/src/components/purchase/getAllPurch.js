@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { CSVLink } from "react-csv";
 import { useDispatch, useSelector } from "react-redux";
 import { loadAllPurchase } from "../../redux/actions/purchase/getPurchaseAction";
-import DashboardCard from "../Card/DashboardCard";
 import PageTitle from "../page-header/PageHeader";
 
 function CustomTable({ list, total, status, setStatus, startdate, enddate }) {
@@ -37,40 +36,38 @@ function CustomTable({ list, total, status, setStatus, startdate, enddate }) {
 		},
 		{
 			title: "Date",
-			dataIndex: "date",
+			dataIndex: "date_achat",
 			key: "date",
 			render: (date) => moment(date).format("ll"),
 		},
 		{
 			title: "Supplier Name ",
-			dataIndex: `supplier`,
-			key: "supplier_id",
-			render: (supplier) => supplier?.name,
+			dataIndex: `id_fournisseur`,
+			key: "id_fournisseur",
+			render: (supplier) => supplier?.nomF,
 		},
 		{
 			title: "Total Amount",
-			dataIndex: "total_amount",
-			key: "total_amount",
+			dataIndex: "prix_achatTTC",
+			key: "prix_achatTTC",
 		},
-		{
-			title: "Discount",
-			dataIndex: "discount",
-			key: "discount",
-		},
+	
 		{
 			title: "Due Amount",
-			dataIndex: "due_amount",
-			key: "due_amount",
+			dataIndex: "id_article",
+			key: "id_article",
+			render: (supplier) => supplier?.article,
+
 		},
 		{
 			title: "Paid Amount",
-			dataIndex: "paid_amount",
-			key: "paid_amount",
+			dataIndex: "type_achat",
+			key: "type_achat",
 		},
 
 		//Update Supplier Name here
 
-		{
+	/*	{
 			title: "Action",
 			dataIndex: "_id",
 			key: "_id",
@@ -80,6 +77,7 @@ function CustomTable({ list, total, status, setStatus, startdate, enddate }) {
 				</Link>
 			),
 		},
+		*/
 	];
 
 	useEffect(() => {
@@ -250,17 +248,7 @@ const GetAllPurch = (props) => {
 			<PageTitle title={"Back"} />
 			<div className='card card-custom mt-1 '>
 				<div className='card-body'>
-					<div className='card-title d-sm-flex justify-content-between'>
-						<h5 className='d-inline-flex'>Purchase Invoice List</h5>
-						<div>
-							<RangePicker
-								onCalendarChange={onCalendarChange}
-								defaultValue={[moment(startdate), moment(enddate)]}
-								className='range-picker'
-							/>
-						</div>
-					</div>
-					<DashboardCard information={total} count={total?._count} />
+				
 					<br />
 
 					<CustomTable

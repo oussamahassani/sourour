@@ -4,8 +4,7 @@ import moment from "moment";
 import React, { Fragment, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadDashboardData } from "../../../redux/actions/dashboard/getDashboardDataAction";
-import { loadAllPurchase } from "../../../redux/actions/purchase/getPurchaseAction";
-import { loadAllSale } from "../../../redux/actions/sale/getSaleAction";
+
 import NewDashboardCard from "../../Card/Dashboard/NewDashboardCard";
 import Loader from "../../loader/loader";
 
@@ -24,23 +23,8 @@ const DemoLine = () => {
 
 	useEffect(() => {
 		dispatch(loadDashboardData({ startdate, enddate }));
-		dispatch(
-			loadAllPurchase({
-				page: 1,
-				limit: 10,
-				startdate: startdate,
-				enddate: enddate,
-			})
-		);
-		dispatch(
-			loadAllSale({
-				page: 1,
-				limit: 10,
-				startdate: startdate,
-				enddate: enddate,
-				user: "",
-			})
-		);
+
+		
 	}, []);
 
 	const onCalendarChange = (dates) => {
@@ -56,24 +40,7 @@ const DemoLine = () => {
 			})
 		);
 
-		dispatch(
-			loadAllPurchase({
-				page: 1,
-				limit: 10,
-				startdate: newStartdate,
-				enddate: newEnddate,
-			})
-		);
-
-		dispatch(
-			loadAllSale({
-				page: 1,
-				limit: 10,
-				startdate: newStartdate,
-				enddate: newEnddate,
-				user: "",
-			})
-		);
+	
 	};
 
 	const config = {

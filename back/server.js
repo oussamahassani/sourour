@@ -9,14 +9,10 @@ const UserRouter = require('./routes/rhRoutes');
 const ClientRoute = require('./routes/clientRoute');
 const fournisseurtRoute = require('./routes/fournisseursRoutes');
 const produittRoute = require('./routes/articleRoutes');
+const achatRoute = require('./routes/achatRoutes')
 
-const paymentPurchaseInvoiceRoutes = require("./routes/purchase/paymentPurchaseInvoice/paymentPurchaseInvoice.routes");
-const paymentSaleInvoiceRoutes = require("./routes/sale/paymentSaleInvoice/paymentSaleInvoice.routes");
-const returnSaleInvoiceRoutes = require("./routes/sale/returnSaleInvoice/returnSaleInvoice.routes");
-const purchaseInvoiceRoutes = require("./routes/purchase/purchaseInvoice/purchaseInvoice.routes");
-const returnPurchaseInvoiceRoutes = require("./routes/purchase/returnPurchaseInvoice/returnPurchaseInvoice.routes");
-const saleInvoiceRoutes = require("./routes/sale/saleInvoice/saleInvoice.routes");
-//const transactionRoutes = require("./routes/accounting/transaction/transaction.routes");
+const PaymentRoute = require('./routes/paiementsRoutes')
+const InterventionReportRoute = require('./routes/interventionsRoutes')
 
 const dashboardRoutes = require("./routes/dashboard/dashboard.routes");
 
@@ -39,7 +35,7 @@ const connectDB = async () => {
         mongoose.connect("mongodb://127.0.0.1:27017/your-db-name")
             .then(res => {
                 console.log('✅ Connexion à MongoDB réussie')
-                //initPermissions(); // initialise les permissions une seule fois
+              //  initPermissions(); // initialise les permissions une seule fois
 
 
             })
@@ -63,16 +59,12 @@ app.use('/user', UserRouter);
 app.use('/', ClientRoute);
 app.use('/', fournisseurtRoute);
 app.use('/product', produittRoute);
-app.use("/payment-purchase-invoice", paymentPurchaseInvoiceRoutes);
-app.use("/payment-sale-invoice", paymentSaleInvoiceRoutes);
-app.use("/return-sale-invoice", returnSaleInvoiceRoutes);
-app.use("/sale-invoice", saleInvoiceRoutes);
+app.use("/achat" , achatRoute)
+app.use("/payment",PaymentRoute)
+app.use("/intervention",InterventionReportRoute)
 
-app.use("/purchase-invoice", purchaseInvoiceRoutes);
-app.use("/return-purchase-invoice", returnPurchaseInvoiceRoutes);
-//app.use("/account", accountRoutes);
-//app.use("/setting", settingRoutes);
-//app.use("/transaction", transactionRoutes);
+
+
 app.use("/dashboard", dashboardRoutes);
 
 // Middleware de gestion des erreurs globales

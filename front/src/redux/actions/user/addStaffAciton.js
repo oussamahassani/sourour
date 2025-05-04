@@ -23,7 +23,7 @@ export const addStaffAdmin = (values) => {
 				},
 			});
 			//dispatching data
-			dispatch(addStaffAction(data));
+			dispatch(addStaffAction(values));
 			toast.success("Registration successful");
 
 			return "success";

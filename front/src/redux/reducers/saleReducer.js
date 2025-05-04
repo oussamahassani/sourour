@@ -18,8 +18,8 @@ const saleReducer = (state = initialState, action) => {
     case SALES:
       return {
         ...state,
-        list: action.payload.allSaleInvoice,
-        total: action.payload.aggregations,
+        list: action.payload,
+        total: action.payload.length,
       };
     case ADD_SALE:
       if (!Array.isArray(state.list)) {

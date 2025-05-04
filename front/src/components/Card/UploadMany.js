@@ -15,8 +15,10 @@ const UploadMany = ({ urlPath }) => {
 	};
 
 	const csvFileToArray = (string) => {
-		const csvHeader = string.slice(0, string.indexOf("\n")).split(",");
-		const csvRows = string.slice(string.indexOf("\n") + 1).split("\n");
+		const normalizedString = string.replace(/\r\n|\r/g, '\n');
+
+		const csvHeader = normalizedString.slice(0, normalizedString.indexOf("\n")).split(",");
+		const csvRows = normalizedString.slice(normalizedString.indexOf("\n") + 1).split("\n");
 
 		const array = csvRows.map((i) => {
 			const values = i.split(",");
