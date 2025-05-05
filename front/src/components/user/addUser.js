@@ -71,7 +71,7 @@ const AddUser = () => {
         >
           <Card bordered={false}>
             <Title level={4} className="m-2 text-center">
-              Add New Staff
+              Add New Employer
             </Title>
             <Form
               form={form}

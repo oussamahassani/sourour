@@ -50,7 +50,7 @@ const ClientSchema = new mongoose.Schema({
   },
   commercial_assigne: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Utilisateurs', // Assurez-vous que le modèle 'Utilisateur' existe
+    ref: 'User', // Assurez-vous que le modèle 'Utilisateur' existe
     default: null
   }
 });

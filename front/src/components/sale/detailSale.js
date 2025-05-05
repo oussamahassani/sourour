@@ -147,8 +147,8 @@ const DetailSale = () => {
 									<Col span={11}>
 										<CardComponent title='Initial Invoice Information '>
 											<div className='d-flex justify-content-between'>
-												<div>
-													<p>
+												<div >
+													<p >
 														<Typography.Text strong>
 															Payements Date :
 														</Typography.Text>{" "}
@@ -199,12 +199,12 @@ const DetailSale = () => {
 
 													{sale.paiements.map(el => {
 														return (
-															<>
+															<div className="card p-2 m-2">
 																<p>
 																	<Typography.Text strong>
 																		Paid Amount :
 																	</Typography.Text>{" "}
-																	<strong style={{ color: "red" }}>
+																	<strong >
 																		{" "}
 																		{el.montantPaye}
 																	</strong>
@@ -213,12 +213,21 @@ const DetailSale = () => {
 																	<Typography.Text strong>
 																		Mode Paiement :
 																	</Typography.Text>{" "}
-																	<strong style={{ color: "red" }}>
+																	<strong >
 																		{" "}
 																		{el.modePaiement}
 																	</strong>
 																</p>
-															</>
+																<p>
+																	<Typography.Text strong>
+																		Staus Paiement :
+																	</Typography.Text>{" "}
+																	<strong style={{ color: "red" }}>
+																		{" "}
+																		{el.statut}
+																	</strong>
+																</p>
+															</div>
 														)
 													}
 													)}

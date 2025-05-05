@@ -129,10 +129,10 @@ const Test = ({ color }) => {
         {
           label: (
             <NavLink to="/hr/staffs">
-              <span>Staffs</span>
+              <span>Employer</span>
             </NavLink>
           ),
-          key: "staffs",
+          key: "Employer",
           icon: <UsergroupAddOutlined />,
         },
         {

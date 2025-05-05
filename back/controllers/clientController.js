@@ -1,7 +1,7 @@
 const Client = require('../models/Client');
 const User = require('../models/User');
 // 📌 Ajouter un client
-const {sendCompteCreationConfirmationEmail} = require('../utils/emiling')
+const {sendCompteCreationActivation,sendNotificationAdminClientCreation} = require('../utils/emiling')
 
 exports.ajouterClient = async (req, res) => {
  /* if(req.query.query === "createmany"){
@@ -78,9 +78,13 @@ exports.ajouterClient = async (req, res) => {
     });
 
     await newClient.save();
+    const userAD =  await User.findOne({role:"admin"});
+
+    await sendNotificationAdminClientCreation(userAD,newClient)
+
     if(validation_admin){
       const user =  await User.findById(commercial_assigne);
-      await sendCompteCreationConfirmationEmail(user.email,user)
+      await sendCompteCreationActivation(user.email,user)
     }
     res.status(201).json({ message: 'Client ajouté avec succès', client: newClient });
   } catch (error) {
@@ -128,7 +132,7 @@ exports.modifierClient = async (req, res) => {
     }
     if(updatedClient && updatedClient.validation_admin){
       const user =  await User.findById(updatedClient.commercial_assigne);
-      await sendCompteCreationConfirmationEmail(user.email,user)
+      await sendCompteCreationActivation(user.email,user , updatedClient)
     }
     res.status(200).json({ message: "Client mis à jour avec succès", client: updatedClient });
   } catch (error) {

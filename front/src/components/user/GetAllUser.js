@@ -96,7 +96,7 @@ function CustomTable({ list }) {
     <div>
       <div className="d-flex my-2">
         <div className="w-50">
-          <h4>Staff List</h4>
+          <h4>Employer List</h4>
         </div>
         {list && (
           <div className="text-center d-flex justify-content-end w-50">

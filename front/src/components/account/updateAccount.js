@@ -113,7 +113,7 @@ const UpdateAccount = ({ account, id }) => {
 								message: "Please input technicianName!",
 							},
 						]}>
-						<Input />
+						<Input  readOnly={true} />
 					</Form.Item>
 
 					<Form.Item
@@ -126,7 +126,7 @@ const UpdateAccount = ({ account, id }) => {
 								message: "Please input address Intervention!",
 							},
 						]}>
-										<Input />
+										<Input readOnly={true} />
 
 					</Form.Item>
 					<Form.Item
@@ -139,7 +139,7 @@ const UpdateAccount = ({ account, id }) => {
 								message: "Please input  Type Intervention!",
 							},
 						]}>
-										<Input />
+										<Input readOnly={true}  />
 
 					</Form.Item>
 					<Form.Item

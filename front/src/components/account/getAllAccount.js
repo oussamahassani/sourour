@@ -143,7 +143,7 @@ const GetAllAccount = (props) => {
       <div className="card-body">
         <div className="card-title d-flex justify-content-between">
           <h5>
-            <span className="ms-2">Accounts</span>
+            <span className="ms-2">List Intervention repport</span>
           </h5>
         </div>
         <CustomTable list={list} startdate={startdate} enddate={enddate} />
