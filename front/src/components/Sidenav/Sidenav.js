@@ -56,7 +56,7 @@ const Test = ({ color }) => {
           key: "suppliers",
           icon: <UserOutlined />,
         },
-  
+
         {
           label: (
             <NavLink to="/purchaselist">
@@ -82,11 +82,11 @@ const Test = ({ color }) => {
           key: "customers",
           icon: <UserOutlined />,
         },
-   
+
         {
           label: (
             <NavLink to="/salelist">
-              <span>Sale List</span>
+              <span>Payements List</span>
             </NavLink>
           ),
           key: "saleList",
@@ -95,23 +95,23 @@ const Test = ({ color }) => {
       ],
     },
     {
-      label: "ACCOUNTS",
+      label: "Intervention",
       key: "accountSection",
       icon: <InboxOutlined />,
       children: [
         {
           label: (
             <NavLink to="/account/">
-              <span>Account</span>
+              <span>Intervention</span>
             </NavLink>
           ),
           key: "accountList",
           icon: <UnorderedListOutlined />,
         },
-     
+
       ],
     },
-   
+
     {
       label: "HR",
       key: "hrSection",
@@ -147,9 +147,9 @@ const Test = ({ color }) => {
 
       ],
     },
- 
 
-  
+
+
   ];
 
   return (

@@ -13,11 +13,11 @@ const NewDashboardCard = ({ information }) => {
                   <div className="media d-flex">
                     <div className="media-body text-left">
                       <h3 className="">
-                        {information?.purchase_total
-                          ? information?.purchase_total
+                        {information?.userlength
+                          ? information?.userlength
                           : 0}
                       </h3>
-                      <span className="">Total Purchase</span>
+                      <span className="">Total User</span>
                     </div>
                     <div className="align-self-center">
                       <i className="icon-cloud-download font-large-2 float-right"></i>
@@ -58,7 +58,7 @@ const NewDashboardCard = ({ information }) => {
                           ? information?.sale_profit
                           : 0}
                       </h3>
-                      <span className="dark">Total Profit</span>
+                      <span className="dark">Total Custommer</span>
                     </div>
                     <div className="align-self-center">
                       <i className="icon-wallet font-large-2 float-right"></i>

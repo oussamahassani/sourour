@@ -12,13 +12,13 @@ const getDashboardData = async (req, res) => {
     const allSaleInvoice = await SaleInvoice.aggregate([
       {
         $match: {
-          date: { $gte: startDate, $lte: endDate },
+          date_achat: { $gte: startDate, $lte: endDate },
         },
       },
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$date" },
+            $dateToString: { format: "%Y-%m-%d", date: "$date_achat" },
           },
           total_amount: { $sum: "$prix_achatTTC" },
           paid_amount: { $sum: "$prix_achatHT" },
@@ -30,20 +30,20 @@ const getDashboardData = async (req, res) => {
     ]);
 
     const formattedData1 = allSaleInvoice.map((item) => ({
-      type_achat: "Direct",
+      type: "Direct",
       date: item._id,
-      amount: item.prix_achatHT,
+      amount: item.paid_amount,
     }));
 
     const formattedData2 = allSaleInvoice.map((item) => ({
       type: "Commandé",
       date: item._id,
-      amount: item.prix_achatHT,
+      amount: item.paid_amount,
     }));
 
 
 
-    const saleProfitCount = [...formattedData1, ...formattedData2, ];
+    const saleProfitCount = [...formattedData1, ...formattedData2,];
 
     // ========================== PurchaseVSSale ==========================
     const salesInfo = await SaleInvoice.aggregate([
@@ -65,56 +65,40 @@ const getDashboardData = async (req, res) => {
     const SupplierVSCustomer = [...formattedData4];
 
     // ========================== customerSaleProfit ==========================
-   
 
-  
 
-   
-        const customer = (await Customer.find()).map(el  =>{
-        return {
-          label: el?.nom || "Unknown",
-          type: "Profit",
-          value: el.cin,
-        }
-      }
-      )
-    
 
-    const UserInfo =(await User.find()).map(el  =>{
+
+
+    const customer = (await Customer.find()).map(el => {
       return {
         label: el?.nom || "Unknown",
-        type: "Profit",
+        type: el?.plafond_credit,
         value: el.cin,
       }
     }
     )
 
+
+    const UserInfo = (await User.find().limit(10)).map(el => {
+      return {
+        label: el?.nom || "Unknown",
+        role: el.role,
+      }
+    }
+    )
+    const UserInfoLength = (await User.find().countDocuments())
     // ========================== cardInfo ==========================
 
 
-    const saleInfo = await SaleInvoice.aggregate([
-      {
-        $match: {
-          date: { $gte: startDate, $lte: endDate },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          count: { $sum: 1 },
-          total_amount: { $sum: "$total_amount" },
-          due_amount: { $sum: "$due_amount" },
-          paid_amount: { $sum: "$paid_amount" },
-          profit: { $sum: "$profit" },
-        },
-      },
-    ]);
+
 
     const cardInfo = {
-  
-      sale_count: saleInfo[0]?.count || 0,
-      sale_total: saleInfo[0]?.total_amount || 0,
-      sale_profit: saleInfo[0]?.profit || 0,
+
+      sale_count: allSaleInvoice[0]?.count || 0,
+      sale_total: allSaleInvoice[0]?.total_amount || 0,
+      sale_profit: customer.length || 0,
+      userlength: UserInfoLength
     };
 
     res.json({

@@ -4,14 +4,14 @@ import "./sale.css";
 
 import { SearchOutlined } from "@ant-design/icons";
 import {
-    Button,
-    DatePicker,
-    Dropdown,
-    Form,
-    Menu,
-    Segmented,
-    Select,
-    Table
+  Button,
+  DatePicker,
+  Dropdown,
+  Form,
+  Menu,
+  Segmented,
+  Select,
+  Table
 } from "antd";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -29,7 +29,7 @@ function CustomTable({ list, total, startdate, enddate, count, user }) {
 
   const columns = [
     {
-      title: "Invoice No",
+      title: "Payement No",
       dataIndex: "_id",
       key: "_id",
       render: (name, { _id }) => <Link to={`/sale/${_id}`}>{_id}</Link>,
@@ -140,12 +140,12 @@ const GetAllSale = (props) => {
   const [loading, setLoading] = useState(false);
 
 
-	const [startdate, setStartdate] = useState(
-		moment().startOf("month").format("YYYY-MM-DD")
-	);
-	const [enddate, setEnddate] = useState(
-		moment().endOf("month").format("YYYY-MM-DD")
-	);
+  const [startdate, setStartdate] = useState(
+    moment().startOf("month").format("YYYY-MM-DD")
+  );
+  const [enddate, setEnddate] = useState(
+    moment().endOf("month").format("YYYY-MM-DD")
+  );
 
 
 
@@ -157,17 +157,17 @@ const GetAllSale = (props) => {
   }, [totalCount]);
 
 
-	useEffect(() => {
-		dispatch(
-			loadAllSale({
-				page: 1,
-				limit: 10,
-				startdate: moment().startOf("month"),
-				enddate: moment().endOf("month"),
-				user: "",
-			})
-		);
-	}, []);
+  useEffect(() => {
+    dispatch(
+      loadAllSale({
+        page: 1,
+        limit: 10,
+        startdate: moment().startOf("month"),
+        enddate: moment().endOf("month"),
+        user: "",
+      })
+    );
+  }, []);
 
 
   const CSVlist = list?.map((i) => ({
@@ -208,12 +208,12 @@ const GetAllSale = (props) => {
   };
 
 
-	const onCalendarChange = (dates) => {
-		const newStartdate = dates[0].format("YYYY-MM-DD");
-		const newEnddate = dates[1].format("YYYY-MM-DD");
-		setStartdate(newStartdate ? newStartdate : startdate);
-		setEnddate(newEnddate ? newEnddate : enddate);
-	};
+  const onCalendarChange = (dates) => {
+    const newStartdate = dates[0].format("YYYY-MM-DD");
+    const newEnddate = dates[1].format("YYYY-MM-DD");
+    setStartdate(newStartdate ? newStartdate : startdate);
+    setEnddate(newEnddate ? newEnddate : enddate);
+  };
 
 
   const isLogged = Boolean(localStorage.getItem("isLogged"));
@@ -223,17 +223,17 @@ const GetAllSale = (props) => {
   }
 
 
-	return (
-		<>
-			<PageTitle title={"Back"} />
-			<div className='card card-custom mt-1'>
-				<div className='card-body'>
-				
-     
+  return (
+    <>
+      <PageTitle title={"Back"} />
+      <div className='card card-custom mt-1'>
+        <div className='card-body'>
+
+
           <br />
           <div>
             <div>
-              <h5>Sales History</h5>
+              <h5>Payements History</h5>
               {list && (
                 <div className="card-title d-flex justify-content-end ">
                   <div className="me-2">
@@ -274,7 +274,7 @@ const GetAllSale = (props) => {
                     />
                   </div>
 
-                 
+
                 </div>
               )}
             </div>

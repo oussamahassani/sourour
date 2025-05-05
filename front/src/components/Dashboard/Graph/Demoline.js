@@ -24,7 +24,7 @@ const DemoLine = () => {
 	useEffect(() => {
 		dispatch(loadDashboardData({ startdate, enddate }));
 
-		
+
 	}, []);
 
 	const onCalendarChange = (dates) => {
@@ -40,11 +40,11 @@ const DemoLine = () => {
 			})
 		);
 
-	
+
 	};
 
 	const config = {
-		data,
+		data: data,
 		xField: "date",
 		yField: "amount",
 		seriesField: "type",
@@ -77,7 +77,7 @@ const DemoLine = () => {
 
 			<NewDashboardCard information={cardInformation} />
 
-			<Card title='Sales vs Profit'>
+			<Card title='Sales'>
 				{data ? <Line {...config} /> : <Loader />}
 			</Card>
 		</Fragment>

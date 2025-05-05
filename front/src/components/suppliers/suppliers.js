@@ -16,7 +16,7 @@ const Suppliers = (props) => {
   return (
     <>
       <PageTitle title="Back" />
-      <AddSup />
+      {/* <AddSup />*/}
       <GetAllSup />
     </>
   );

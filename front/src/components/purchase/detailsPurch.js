@@ -22,25 +22,25 @@ const DetailsPurch = () => {
 	const purchase = useSelector((state) => state.purchases.purchase);
 
 	const onValidate = async () => {
-		  try {
+		try {
 			await axios({
-			  method: "put",
-			  headers: {
-				Accept: "application/json",
-				"Content-Type": "application/json;charset=UTF-8",
-			  },
-			  url: `achat/${purchase._id}`,
-			  data: {
-				...purchase,validation_admin:true
-			  },
+				method: "put",
+				headers: {
+					Accept: "application/json",
+					"Content-Type": "application/json;charset=UTF-8",
+				},
+				url: `achat/modifier/${purchase._id}`,
+				data: {
+					...purchase, validation_admin: true
+				},
 			});
-			return "success";
+
 			// return data;
-		  } catch (error) {
+		} catch (error) {
 			console.log(error.message);
-		  }
-		  	  toast.success("Achat details is updated");
-				return navigate("/purchaselist");
+		}
+		toast.success("Achat details is updated");
+		return navigate("/purchaselist");
 
 	}
 	//Delete Supplier
@@ -88,17 +88,17 @@ const DetailsPurch = () => {
 								</h5>
 								<div className='card-header d-flex justify-content-between'>
 									<div className='me-2'>
-									
-										{!purchase.validation_admin && 
+
+										{!purchase.validation_admin &&
 											<Button type='primary' shape='round' onClick={onValidate}>
 												{" "}
 												Validate Purchase{" "}
 											</Button>
-}
-									
+										}
+
 									</div>
 									<div className='me-2'>
-										<Popover
+										{!purchase.validation_admin && <Popover
 											content={
 												<a onClick={onDelete}>
 													<Button type='primary' danger>
@@ -115,9 +115,9 @@ const DetailsPurch = () => {
 												DetailCust
 												shape='round'
 												icon={<DeleteOutlined />}></Button>
-										</Popover>
+										</Popover>}
 									</div>
-									
+
 								</div>
 							</div>
 							<div className='card-body'>
@@ -157,7 +157,7 @@ const DetailsPurch = () => {
 										</CardComponent>
 									</Col>
 									<Col span={12}>
-								
+
 										<div className='mt-1'>
 											<CardComponent>
 												<p>
@@ -179,7 +179,7 @@ const DetailsPurch = () => {
 								</Row>
 								<br />
 
-								
+
 							</div>
 						</Card>
 					</Fragment>

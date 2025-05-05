@@ -15,7 +15,7 @@ const Product = (props) => {
     <>
       <PageTitle title="Back" />
 
-      <AddProd />
+      {/*  <AddProd />*/}
 
       <GetAllProd />
     </>
