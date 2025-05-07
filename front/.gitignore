@@ -9,3 +9,62 @@
 
 # production
 /build
+
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+coverage/
+generated_plugin_registrant.dart
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+*.iml
+.gradle/
+*.keystore
+
+# iOS
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/build/
+ios/Flutter/Flutter.podspec
+*.xcuserstate
+
+# Xcode
+*.xcworkspace
+*.xcuserstate
+*.xcsettings
+*.xcodeproj
+*.xcscheme
+
+# macOS
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Pods/
+macos/build/
+
+# Web
+web/generated_plugin_registrant.dart
+
+# Windows
+windows/Flutter/ephemeral/
+windows/build/
+windows/runner/ephemeral/
+
+# Linux
+linux/Flutter/ephemeral/
+linux/build/
+
+# Others
+.idea/
+.vscode/
+*.log
+*.lock
+pubspec.lock
