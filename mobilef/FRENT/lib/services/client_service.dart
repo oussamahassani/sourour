@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config.dart';
+import '../models/Client.dart';
 
 class ClientService {
   static const String _baseUrl = '${AppConfig.baseUrl}/clients';
@@ -16,7 +17,7 @@ class ClientService {
   }
 
   // Récupérer tous les clients
-  static Future<List<dynamic>> fetchClients() async {
+  static Future<List<Client>> fetchClients() async {
     try {
       final response = await http.get(
         Uri.parse(_baseUrl),
@@ -28,7 +29,11 @@ class ClientService {
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
-        return decodedData is List ? decodedData : decodedData['data'] ?? [];
+       final rawList =   decodedData is List ? decodedData : decodedData['clients'] ?? [];
+
+          return rawList
+        .map<Client>((json) => Client.fromJson(json))
+        .toList();
       } else {
         throw Exception(
           'Échec du chargement (${response.statusCode}): ${response.body}',

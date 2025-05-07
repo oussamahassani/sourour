@@ -9,6 +9,8 @@ import 'package:open_file/open_file.dart';
 import 'package:printing/printing.dart';
 
 import '../models/fournisseur.dart';
+import '../models/Client.dart';
+
 import '../services/client_service.dart';
 
 import 'article.dart';
@@ -30,23 +32,22 @@ class _FactureScreenState extends State<FactureScreen1> {
     loadClients();
   }
   DateTime _selectedDate = DateTime.now();
-  String? _selectedClient;
+  Client? _selectedClient;
   bool _isTTC = false;
   List<Map<String, dynamic>> _articles = [];
   double _totalHT = 0.0;
   double _totalFacture = 0.0;
   double _sousTotal = 0.0;
   double _totalTVA = 0.0;
-    List<String> _clients = ['Client 11', 'Client 12'];
-   List<dynamic> sclients = [];
+    List<Client> _clients = [];
     
   Future<void> loadClients() async {
     try {
-      List<dynamic> clients = await ClientService.fetchClients();
+      List<Client> clients = await ClientService.fetchClients();
       print('Clients in facture screen: $clients');
 
       setState(() {
-        sclients = clients;
+        _clients = clients;
       });
     } catch (e) {
       print('Error loading clients: $e');
@@ -251,7 +252,7 @@ class _FactureScreenState extends State<FactureScreen1> {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text('Client:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text(_selectedClient ?? ""),
+                      pw.Text(_selectedClient?.fullName  ?? ""),
                       pw.Text('Adresse: ${_adresseFacturationController.text}'),
                     ],
                   ),
@@ -380,8 +381,8 @@ class _FactureScreenState extends State<FactureScreen1> {
   // Fonction pour ajouter un client
   void _ajouterClient(Fournisseur client) {
     setState(() {
-      _clients.add(client.nomFournisseur);
-      _selectedClient = client.nom;
+    //  _clients.add(client.nomFournisseur);
+     // _selectedClient = client;
     });
   }
 
@@ -508,11 +509,11 @@ class _FactureScreenState extends State<FactureScreen1> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      DropdownButtonFormField<String>(
+                      DropdownButtonFormField<Client>(
                         value: _selectedClient,
                         onChanged: (value) => setState(() => _selectedClient = value),
                         items: _clients
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c.fullName)))
                             .toList(),
                         decoration: InputDecoration(
                           labelText: 'Sélectionner un client',
