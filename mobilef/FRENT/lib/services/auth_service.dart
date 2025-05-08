@@ -18,6 +18,7 @@ class AuthService {
         'telephone': telephone,
         'email': email,
         'motDePasse': motDePasse,
+        'role': "Utilisateur",
       }),
     );
     

@@ -13,7 +13,7 @@ const achatRoute = require('./routes/achatRoutes')
 
 const PaymentRoute = require('./routes/paiementsRoutes')
 const InterventionReportRoute = require('./routes/interventionsRoutes')
-
+const ArticleRoute = require('./routes/venteRoutes')
 const dashboardRoutes = require("./routes/dashboard/dashboard.routes");
 
 const initPermissions = require("./initPermission");
@@ -35,7 +35,7 @@ const connectDB = async () => {
         mongoose.connect("mongodb://127.0.0.1:27017/your-db-name")
             .then(res => {
                 console.log('✅ Connexion à MongoDB réussie')
-              //  initPermissions(); // initialise les permissions une seule fois
+                //  initPermissions(); // initialise les permissions une seule fois
 
 
             })
@@ -59,9 +59,10 @@ app.use('/user', UserRouter);
 app.use('/', ClientRoute);
 app.use('/', fournisseurtRoute);
 app.use('/product', produittRoute);
-app.use("/achat" , achatRoute)
-app.use("/payment",PaymentRoute)
-app.use("/intervention",InterventionReportRoute)
+app.use("/achat", achatRoute)
+app.use("/payment", PaymentRoute)
+app.use("/intervention", InterventionReportRoute)
+app.use("/articles", ArticleRoute)
 
 
 

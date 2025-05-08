@@ -4,7 +4,7 @@ import '../models/fournisseur.dart';
 
 class FournisseurService {
   final String baseUrl;
-  final String endpoint = '/api/fournisseurs';
+  final String endpoint = '/fournisseurs';
   final Duration timeout = const Duration(seconds: 30);
 
   FournisseurService({required this.baseUrl, required http.Client client});

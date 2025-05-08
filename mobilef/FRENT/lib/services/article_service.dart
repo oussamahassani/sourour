@@ -10,7 +10,7 @@ class ArticleService {
   final Duration timeoutDuration;
 
   ArticleService({
-    this.baseUrl = '${AppConfig.baseUrl}/api/articles',
+    this.baseUrl = '${AppConfig.baseUrl}/articles',
     this.timeoutDuration = const Duration(seconds: 15),
   });
 
@@ -70,7 +70,7 @@ class ArticleService {
       throw ArgumentError('La référence est requise');
     }
 
-    final url = Uri.parse(baseUrl);
+    final url = Uri.parse('$baseUrl/create');
     final response = await http.post(
       url,
       headers: _defaultHeaders,
