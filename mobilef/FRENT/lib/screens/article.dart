@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/article.dart';
 import 'package:provider/provider.dart';
 import '../providers/article_provider.dart';
@@ -7,11 +8,11 @@ import 'article_list_screen.dart';
 class ArticleFormScreen extends StatefulWidget {
   final Article? article;
 
-const ArticleFormScreen({
-  Key? key, 
-  this.article, 
-  required Future<dynamic> Function(dynamic Article) onSave
-}) : super(key: key);
+  const ArticleFormScreen({
+    Key? key,
+    this.article,
+    required Future<dynamic> Function(dynamic Article) onSave,
+  }) : super(key: key);
   @override
   _ArticleFormScreenState createState() => _ArticleFormScreenState();
 }
@@ -33,15 +34,16 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
   bool _isSaving = false;
 
   final List<String> _categories = [
-    'Climatiseur', 'Chauffage', 'Réfrigération',
-    'Plomberie', 'Sanitaire', 'Électricité', 'Ventilation',
+    'Climatiseur',
+    'Chauffage',
+    'Réfrigération',
+    'Plomberie',
+    'Sanitaire',
+    'Électricité',
+    'Ventilation',
   ];
 
-  final List<String> _types = [
-    'article achat', 
-    'article vente', 
-    'autre'
-  ];
+  final List<String> _types = ['article achat', 'article vente', 'autre'];
 
   @override
   void initState() {
@@ -63,8 +65,10 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
       _nomController.text = article.nomArticle;
       _referenceController.text = article.reference;
       _descriptionController.text = article.description ?? '';
-      _prixAchatController.text = article.prixAchat?.toStringAsFixed(2) ?? '0.00';
-      _prixVenteController.text = article.prixVente?.toStringAsFixed(2) ?? '0.00';
+      _prixAchatController.text =
+          article.prixAchat?.toStringAsFixed(2) ?? '0.00';
+      _prixVenteController.text =
+          article.prixVente?.toStringAsFixed(2) ?? '0.00';
       _margeController.text = (article.tauxMarge ?? 0).toStringAsFixed(2);
       _seuilAlerteController.text = (article.seuilAlerte ?? 0).toString();
       _categorie = article.categorie ?? _categories.first;
@@ -91,25 +95,31 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
   }
 
   void _calculateFromMargin() {
-    if (_prixAchatController.text.isEmpty || _margeController.text.isEmpty) return;
-    
-    final prixAchat = double.tryParse(_prixAchatController.text.replaceAll(',', '.')) ?? 0;
-    final marge = double.tryParse(_margeController.text.replaceAll(',', '.')) ?? 0;
-    
+    if (_prixAchatController.text.isEmpty || _margeController.text.isEmpty)
+      return;
+
+    final prixAchat =
+        double.tryParse(_prixAchatController.text.replaceAll(',', '.')) ?? 0;
+    final marge =
+        double.tryParse(_margeController.text.replaceAll(',', '.')) ?? 0;
+
     if (prixAchat == 0) return;
-    
+
     final prixVente = prixAchat * (1 + marge / 100);
     _prixVenteController.text = prixVente.toStringAsFixed(2);
   }
 
   void _calculateFromSalePrice() {
-    if (_prixAchatController.text.isEmpty || _prixVenteController.text.isEmpty) return;
-    
-    final prixAchat = double.tryParse(_prixAchatController.text.replaceAll(',', '.')) ?? 0;
-    final prixVente = double.tryParse(_prixVenteController.text.replaceAll(',', '.')) ?? 0;
-    
+    if (_prixAchatController.text.isEmpty || _prixVenteController.text.isEmpty)
+      return;
+
+    final prixAchat =
+        double.tryParse(_prixAchatController.text.replaceAll(',', '.')) ?? 0;
+    final prixVente =
+        double.tryParse(_prixVenteController.text.replaceAll(',', '.')) ?? 0;
+
     if (prixAchat == 0) return;
-    
+
     final marge = ((prixVente - prixAchat) / prixAchat) * 100;
     _margeController.text = marge.toStringAsFixed(2);
   }
@@ -118,38 +128,50 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
+    final now = DateTime.now();
+    final timestamp = now.millisecondsSinceEpoch;
+    String ids;
+    if (widget.article != null) {
+      ids = widget.article!.id;
+    } else {
+      ids = timestamp.toString();
+    }
+    // try {
+    final article = Article(
+      id: ids,
+      nomArticle: _nomController.text.trim(),
+      reference: _referenceController.text.trim(),
+      categorie: _categorie,
+      type: _type,
+      description:
+          _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+      prixAchat: double.parse(_prixAchatController.text.replaceAll(',', '.')),
+      prixVente: double.parse(_prixVenteController.text.replaceAll(',', '.')),
+      tauxMarge: double.parse(_margeController.text.replaceAll(',', '.')),
+      stock: widget.article?.stock ?? 0,
+      seuilAlerte: int.tryParse(_seuilAlerteController.text) ?? 0,
+      dateAjout: widget.article?.dateAjout ?? DateTime.now(),
+      image: "null",
+    );
 
-    try {
-      final article = Article(
-        id: widget.article!.id,
-        nomArticle: _nomController.text.trim(),
-        reference: _referenceController.text.trim(),
-        categorie: _categorie!,
-        type: _type!,
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
-            : _descriptionController.text.trim(),
-        prixAchat: double.parse(_prixAchatController.text.replaceAll(',', '.')),
-        prixVente: double.parse(_prixVenteController.text.replaceAll(',', '.')),
-        tauxMarge: double.parse(_margeController.text.replaceAll(',', '.')),
-        stock: widget.article?.stock ?? 0,
-        seuilAlerte: int.tryParse(_seuilAlerteController.text) ?? 0,
-        dateAjout: widget.article?.dateAjout ?? DateTime.now(),
-        image: _imageUrl,
-      );
+    final articleProvider = Provider.of<ArticleProvider>(
+      context,
+      listen: false,
+    );
+    print(widget);
+    if (widget.article == null) {
+      await articleProvider.addArticle(article);
+    } else {
+      await articleProvider.updateArticle(article);
+    }
 
-      final articleProvider = Provider.of<ArticleProvider>(context, listen: false);
-      
-      if (widget.article == null) {
-        await articleProvider.addArticle(article);
-      } else {
-        await articleProvider.updateArticle(article);
-      }
-
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
+    if (!mounted) return;
+    Navigator.pop(context);
+    //  } catch (e) {
+    //   print(e);
+    /*  if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Erreur lors de la sauvegarde'),
@@ -166,22 +188,27 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
       }
-    }
+    }*/
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.article == null ? 'Nouvel article' : 'Modifier article'),
+        title: Text(
+          widget.article == null ? 'Nouvel article' : 'Modifier article',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Voir la liste',
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ArticleListScreen()),
-            ),
+            onPressed:
+                () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ArticleListScreen(),
+                  ),
+                ),
           ),
         ],
       ),
@@ -214,26 +241,31 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.grey.shade400),
         ),
-        child: _imageUrl != null && _imageUrl!.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  _imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(),
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                ),
-              )
-            : _buildPlaceholderImage(),
+        child:
+            _imageUrl != null && _imageUrl!.isNotEmpty
+                ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    _imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder:
+                        (context, error, stackTrace) =>
+                            _buildPlaceholderImage(),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value:
+                              loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                        ),
+                      );
+                    },
+                  ),
+                )
+                : _buildPlaceholderImage(),
       ),
     );
   }
@@ -262,9 +294,17 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
   Widget _buildFormFields() {
     return Column(
       children: [
-        _buildTextField(_nomController, 'Nom de l\'article *', validator: _validateRequired),
+        _buildTextField(
+          _nomController,
+          'Nom de l\'article *',
+          validator: _validateRequired,
+        ),
         const SizedBox(height: 16),
-        _buildTextField(_referenceController, 'Référence *', validator: _validateRequired),
+        _buildTextField(
+          _referenceController,
+          'Référence *',
+          validator: _validateRequired,
+        ),
         const SizedBox(height: 16),
         _buildDropdown(_categories, _categorie, 'Catégorie *', (value) {
           setState(() => _categorie = value);
@@ -296,7 +336,11 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
           'Prix d\'achat *',
           keyboardType: TextInputType.numberWithOptions(decimal: true),
           validator: _validatePrice,
-          onChanged: (_) => _isCalculatingFromMargin ? _calculateFromMargin() : _calculateFromSalePrice(),
+          onChanged:
+              (_) =>
+                  _isCalculatingFromMargin
+                      ? _calculateFromMargin()
+                      : _calculateFromSalePrice(),
         ),
         const SizedBox(height: 10),
         Row(
@@ -340,7 +384,7 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
           child: OutlinedButton(
             onPressed: _isSaving ? null : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              padding:  EdgeInsets.symmetric(vertical: 15),
+              padding: EdgeInsets.symmetric(vertical: 15),
               side: const BorderSide(color: Colors.grey),
             ),
             child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
@@ -352,21 +396,22 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
             onPressed: _isSaving ? null : _saveArticle,
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
-              padding:  EdgeInsets.symmetric(vertical: 15),
+              padding: EdgeInsets.symmetric(vertical: 15),
             ),
-            child: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
+            child:
+                _isSaving
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : Text(
+                      widget.article == null ? 'Enregistrer' : 'Mettre à jour',
+                      style: const TextStyle(color: Colors.white),
                     ),
-                  )
-                : Text(
-                    widget.article == null ? 'Enregistrer' : 'Mettre à jour',
-                    style: const TextStyle(color: Colors.white),
-                  ),
           ),
         ),
       ],
@@ -412,12 +457,10 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
         filled: true,
         fillColor: Colors.grey.shade50,
       ),
-      items: items.map((item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item),
-        );
-      }).toList(),
+      items:
+          items.map((item) {
+            return DropdownMenuItem<String>(value: item, child: Text(item));
+          }).toList(),
       onChanged: (newValue) {
         if (newValue != null) {
           setState(() {

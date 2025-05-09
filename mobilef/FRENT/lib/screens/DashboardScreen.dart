@@ -14,6 +14,8 @@ import 'devis.dart';
 import 'factureAchat.dart';
 import 'factureVente.dart';
 import 'paiementVente.dart';
+import 'employe.dart';
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -279,8 +281,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               'Ressources Humaines',
               Icons.people_alt_outlined,
               [
-                _buildDrawerItem('Création Compte Employé', () {}),
-                _buildDrawerItem('Utilisateurs', () {}),
+                _buildDrawerItem('Création Compte Employé', () {
+      Navigator.pop(context); // Close the drawer first
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => EmployeeManagementApp()),
+      );
+    }),
+                 _buildDrawerItem('Utilisateurs', () {
+      Navigator.pop(context); // Close the drawer first
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => EmployeeManagementApp()),
+      );
+    }),
               ],
             ),
          

@@ -7,7 +7,10 @@ const ArticleSchema = new mongoose.Schema({
     required: true, 
     trim: true 
   },
+  reference:{
+    type: String, 
 
+  },
   // Description de l'article
   description: { 
     type: String, 
@@ -52,7 +55,7 @@ const ArticleSchema = new mongoose.Schema({
   // Catégorie de l'article
   categorie: { 
     type: String, 
-    enum: ['Climatiseur', 'Chauffage', 'Fourniture', 'Pièce détachée'], 
+    enum: ['Climatiseur','Sanitaire', 'Chauffage', 'Fourniture', 'Pièce détachée'], 
     required: true 
   }
 });

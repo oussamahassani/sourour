@@ -1,14 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import '../models/employee_model.dart';
-import '../services/user_rh_service.dart';
+import 'package:http/http.dart' as http;
+import '../models/employee.dart'; // Import the Employee class
 
 class UserRhProvider with ChangeNotifier {
-  final UserRhService _service;
-
-  UserRhProvider(this._service);
-
-  List<Employee> _employees = [];
   bool _isLoading = false;
+  List<Employee> _employees = [];
 
   List<Employee> get employees => _employees;
   bool get isLoading => _isLoading;
@@ -18,9 +15,18 @@ class UserRhProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _employees = await _service.fetchEmployees();
+      final response = await http.get(
+        Uri.parse('http://your-api-url.com/user'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _employees = data.map((e) => Employee.fromJson(e)).toList();
+      } else {
+        throw Exception('Failed to load employees');
+      }
     } catch (e) {
-      print('Error fetching employees: $e');
+      print('Error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

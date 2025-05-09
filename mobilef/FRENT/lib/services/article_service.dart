@@ -5,12 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/article.dart';
 import '../config.dart';
+
 class ArticleService {
   final String baseUrl;
   final Duration timeoutDuration;
 
   ArticleService({
-    this.baseUrl = '${AppConfig.baseUrl}/articles',
+    this.baseUrl = '${AppConfig.baseUrl}/product',
     this.timeoutDuration = const Duration(seconds: 15),
   });
 
@@ -19,10 +20,9 @@ class ArticleService {
       final url = Uri.parse(baseUrl);
       debugPrint('🔗 Fetching articles from: $url');
 
-      final response = await http.get(
-        url,
-        headers: _defaultHeaders,
-      ).timeout(timeoutDuration);
+      final response = await http
+          .get(url, headers: _defaultHeaders)
+          .timeout(timeoutDuration);
 
       debugPrint('⚡ Response status: ${response.statusCode}');
       debugPrint('📦 Response body: ${response.body}');
@@ -44,10 +44,9 @@ class ArticleService {
   Future<Article> fetchArticleById(String id) async {
     try {
       final url = Uri.parse('$baseUrl/$id');
-      final response = await http.get(
-        url,
-        headers: _defaultHeaders,
-      ).timeout(timeoutDuration);
+      final response = await http
+          .get(url, headers: _defaultHeaders)
+          .timeout(timeoutDuration);
 
       return _handleResponse<Article>(
         response,
@@ -60,45 +59,50 @@ class ArticleService {
     }
   }
 
- Future<Article> createArticle(Article article) async {
-  try {
-    // Validation renforcée
-    if (article.nomArticle.isEmpty) {
-      throw ArgumentError('Le nom de l\'article est requis');
-    }
-    if (article.reference.isEmpty) {
-      throw ArgumentError('La référence est requise');
-    }
+  Future<Article> createArticle(Article article) async {
+    try {
+      // Validation renforcée
+      if (article.nomArticle.isEmpty) {
+        throw ArgumentError('Le nom de l\'article est requis');
+      }
+      if (article.reference.isEmpty) {
+        throw ArgumentError('La référence est requise');
+      }
 
-    final url = Uri.parse('$baseUrl/create');
-    final response = await http.post(
-      url,
-      headers: _defaultHeaders,
-      body: jsonEncode(article.toJson()),
-    ).timeout(timeoutDuration);
+      final url = Uri.parse('$baseUrl');
+      final response = await http
+          .post(
+            url,
+            headers: _defaultHeaders,
+            body: jsonEncode(article.toJson()),
+          )
+          .timeout(timeoutDuration);
 
-    if (response.statusCode == 201) {
-      final responseData = jsonDecode(response.body);
-      return Article.fromJson(responseData);
-    } else {
-      throw HttpException(
-        'Échec de la création - Code: ${response.statusCode}',
-        uri: url,
-      );
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        return Article.fromJson(responseData);
+      } else {
+        throw HttpException(
+          'Échec de la création - Code: ${response.statusCode}',
+          uri: url,
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur création article: $e');
+      rethrow;
     }
-  } catch (e) {
-    debugPrint('Erreur création article: $e');
-    rethrow;
   }
-}
+
   Future<Article> updateArticle(Article article) async {
     try {
       final url = Uri.parse('$baseUrl/${article.id}');
-      final response = await http.put(
-        url,
-        headers: _defaultHeaders,
-        body: jsonEncode(article.toJson()),
-      ).timeout(timeoutDuration);
+      final response = await http
+          .put(
+            url,
+            headers: _defaultHeaders,
+            body: jsonEncode(article.toJson()),
+          )
+          .timeout(timeoutDuration);
 
       return _handleResponse<Article>(
         response,
@@ -113,16 +117,11 @@ class ArticleService {
   Future<void> deleteArticle(String id) async {
     try {
       final url = Uri.parse('$baseUrl/$id');
-      final response = await http.delete(
-        url,
-        headers: _defaultHeaders,
-      ).timeout(timeoutDuration);
+      final response = await http
+          .delete(url, headers: _defaultHeaders)
+          .timeout(timeoutDuration);
 
-      _handleResponse<void>(
-        response,
-        expectedStatus: 204,
-        onSuccess: () {},
-      );
+      _handleResponse<void>(response, expectedStatus: 204, onSuccess: () {});
     } catch (e) {
       debugPrint('❌ Error in deleteArticle: $e');
       rethrow;
@@ -169,21 +168,27 @@ class ArticleService {
   List<Article> _parseArticles(String responseBody) {
     try {
       final decoded = jsonDecode(responseBody);
-      
+
       if (decoded is List) {
         return decoded.map<Article>((json) => Article.fromJson(json)).toList();
-      } 
-      
+      }
+
       if (decoded is Map) {
         if (decoded['data'] is List) {
-          return (decoded['data'] as List).map<Article>((json) => Article.fromJson(json)).toList();
+          return (decoded['data'] as List)
+              .map<Article>((json) => Article.fromJson(json))
+              .toList();
         }
         if (decoded['items'] is List) {
-          return (decoded['items'] as List).map<Article>((json) => Article.fromJson(json)).toList();
+          return (decoded['items'] as List)
+              .map<Article>((json) => Article.fromJson(json))
+              .toList();
         }
       }
-      
-      throw const FormatException('Invalid response format - Expected array or object with data/items array');
+
+      throw const FormatException(
+        'Invalid response format - Expected array or object with data/items array',
+      );
     } on FormatException catch (e) {
       debugPrint('❌ JSON parsing error: $e');
       throw DataParsingException(e.message);

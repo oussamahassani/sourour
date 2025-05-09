@@ -15,7 +15,7 @@ const EmployeeSchema = new mongoose.Schema({
     department: { type: String, required: true },
 
     // Date d'embauche de l'employé
-    date_hire: { type: Date, required: true },
+    date_hire: { type: Date},
 
     // Salaire de l'employé
     salary: { type: Number, required: true },
@@ -42,7 +42,7 @@ const EmployeeSchema = new mongoose.Schema({
     adresse: { type: String, required: true },
 
     // Numéro de sécurité sociale de l'employé
-    num_securite_sociale: { type: String, required: true }
+    num_securite_sociale: { type: String}
 });
 
 // Exporter le modèle pour utilisation dans d'autres fichiers

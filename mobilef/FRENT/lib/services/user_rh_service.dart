@@ -1,15 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'employee_model.dart';
+import '../models/Employee.dart';
 import '../config.dart';
 
 class UserRhService {
-  final String baseUrl='${AppConfig.baseUrl}/user'; 
+  static const String baseUrl = '${AppConfig.baseUrl}/user';
 
-  UserRhService({required this.baseUrl});
-
-  Future<List<Employee>> fetchEmployees() async {
-    final response = await http.get(Uri.parse('$baseUrl'));
+  static Future<List<Employee>> fetchEmployees() async {
+    final response = await http.get(Uri.parse('${baseUrl}/employees'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -19,4 +17,17 @@ class UserRhService {
     }
   }
 
+  static Future<void> createEmployee(Employee employee) async {
+    print('🟢 Employee: ${employee.genre}');
+
+    final response = await http.post(
+      Uri.parse('${baseUrl}/employees'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(employee.toJson()),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception('Échec de la création de l\'employé');
+    }
+  }
 }

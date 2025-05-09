@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import '../services/user_rh_service.dart';
+import '../models/Employee.dart';
 
 class EmployeeManagementApp extends StatelessWidget {
   @override
@@ -14,10 +15,7 @@ class EmployeeManagementApp extends StatelessWidget {
           primary: Colors.teal,
           secondary: Colors.tealAccent,
         ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.teal,
-          elevation: 0,
-        ),
+        appBarTheme: AppBarTheme(backgroundColor: Colors.teal, elevation: 0),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal,
@@ -29,9 +27,7 @@ class EmployeeManagementApp extends StatelessWidget {
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           filled: true,
           fillColor: Colors.grey[100],
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -47,38 +43,11 @@ class EmployeeManagementApp extends StatelessWidget {
 }
 
 // Modèle d'employé
-class Employee {
-  final String id;
-  final String nom;
-  final String prenom;
-  final int age;
-  final String telephone;
-  final String adresse;
-  final String email;
-  final String dateEmbauche;
-  final String genre;
-  final String situationFamiliale;
-  final String poste;
-  final String privilege;
 
-  Employee({
-    required this.id,
-    required this.nom,
-    required this.prenom,
-    required this.age,
-    required this.telephone,
-    required this.adresse,
-    required this.email,
-    required this.dateEmbauche,
-    required this.genre,
-    required this.situationFamiliale,
-    required this.poste,
-    required this.privilege,
-  });
-}
+List<Employee> dummyEmployees = [];
 
 // Liste d'employés pour la démonstration
-List<Employee> dummyEmployees = [
+/*List<Employee> dummyEmployees = [
   Employee(
     id: '1',
     nom: 'Dupont',
@@ -122,7 +91,7 @@ List<Employee> dummyEmployees = [
     privilege: 'Niveau 4',
   ),
 ];
-
+*/
 class EmployeeForm extends StatefulWidget {
   final Employee? employeeToEdit;
 
@@ -142,7 +111,7 @@ class _EmployeeFormState extends State<EmployeeForm> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _privilegeController = TextEditingController();
-  
+
   String? _selectedPost;
   String _gender = "H";
   String _familyStatus = "Célibataire";
@@ -158,6 +127,14 @@ class _EmployeeFormState extends State<EmployeeForm> {
     "Chef d'équipe",
   ];
 
+  Future<void> loadEmployees() async {
+    final employees =
+        await UserRhService.fetchEmployees(); // Doit renvoyer un Future<List<Employee>>
+    setState(() {
+      dummyEmployees = employees;
+    });
+  }
+
   final List<String> _privileges = [
     "Niveau 1",
     "Niveau 2",
@@ -169,18 +146,21 @@ class _EmployeeFormState extends State<EmployeeForm> {
   @override
   void initState() {
     super.initState();
+    loadEmployees();
     if (widget.employeeToEdit != null) {
-      _nameController.text = widget.employeeToEdit!.nom;
-      _surnameController.text = widget.employeeToEdit!.prenom;
-      _ageController.text = widget.employeeToEdit!.age.toString();
-      _phoneController.text = widget.employeeToEdit!.telephone;
-      _addressController.text = widget.employeeToEdit!.adresse;
-      _emailController.text = widget.employeeToEdit!.email;
-      _dateController.text = widget.employeeToEdit!.dateEmbauche;
-      _gender = widget.employeeToEdit!.genre;
-      _familyStatus = widget.employeeToEdit!.situationFamiliale;
-      _selectedPost = widget.employeeToEdit!.poste;
-      _privilegeController.text = widget.employeeToEdit!.privilege;
+      _nameController.text = widget.employeeToEdit?.fullname ?? '';
+      _surnameController.text = widget.employeeToEdit?.prenom ?? '';
+      _ageController.text =
+          widget.employeeToEdit?.age?.toString() ??
+          ''; // Ensure 'age' is not null and convert to String
+      _phoneController.text = widget.employeeToEdit?.telephone ?? '';
+      _addressController.text = widget.employeeToEdit?.adresse ?? '';
+      _emailController.text = widget.employeeToEdit?.email ?? '';
+      _dateController.text = widget.employeeToEdit?.dateEmbauche ?? '';
+      _gender = widget.employeeToEdit?.genre ?? '';
+      _familyStatus = widget.employeeToEdit?.situationFamiliale ?? '';
+      _selectedPost = widget.employeeToEdit?.poste ?? '';
+      _privilegeController.text = widget.employeeToEdit?.privilege ?? '';
     } else {
       _privilegeController.text = "Niveau 1";
     }
@@ -214,7 +194,7 @@ class _EmployeeFormState extends State<EmployeeForm> {
     }
   }
 
-  void _saveEmployee() {
+  void _saveEmployee() async {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -226,33 +206,44 @@ class _EmployeeFormState extends State<EmployeeForm> {
           ),
         ),
       );
-      
+
       // Ajouter logique de sauvegarde ici
-      
+
       if (widget.employeeToEdit == null) {
-        // Ajouter à la liste
-        dummyEmployees.add(
-          Employee(
-            id: (dummyEmployees.length + 1).toString(),
-            nom: _nameController.text,
-            prenom: _surnameController.text,
-            age: int.parse(_ageController.text),
-            telephone: _phoneController.text,
-            adresse: _addressController.text,
-            email: _emailController.text,
-            dateEmbauche: _dateController.text,
-            genre: _gender,
-            situationFamiliale: _familyStatus,
-            poste: _selectedPost ?? _posts.first,
-            privilege: _privilegeController.text,
-          ),
+        final newEmployee = Employee(
+          id: (dummyEmployees.length + 1).toString(),
+          fullname: _nameController.text,
+          prenom: _surnameController.text,
+          age: int.parse(_ageController.text),
+          telephone: _phoneController.text,
+          adresse: _addressController.text,
+          email: _emailController.text,
+          dateEmbauche: _dateController.text,
+          genre: _gender,
+          situationFamiliale: _familyStatus,
+          poste: _selectedPost ?? _posts.first,
+          privilege: _privilegeController.text,
         );
+
+        try {
+          await UserRhService.createEmployee(newEmployee); // Appel à l'API
+          setState(() {
+            dummyEmployees.add(newEmployee); // Ajoute localement après succès
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Employé ajouté avec succès')));
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur lors de l\'ajout : $e')),
+          );
+        }
       }
-      
+
       // Retourner à la liste après sauvegarde
       Navigator.push(
-        context, 
-        MaterialPageRoute(builder: (context) => EmployeeListScreen())
+        context,
+        MaterialPageRoute(builder: (context) => EmployeeListScreen()),
       );
     }
   }
@@ -289,29 +280,33 @@ class _EmployeeFormState extends State<EmployeeForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: Text(
-    widget.employeeToEdit == null ? "Ajout d'un Employé" : "Modification d'un Employé",
-    style: TextStyle(
-      fontWeight: FontWeight.bold,
-      color: Colors.white,  // Text color
-      fontSize: 18,        // Optional: adjust font size
-    ),
-  ),
-  backgroundColor: Colors.teal,  // AppBar background color
-  iconTheme: IconThemeData(color: Colors.white),  // Color for back button and action icons
-  actions: [
-    IconButton(
-      icon: Icon(Icons.list_alt),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => EmployeeListScreen()),
-        );
-      },
-      tooltip: "Liste des employés",
-    ),
-  ],
-),
+        title: Text(
+          widget.employeeToEdit == null
+              ? "Ajout d'un Employé"
+              : "Modification d'un Employé",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // Text color
+            fontSize: 18, // Optional: adjust font size
+          ),
+        ),
+        backgroundColor: Colors.teal, // AppBar background color
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ), // Color for back button and action icons
+        actions: [
+          IconButton(
+            icon: Icon(Icons.list_alt),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EmployeeListScreen()),
+              );
+            },
+            tooltip: "Liste des employés",
+          ),
+        ],
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -378,7 +373,10 @@ class _EmployeeFormState extends State<EmployeeForm> {
                           controller: _surnameController,
                           decoration: InputDecoration(
                             labelText: "Prénom",
-                            prefixIcon: Icon(Icons.person_outline, color: Colors.teal),
+                            prefixIcon: Icon(
+                              Icons.person_outline,
+                              color: Colors.teal,
+                            ),
                           ),
                           validator: _validateRequired,
                         ),
@@ -391,7 +389,10 @@ class _EmployeeFormState extends State<EmployeeForm> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: "Âge",
-                      prefixIcon: Icon(Icons.calendar_today, color: Colors.teal),
+                      prefixIcon: Icon(
+                        Icons.calendar_today,
+                        color: Colors.teal,
+                      ),
                     ),
                     validator: _validateRequired,
                   ),
@@ -430,8 +431,14 @@ class _EmployeeFormState extends State<EmployeeForm> {
                     controller: _dateController,
                     decoration: InputDecoration(
                       labelText: "Date d'embauche",
-                      prefixIcon: Icon(Icons.calendar_month, color: Colors.teal),
-                      suffixIcon: Icon(Icons.arrow_drop_down, color: Colors.teal),
+                      prefixIcon: Icon(
+                        Icons.calendar_month,
+                        color: Colors.teal,
+                      ),
+                      suffixIcon: Icon(
+                        Icons.arrow_drop_down,
+                        color: Colors.teal,
+                      ),
                     ),
                     readOnly: true,
                     onTap: () => _selectDate(context),
@@ -461,7 +468,8 @@ class _EmployeeFormState extends State<EmployeeForm> {
                                 value: "H",
                                 groupValue: _gender,
                                 activeColor: Colors.teal,
-                                onChanged: (value) => setState(() => _gender = value!),
+                                onChanged:
+                                    (value) => setState(() => _gender = value!),
                               ),
                               Text("Homme"),
                               SizedBox(width: 20),
@@ -469,7 +477,8 @@ class _EmployeeFormState extends State<EmployeeForm> {
                                 value: "F",
                                 groupValue: _gender,
                                 activeColor: Colors.teal,
-                                onChanged: (value) => setState(() => _gender = value!),
+                                onChanged:
+                                    (value) => setState(() => _gender = value!),
                               ),
                               Text("Femme"),
                             ],
@@ -502,7 +511,9 @@ class _EmployeeFormState extends State<EmployeeForm> {
                                 value: "Marié(e)",
                                 groupValue: _familyStatus,
                                 activeColor: Colors.teal,
-                                onChanged: (value) => setState(() => _familyStatus = value!),
+                                onChanged:
+                                    (value) =>
+                                        setState(() => _familyStatus = value!),
                               ),
                               Text("Marié(e)"),
                               SizedBox(width: 20),
@@ -510,7 +521,9 @@ class _EmployeeFormState extends State<EmployeeForm> {
                                 value: "Célibataire",
                                 groupValue: _familyStatus,
                                 activeColor: Colors.teal,
-                                onChanged: (value) => setState(() => _familyStatus = value!),
+                                onChanged:
+                                    (value) =>
+                                        setState(() => _familyStatus = value!),
                               ),
                               Text("Célibataire"),
                             ],
@@ -526,17 +539,29 @@ class _EmployeeFormState extends State<EmployeeForm> {
                       prefixIcon: Icon(Icons.work, color: Colors.teal),
                     ),
                     value: _selectedPost ?? _posts.first,
-                    items: _posts.map((post) => DropdownMenuItem(value: post, child: Text(post))).toList(),
+                    items:
+                        _posts
+                            .map(
+                              (post) => DropdownMenuItem(
+                                value: post,
+                                child: Text(post),
+                              ),
+                            )
+                            .toList(),
                     onChanged: (value) {
                       setState(() {
                         _selectedPost = value.toString();
                         _isUser = _selectedPost == "Utilisateur";
                       });
                     },
-                    validator: (value) => value == null ? 'Veuillez sélectionner un poste' : null,
+                    validator:
+                        (value) =>
+                            value == null
+                                ? 'Veuillez sélectionner un poste'
+                                : null,
                   ),
                   SizedBox(height: 10),
-                 
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -545,10 +570,10 @@ class _EmployeeFormState extends State<EmployeeForm> {
                           onPressed: _saveEmployee,
                           icon: Icon(Icons.save),
                           label: Text("Enregistrer"),
-                          
+
                           style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.white,
-                        foregroundColor: Colors.teal,
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.teal,
                             padding: EdgeInsets.symmetric(vertical: 15),
                           ),
                         ),
@@ -559,7 +584,9 @@ class _EmployeeFormState extends State<EmployeeForm> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => EmployeeListScreen()),
+                              MaterialPageRoute(
+                                builder: (context) => EmployeeListScreen(),
+                              ),
                             );
                           },
                           icon: Icon(Icons.list),
@@ -567,7 +594,7 @@ class _EmployeeFormState extends State<EmployeeForm> {
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 15),
                             backgroundColor: Colors.teal,
-                        foregroundColor: Colors.white,
+                            foregroundColor: Colors.white,
                           ),
                         ),
                       ),
@@ -590,7 +617,7 @@ class EmployeeListScreen extends StatefulWidget {
 
 class _EmployeeListScreenState extends State<EmployeeListScreen> {
   String _searchQuery = '';
-  
+
   void _deleteEmployee(String id) {
     showDialog(
       context: context,
@@ -607,9 +634,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             ),
             ElevatedButton(
               child: Text("Supprimer"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () {
                 setState(() {
                   dummyEmployees.removeWhere((employee) => employee.id == id);
@@ -634,11 +659,17 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     if (_searchQuery.isEmpty) {
       return dummyEmployees;
     }
-    
+
     return dummyEmployees.where((employee) {
-      return employee.nom.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             employee.prenom.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             employee.poste.toLowerCase().contains(_searchQuery.toLowerCase());
+      return (employee?.fullname?.toLowerCase() ?? '').contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          (employee?.prenom?.toLowerCase() ?? '').contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          (employee?.poste?.toLowerCase() ?? '').contains(
+            _searchQuery.toLowerCase(),
+          );
     }).toList();
   }
 
@@ -651,7 +682,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.teal,
-                          foregroundColor: Colors.white,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: Icon(Icons.add),
@@ -695,107 +726,125 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
               ),
             ),
             Expanded(
-              child: _filteredEmployees.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.sentiment_dissatisfied,
-                            size: 80,
-                            color: Colors.teal.shade200,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            "Aucun employé trouvé",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
+              child:
+                  _filteredEmployees.isEmpty
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.sentiment_dissatisfied,
+                              size: 80,
+                              color: Colors.teal.shade200,
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredEmployees.length,
-                      padding: EdgeInsets.all(8),
-                      itemBuilder: (context, index) {
-                        final employee = _filteredEmployees[index];
-                        return Card(
-                          margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ListTile(
-                            contentPadding: EdgeInsets.all(16),
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.teal,
-                              foregroundColor: Colors.white,
-                              child: Text(
-                                "${employee.prenom[0]}${employee.nom[0]}",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            title: Text(
-                              "${employee.prenom} ${employee.nom}",
+                            SizedBox(height: 16),
+                            Text(
+                              "Aucun employé trouvé",
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 18,
+                                color: Colors.grey,
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(height: 4),
-                                Text(
-                                  employee.poste,
-                                  style: TextStyle(
-                                    color: Colors.teal,
-                                    fontWeight: FontWeight.w500,
+                          ],
+                        ),
+                      )
+                      : ListView.builder(
+                        itemCount: _filteredEmployees.length,
+                        padding: EdgeInsets.all(8),
+                        itemBuilder: (context, index) {
+                          final employee = _filteredEmployees[index];
+                          return Card(
+                            margin: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
+                            ),
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.all(16),
+                              leading: CircleAvatar(
+                                backgroundColor: Colors.teal,
+                                foregroundColor: Colors.white,
+                                child: Text(
+                                  "${employee.fullname}",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              title: Text(
+                                "${employee.fullname}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: 4),
+                                  Text(
+                                    employee.poste ?? "",
+                                    style: TextStyle(
+                                      color: Colors.teal,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                                Text(employee.email),
-                              ],
+                                  Text(employee.email ?? ""),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.visibility,
+                                      color: Colors.teal,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => EmployeeDetailScreen(
+                                                employee: employee,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    tooltip: "Détails",
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.edit,
+                                      color: Colors.orange,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => EmployeeForm(
+                                                employeeToEdit: employee,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    tooltip: "Modifier",
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: Colors.red),
+                                    onPressed:
+                                        () =>
+                                            _deleteEmployee(employee.id ?? ""),
+                                    tooltip: "Supprimer",
+                                  ),
+                                ],
+                              ),
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.visibility, color: Colors.teal),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => EmployeeDetailScreen(employee: employee),
-                                      ),
-                                    );
-                                  },
-                                  tooltip: "Détails",
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.edit, color: Colors.orange),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => EmployeeForm(employeeToEdit: employee),
-                                      ),
-                                    );
-                                  },
-                                  tooltip: "Modifier",
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteEmployee(employee.id),
-                                  tooltip: "Supprimer",
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
             ),
           ],
         ),
@@ -864,7 +913,7 @@ class EmployeeDetailScreen extends StatelessWidget {
                         radius: 60,
                         backgroundColor: Colors.teal,
                         child: Text(
-                          "${employee.prenom[0]}${employee.nom[0]}",
+                          "${employee.fullname}",
                           style: TextStyle(
                             fontSize: 40,
                             fontWeight: FontWeight.bold,
@@ -874,7 +923,7 @@ class EmployeeDetailScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        "${employee.prenom} ${employee.nom}",
+                        " ${employee.fullname}",
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -882,7 +931,7 @@ class EmployeeDetailScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        employee.poste,
+                        employee.poste ?? "",
                         style: TextStyle(
                           fontSize: 18,
                           color: Colors.teal,
@@ -898,8 +947,14 @@ class EmployeeDetailScreen extends StatelessWidget {
                   title: "Informations personnelles",
                   content: [
                     _buildDetailItem("Âge", "${employee.age} ans"),
-                    _buildDetailItem("Genre", employee.genre == "H" ? "Homme" : "Femme"),
-                    _buildDetailItem("Situation familiale", employee.situationFamiliale),
+                    _buildDetailItem(
+                      "Genre",
+                      employee.genre == "H" ? "Homme" : "Femme",
+                    ),
+                    _buildDetailItem(
+                      "Situation familiale",
+                      employee.situationFamiliale ?? "",
+                    ),
                   ],
                 ),
                 SizedBox(height: 16),
@@ -907,9 +962,9 @@ class EmployeeDetailScreen extends StatelessWidget {
                   icon: Icons.contact_phone,
                   title: "Coordonnées",
                   content: [
-                    _buildDetailItem("Téléphone", employee.telephone),
-                    _buildDetailItem("Email", employee.email),
-                    _buildDetailItem("Adresse", employee.adresse),
+                    _buildDetailItem("Téléphone", employee.telephone ?? ""),
+                    _buildDetailItem("Email", employee.email ?? ""),
+                    _buildDetailItem("Adresse", employee.adresse ?? ""),
                   ],
                 ),
                 SizedBox(height: 16),
@@ -917,8 +972,11 @@ class EmployeeDetailScreen extends StatelessWidget {
                   icon: Icons.work,
                   title: "Informations professionnelles",
                   content: [
-                    _buildDetailItem("Date d'embauche", employee.dateEmbauche),
-                    _buildDetailItem("Privilège", employee.privilege),
+                    _buildDetailItem(
+                      "Date d'embauche",
+                      employee.dateEmbauche ?? "",
+                    ),
+                    _buildDetailItem("Privilège", employee.privilege ?? ""),
                   ],
                 ),
                 SizedBox(height: 24),
@@ -929,7 +987,10 @@ class EmployeeDetailScreen extends StatelessWidget {
                     },
                     child: Text("Retour à la liste"),
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -948,9 +1009,7 @@ class EmployeeDetailScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -995,12 +1054,7 @@ class EmployeeDetailScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: Colors.grey.shade800,
-              ),
-            ),
+            child: Text(value, style: TextStyle(color: Colors.grey.shade800)),
           ),
         ],
       ),

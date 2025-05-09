@@ -31,21 +31,20 @@ class Article {
 
   factory Article.fromJson(Map<String, dynamic> json) {
     return Article(
-      id: json['_id'] ?? json['id'] ?? '',
-      nomArticle: json['nomArticle'] ?? '',
+      id: json['_id'] ?? json['_id'] ?? '',
+      nomArticle: json['article'] ?? '',
       reference: json['reference'] ?? '',
-      prixVente: _toDouble(json['prixVente']),
-      prixAchat: _toDouble(json['prixAchat']),
-      tauxMarge: _toDouble(json['tauxMarge']),
+      prixVente: _toDouble(json['prix_vente']),
+      prixAchat: _toDouble(json['prix_achat']),
+      tauxMarge: _toDouble(json['taux_marge']),
       stock: _toInt(json['stock']),
       seuilAlerte: _toInt(json['seuilAlerte']),
       categorie: json['categorie'],
       type: json['type'],
       description: json['description'],
       image: json['image'],
-      dateAjout: json['dateAjout'] != null 
-          ? DateTime.parse(json['dateAjout']) 
-          : null,
+      dateAjout:
+          json['dateAjout'] != null ? DateTime.parse(json['dateAjout']) : null,
     );
   }
 
@@ -74,14 +73,13 @@ class Article {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'nomArticle': nomArticle,
+    'article': nomArticle,
     'reference': reference,
-    'prixVente': prixVente,
-    'prixAchat': prixAchat,
-    'tauxMarge': tauxMarge,
+    'prix_vente': prixVente,
+    'prix_achat': prixAchat,
+    'taux_marge': tauxMarge,
     'stock': stock,
-    'seuilAlerte': seuilAlerte,
+    'alerte_stock': seuilAlerte,
     'categorie': categorie,
     'type': type,
     'description': description,

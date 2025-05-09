@@ -13,7 +13,7 @@ const achatRoute = require('./routes/achatRoutes')
 
 const PaymentRoute = require('./routes/paiementsRoutes')
 const InterventionReportRoute = require('./routes/interventionsRoutes')
-const ArticleRoute = require('./routes/venteRoutes')
+const VenteeRoute = require('./routes/venteRoutes')
 const dashboardRoutes = require("./routes/dashboard/dashboard.routes");
 
 const initPermissions = require("./initPermission");
@@ -62,7 +62,7 @@ app.use('/product', produittRoute);
 app.use("/achat", achatRoute)
 app.use("/payment", PaymentRoute)
 app.use("/intervention", InterventionReportRoute)
-app.use("/articles", ArticleRoute)
+app.use("/vente", VenteeRoute)
 
 
 

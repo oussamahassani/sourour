@@ -28,7 +28,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
   Future<void> _loadArticles() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -37,7 +37,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     try {
       final provider = Provider.of<ArticleProvider>(context, listen: false);
       await provider.loadArticles();
-      
+
       if (provider.articles.isEmpty) {
         setState(() {
           _errorMessage = 'Aucun article disponible';
@@ -46,7 +46,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     } catch (e) {
       debugPrint('Erreur de chargement: $e');
       setState(() {
-        _errorMessage = 'Erreur lors du chargement des articles: ${e.toString()}';
+        _errorMessage =
+            'Erreur lors du chargement des articles: ${e.toString()}';
       });
     } finally {
       if (mounted) {
@@ -70,14 +71,20 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
   List<Article> _getFilteredArticles(List<Article> articles) {
     return articles.where((article) {
-      final searchMatch = _searchController.text.isEmpty ||
-          article.nomArticle.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-          article.reference.toLowerCase().contains(_searchController.text.toLowerCase());
-      
-      final categoryMatch = _selectedCategory == null ||
+      final searchMatch =
+          _searchController.text.isEmpty ||
+          article.nomArticle.toLowerCase().contains(
+            _searchController.text.toLowerCase(),
+          ) ||
+          article.reference.toLowerCase().contains(
+            _searchController.text.toLowerCase(),
+          );
+
+      final categoryMatch =
+          _selectedCategory == null ||
           _selectedCategory == 'Tous' ||
           article.categorie == _selectedCategory;
-      
+
       return searchMatch && categoryMatch;
     }).toList();
   }
@@ -88,9 +95,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     final articles = articleProvider.articles;
     final filteredArticles = _getFilteredArticles(articles);
 
-    final categories = ['Tous']
-      ..addAll(articles.map((a) => a.categorie ?? 'Non catégorisé').toSet().toList()
-        ..removeWhere((c) => c == null));
+    final categories = ['Tous']..addAll(
+      articles.map((a) => a.categorie ?? 'Non catégorisé').toSet().toList()
+        ..removeWhere((c) => c == null),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -98,21 +106,20 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () =>  Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => ArticleFormScreen(
-      article: null, // Pass an existing article if editing, or null for new
-      onSave: (newArticle) async {
-      },
-    ),
-  ),
-)
+            onPressed:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => ArticleFormScreen(
+                          article:
+                              null, // Pass an existing article if editing, or null for new
+                          onSave: (newArticle) async {},
+                        ),
+                  ),
+                ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadArticles,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadArticles),
         ],
       ),
       body: Column(
@@ -126,15 +133,16 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   decoration: InputDecoration(
                     hintText: 'Rechercher...',
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {});
-                            },
-                          )
-                        : null,
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                              },
+                            )
+                            : null,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -144,43 +152,49 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: categories.map((category) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: FilterChip(
-                          label: Text(category),
-                          selected: _selectedCategory == category || 
-                              (category == 'Tous' && _selectedCategory == null),
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedCategory = selected ? 
-                                (category == 'Tous' ? null : category) : null;
-                            });
-                          },
-                        ),
-                      );
-                    }).toList(),
+                    children:
+                        categories.map((category) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: FilterChip(
+                              label: Text(category),
+                              selected:
+                                  _selectedCategory == category ||
+                                  (category == 'Tous' &&
+                                      _selectedCategory == null),
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedCategory =
+                                      selected
+                                          ? (category == 'Tous'
+                                              ? null
+                                              : category)
+                                          : null;
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
                   ),
                 ),
               ],
             ),
           ),
           if (_isLoading)
-            const Expanded(
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_errorMessage != null)
             Expanded(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 50, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      _errorMessage!,
-                      style: const TextStyle(fontSize: 18),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 50,
+                      color: Colors.red,
                     ),
+                    const SizedBox(height: 16),
+                    Text(_errorMessage!, style: const TextStyle(fontSize: 18)),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _loadArticles,
@@ -199,7 +213,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     const Icon(Icons.search_off, size: 50, color: Colors.grey),
                     const SizedBox(height: 16),
                     Text(
-                      _searchController.text.isEmpty && _selectedCategory == null
+                      _searchController.text.isEmpty &&
+                              _selectedCategory == null
                           ? 'Aucun article disponible'
                           : 'Aucun article correspondant aux critères',
                       style: const TextStyle(fontSize: 18),
@@ -228,7 +243,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
   Widget _buildArticleItem(BuildContext context, Article article) {
     return Card(
-      margin:  EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: Container(
           width: 50,
@@ -237,9 +252,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(8),
           ),
-          child: article.image?.isNotEmpty == true
-              ? Image.network(article.image!, fit: BoxFit.cover)
-              : const Icon(Icons.inventory, color: Colors.grey),
+          child:
+              article.image?.isNotEmpty == true
+                  ? Image.network(article.image!, fit: BoxFit.cover)
+                  : const Icon(Icons.inventory, color: Colors.grey),
         ),
         title: Text(article.nomArticle),
         subtitle: Column(
@@ -255,11 +271,15 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
-                        ? Colors.red[50]
-                        : Colors.green[50],
+                    color:
+                        (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
+                            ? Colors.red[50]
+                            : Colors.green[50],
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -267,9 +287,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                         ? 'Stock bas (${article.stock})'
                         : 'En stock (${article.stock})',
                     style: TextStyle(
-                      color: (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
-                          ? Colors.red
-                          : Colors.green[700],
+                      color:
+                          (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
+                              ? Colors.red
+                              : Colors.green[700],
                     ),
                   ),
                 ),
@@ -295,7 +316,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 class ArticleDetailBottomSheet extends StatelessWidget {
   final Article article;
 
-  const ArticleDetailBottomSheet({Key? key, required this.article}) : super(key: key);
+  const ArticleDetailBottomSheet({Key? key, required this.article})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -327,9 +349,14 @@ class ArticleDetailBottomSheet extends StatelessWidget {
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: article.image?.isNotEmpty == true
-                      ? Image.network(article.image!, fit: BoxFit.cover)
-                      : const Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
+                  child:
+                      article.image?.isNotEmpty == true
+                          ? Image.network(article.image!, fit: BoxFit.cover)
+                          : const Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -355,9 +382,10 @@ class ArticleDetailBottomSheet extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
-                              ? Colors.red[50]
-                              : Colors.green[50],
+                          color:
+                              (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
+                                  ? Colors.red[50]
+                                  : Colors.green[50],
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -365,9 +393,11 @@ class ArticleDetailBottomSheet extends StatelessWidget {
                               ? 'Stock bas: ${article.stock}'
                               : 'En stock: ${article.stock}',
                           style: TextStyle(
-                            color: (article.stock ?? 0) <= (article.seuilAlerte ?? 0)
-                                ? Colors.red
-                                : Colors.green[700],
+                            color:
+                                (article.stock ?? 0) <=
+                                        (article.seuilAlerte ?? 0)
+                                    ? Colors.red
+                                    : Colors.green[700],
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -382,34 +412,31 @@ class ArticleDetailBottomSheet extends StatelessWidget {
             _buildDetailRow('Catégorie', article.categorie ?? 'Non spécifiée'),
             _buildDetailRow('Type', article.type ?? 'Non spécifié'),
             _buildDetailRow(
-              'Prix d\'achat', 
+              'Prix d\'achat',
               '${article.prixAchat?.toStringAsFixed(2) ?? '0.00'} €',
             ),
             _buildDetailRow(
-              'Prix de vente', 
+              'Prix de vente',
               '${article.prixVente?.toStringAsFixed(2) ?? '0.00'} €',
             ),
             _buildDetailRow(
-              'Marge', 
+              'Marge',
               '${article.tauxMarge?.toStringAsFixed(2) ?? '0.00'}%',
             ),
             _buildDetailRow(
-              'Seuil d\'alerte', 
+              'Seuil d\'alerte',
               article.seuilAlerte?.toString() ?? '0',
             ),
             _buildDetailRow(
-              'Date d\'ajout', 
-              article.dateAjout != null 
-                ? DateFormat('dd/MM/yyyy').format(article.dateAjout!)
-                : 'Date inconnue',
+              'Date d\'ajout',
+              article.dateAjout != null
+                  ? DateFormat('dd/MM/yyyy').format(article.dateAjout!)
+                  : 'Date inconnue',
             ),
             const SizedBox(height: 16),
             const Text(
               'Description',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
@@ -417,9 +444,10 @@ class ArticleDetailBottomSheet extends StatelessWidget {
                   ? article.description!
                   : 'Aucune description disponible',
               style: TextStyle(
-                color: article.description?.isNotEmpty == true 
-                  ? null 
-                  : Colors.grey,
+                color:
+                    article.description?.isNotEmpty == true
+                        ? null
+                        : Colors.grey,
               ),
             ),
             const SizedBox(height: 24),
@@ -429,16 +457,17 @@ class ArticleDetailBottomSheet extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                       Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => ArticleFormScreen(
-      article: null, // Pass an existing article if editing, or null for new
-      onSave: (newArticle) async {
-      },
-    ),
-  ),
-);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ArticleFormScreen(
+                                article:
+                                    article, // Pass an existing article if editing, or null for new
+                                onSave: (newArticle) async {},
+                              ),
+                        ),
+                      );
                     },
                     child: const Text('MODIFIER'),
                   ),
@@ -450,7 +479,10 @@ class ArticleDetailBottomSheet extends StatelessWidget {
                       backgroundColor: Colors.red,
                     ),
                     onPressed: () => _confirmDelete(context),
-                    child: const Text('SUPPRIMER', style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'SUPPRIMER',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -492,36 +524,45 @@ class ArticleDetailBottomSheet extends StatelessWidget {
     Navigator.pop(context);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmer la suppression'),
-        content: const Text('Voulez-vous vraiment supprimer cet article ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ANNULER'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Confirmer la suppression'),
+            content: const Text('Voulez-vous vraiment supprimer cet article ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ANNULER'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    final provider = Provider.of<ArticleProvider>(
+                      context,
+                      listen: false,
+                    );
+                    await provider.deleteArticle(article.id!);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Article supprimé avec succès'),
+                      ),
+                    );
+                    // Rafraîchir la liste après suppression
+                    provider.loadArticles();
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: ${e.toString()}')),
+                    );
+                  }
+                },
+                child: const Text(
+                  'SUPPRIMER',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              try {
-                final provider = Provider.of<ArticleProvider>(context, listen: false);
-                await provider.deleteArticle(article.id!);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Article supprimé avec succès')),
-                );
-                // Rafraîchir la liste après suppression
-                provider.loadArticles();
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Erreur: ${e.toString()}')),
-                );
-              }
-            },
-            child: const Text('SUPPRIMER', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 }
