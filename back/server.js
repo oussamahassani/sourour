@@ -15,7 +15,7 @@ const PaymentRoute = require('./routes/paiementsRoutes')
 const InterventionReportRoute = require('./routes/interventionsRoutes')
 const VenteeRoute = require('./routes/venteRoutes')
 const dashboardRoutes = require("./routes/dashboard/dashboard.routes");
-
+const factureRoutes  = require("./routes/factureRoutes")
 const initPermissions = require("./initPermission");
 
 const cors = require('cors');
@@ -58,6 +58,9 @@ app.use('/admin', AdminRouter);
 app.use('/user', UserRouter);
 app.use('/', ClientRoute);
 app.use('/', fournisseurtRoute);
+app.use('/', factureRoutes);
+
+
 app.use('/product', produittRoute);
 app.use("/achat", achatRoute)
 app.use("/payment", PaymentRoute)

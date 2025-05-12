@@ -46,7 +46,6 @@ const ClientSchema = new mongoose.Schema({
   },
   cin: {
     type: String,
-    required: true
   },
   commercial_assigne: {
     type: mongoose.Schema.Types.ObjectId,

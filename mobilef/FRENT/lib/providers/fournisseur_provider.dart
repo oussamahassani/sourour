@@ -9,7 +9,8 @@ class FournisseurProvider with ChangeNotifier {
   String? _error;
   bool _hasLoaded = false;
 
-  FournisseurProvider({required FournisseurService service}) : _service = service;
+  FournisseurProvider({required FournisseurService service})
+    : _service = service;
 
   // Getter pour exposer les données
   List<Fournisseur> get fournisseurs => List.unmodifiable(_fournisseurs);
@@ -29,6 +30,7 @@ class FournisseurProvider with ChangeNotifier {
     _setLoading(true);
     try {
       final fetched = await _service.getFournisseurs();
+      print(fetched);
       _fournisseurs = fetched;
       _hasLoaded = true;
       _clearError();
@@ -60,7 +62,8 @@ class FournisseurProvider with ChangeNotifier {
     _setLoading(true);
     try {
       final updated = await _service.updateFournisseur(id, fournisseur);
-      _fournisseurs = _fournisseurs.map((f) => f.id == id ? updated : f).toList();
+      _fournisseurs =
+          _fournisseurs.map((f) => f.id == id ? updated : f).toList();
       _clearError();
       return true;
     } catch (e) {
@@ -136,7 +139,5 @@ class FournisseurProvider with ChangeNotifier {
     }
   }
 
-  updateService(FournisseurService service) {
-    
-  }
+  updateService(FournisseurService service) {}
 }

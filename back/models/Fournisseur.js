@@ -30,7 +30,7 @@ const fournisseurSchema = new mongoose.Schema({
     date_creation: { type: Date, default: Date.now },
     
     // Évaluation du fournisseur
-    evaluation: { type: Number, min: 0, max: 5 },
+    evaluation: { type: Number, min: 0, max: 10 },
     
     // Notes supplémentaires sur le fournisseur
     notes: { type: String },

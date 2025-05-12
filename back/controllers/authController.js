@@ -3,6 +3,7 @@ const Role = require('../models/Role');
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const {sendCompteCreationConfirmationEmail} = require('../utils/emiling')
 
 // Inscription
 exports.signup = async (req, res) => {
@@ -26,7 +27,7 @@ exports.signup = async (req, res) => {
       role,
     });
     await user.save();
-
+    const sendmail = await sendCompteCreationConfirmationEmail(email,user,motDePasse)
     const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });

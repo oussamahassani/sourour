@@ -1,8 +1,59 @@
 const mongoose = require("mongoose");
 const SaleInvoice = require("../../models/Achat");
+const BaysInvoice = require("../../models/Vente");
 const User = require("../../models/User");
 const Customer = require("../../models/Client");
 
+const getDashboardMobileData = async (req, res) => {
+  const totalTTcAchat = await SaleInvoice.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalPrixTTC: { $sum: "$prix_ttc" }
+      }
+    }
+  ])
+  const totalTvaAchat = await SaleInvoice.aggregate([
+    {
+      $group: {
+        _id: null,
+        tva: { $sum: "$TVA" }
+      }
+    }
+  ])
+  const totalTvaBys =  await SaleInvoice.aggregate([
+    {
+      $group: {
+        _id: null,
+        tva: { $sum: "$TVA" }
+      }
+    }
+  ])
+  const totalTTcBayes = await BaysInvoice.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalPrixTTC: { $sum: "$prix_ttc" }
+      }
+    }
+  ])
+let data = {}
+if(totalTTcAchat && totalTTcAchat.length> 0){
+  data.totalTTcAchat = totalTTcAchat[0].totalPrixTTC
+}
+if(totalTTcBayes && totalTTcBayes.length> 0){
+  data.totalTTcVente = totalTTcBayes[0].totalPrixTTC
+}
+let sumTva = 0
+if(totalTvaBys && totalTvaBys.length> 0){
+  sumTva = totalTvaBys[0].tva
+}
+if(totalTvaAchat && totalTvaAchat.length> 0){
+  sumTva += totalTvaAchat[0].tva
+}
+data.sumTva = sumTva;
+  res.json(data);
+}
 const getDashboardData = async (req, res) => {
   try {
     const startDate = new Date(req.query.startdate);
@@ -114,4 +165,4 @@ const getDashboardData = async (req, res) => {
   }
 };
 
-module.exports = { getDashboardData };
+module.exports = { getDashboardData,getDashboardMobileData };

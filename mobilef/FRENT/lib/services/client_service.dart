@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 import '../models/Client.dart';
+import '../models/Dashbord.dart';
 
 class ClientService {
   static const String _baseUrl = '${AppConfig.baseUrl}/clients';
@@ -16,24 +17,44 @@ class ClientService {
     };
   }
 
+  static Future<Dashbord> fetchDashbordData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConfig.baseUrl}/dashboard/mobile'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        final rawData =
+            decodedData is Map
+                ? decodedData
+                : {"totalPrixTTC": 0, "totalTTcVente": 0};
+
+        return Dashbord.fromJson(rawData);
+      } else {
+        throw Exception('Erreur serveur: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('[ERROR fetchClients] $e');
+      throw Exception('Erreur réseau: ${e.toString()}');
+    }
+  }
+
   // Récupérer tous les clients
   static Future<List<Client>> fetchClients() async {
     try {
-      final response = await http.get(
-        Uri.parse(_baseUrl),
-        headers: _headers,
-      );
+      final response = await http.get(Uri.parse(_baseUrl), headers: _headers);
 
       print('[GET Clients] Status: ${response.statusCode}');
       print('[GET Clients] Response: ${response.body}');
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
-       final rawList =   decodedData is List ? decodedData : decodedData['clients'] ?? [];
+        final rawList =
+            decodedData is List ? decodedData : decodedData['clients'] ?? [];
 
-          return rawList
-        .map<Client>((json) => Client.fromJson(json))
-        .toList();
+        return rawList.map<Client>((json) => Client.fromJson(json)).toList();
       } else {
         throw Exception(
           'Échec du chargement (${response.statusCode}): ${response.body}',
@@ -70,7 +91,10 @@ class ClientService {
     }
   }
 
-  static Future<Map> updateClient(String id, Map<String, dynamic> clientData) async {
+  static Future<Map> updateClient(
+    String id,
+    Map<String, dynamic> clientData,
+  ) async {
     try {
       // Filtrage des champs autorisés
       final allowedKeys = [
@@ -85,15 +109,17 @@ class ClientService {
         'isActive',
         'entreprise',
         'matricule',
-        'cin'
+        'cin',
       ];
 
       final filteredClientData = Map.fromEntries(
-        clientData.entries.where((e) => allowedKeys.contains(e.key))
+        clientData.entries.where((e) => allowedKeys.contains(e.key)),
       );
 
-      print('Envoi des données de mise à jour : ${json.encode(filteredClientData)}');
-    
+      print(
+        'Envoi des données de mise à jour : ${json.encode(filteredClientData)}',
+      );
+
       final response = await http.put(
         Uri.parse('$_baseUrl/$id'),
         headers: _headers,
@@ -124,7 +150,7 @@ class ClientService {
   static Future<bool> deleteClient(String id) async {
     try {
       print('[DELETE Client] ID: $id'); // Log supplémentaire
-    
+
       final response = await http.delete(
         Uri.parse('$_baseUrl/$id'),
         headers: _headers,

@@ -15,6 +15,8 @@ import 'factureAchat.dart';
 import 'factureVente.dart';
 import 'paiementVente.dart';
 import 'employe.dart';
+import '../services/client_service.dart';
+import '../models/Dashbord.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -30,7 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final Color cardColor = Colors.white;
   final Color textColor = Color(0xFF2D3748);
   final Color textSecondaryColor = Color(0xFF718096);
-  
+
   get client => null;
 
   @override
@@ -49,10 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.notifications_outlined),
             onPressed: () {},
           ),
-          IconButton(
-            icon: Icon(Icons.person_outline),
-            onPressed: () {},
-          ),
+          IconButton(icon: Icon(Icons.person_outline), onPressed: () {}),
         ],
       ),
       drawer: _buildDrawer(),
@@ -121,6 +120,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    fetchDashbordData();
+  }
+
+  Dashbord dummyData = Dashbord(
+    totalPrixTTC: "0",
+    totalTTcVente: "0",
+    sumTva: "0",
+  );
+  Future<void> fetchDashbordData() async {
+    final dataDash =
+        await ClientService.fetchDashbordData(); // Doit renvoyer un Future<List<Employee>>
+    setState(() {
+      dummyData = dataDash;
+    });
+  }
+
   Widget _buildDrawer() {
     return Drawer(
       child: Container(
@@ -171,134 +189,159 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-            _buildExpansionTile(
-              'Achat',
-              Icons.shopping_cart_outlined,
-              [
-                _buildDrawerItem('Achat Direct', () {Navigator.push(
+            _buildExpansionTile('Achat', Icons.shopping_cart_outlined, [
+              _buildDrawerItem('Achat Direct', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AchatDirectMobileScreen()),
-                );}),
-                _buildDrawerItem('Bon de Commande', () {Navigator.push(
+                  MaterialPageRoute(
+                    builder: (context) => AchatDirectMobileScreen(),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Bon de Commande', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BonDeCommandeScreen()),
-                );}),
-                _buildDrawerItem('Bon de Reception', () {Navigator.push(
+                  MaterialPageRoute(
+                    builder: (context) => BonDeCommandeScreen(),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Bon de Reception', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BonDeReceptionScreen()),
-                );}),
-                _buildDrawerItem('Facture', () {Navigator.push(
+                  MaterialPageRoute(
+                    builder: (context) => BonDeReceptionScreen(),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Facture', () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => FactureScreen1()),
-                );}),
-                _buildDrawerItem('Paiement', () {}),
-              ],
-            ),
-            _buildExpansionTile(
-              'Vente',
-              Icons.store_outlined,
-              [
-                _buildDrawerItem('Devis', () {Navigator.push(
+                );
+              }),
+              _buildDrawerItem('Paiement', () {}),
+            ]),
+            _buildExpansionTile('Vente', Icons.store_outlined, [
+              _buildDrawerItem('Devis', () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => DevisMobileScreen()),
-                );}),
-                _buildDrawerItem('Bon de Commande', () {Navigator.push(
+                );
+              }),
+              _buildDrawerItem('Bon de Commande', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BonCommandeMobileScreen()),
-                );}),
-                _buildDrawerItem('Bon de Livraison', ()  {Navigator.push(
+                  MaterialPageRoute(
+                    builder: (context) => BonCommandeMobileScreen(),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Bon de Livraison', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => BonLivraisonMobileScreen()),
-                );}),
-                _buildDrawerItem('Bon de Sortie', () {Navigator.push(
+                  MaterialPageRoute(
+                    builder: (context) => BonLivraisonMobileScreen(),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Bon de Sortie', () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => BonSortiePage()),
-                );}),
-                _buildDrawerItem('Bon de Transfert', () {Navigator.push(
+                );
+              }),
+              _buildDrawerItem('Bon de Transfert', () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => BonTransfertPage()),
-                );}),
-                _buildDrawerItem('Facture', () {Navigator.push(
+                );
+              }),
+              _buildDrawerItem('Facture', () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => FactureScreen()),
-                );}),
-                _buildDrawerItem('Paiement', () {Navigator.push(
+                );
+              }),
+              _buildDrawerItem('Paiement', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => FormulaireVenteScreen()),
-                );}),
-              ],
-            ),
-            _buildExpansionTile(
-              'Contact',
-              Icons.people_outline,
-              [
-                _buildDrawerItem('Clients', () {Navigator.push(
+                  MaterialPageRoute(
+                    builder: (context) => FormulaireVenteScreen(),
+                  ),
+                );
+              }),
+            ]),
+            _buildExpansionTile('Contact', Icons.people_outline, [
+              _buildDrawerItem('Clients', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Client( clientData: {}, clientId: null),
-            ));}),
-                _buildDrawerItem('Fournisseurs', () {  Navigator.push(
+                  MaterialPageRoute(
+                    builder:
+                        (context) => Client(clientData: {}, clientId: null),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Fournisseurs', () {
+                Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => FournisseurScreen(fournisseurData: {})),
-                );}),
-              ],
-            ),
-            _buildExpansionTile(
-              'Finance',
-              Icons.account_balance_outlined,
-              [
-                _buildDrawerItem('Statut Financier', () {}),
-                _buildDrawerItem('Comptes', () {}),
-              ],
-            ),
-            _buildExpansionTile(
-              'Stock',
-              Icons.inventory_2_outlined,
-              [
-                _buildDrawerItem('Articles', () {Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => ArticleFormScreen(
-      article: null, // Pass an existing article if editing, or null for new
-      onSave: (newArticle) async {
-      },
-    ),
-  ),
-);}),
-                _buildDrawerItem('Stock Disponible', () {}),
-                _buildDrawerItem('Mouvement de Stock', () {}),
-              ],
-            ),
-            _buildExpansionTile(
-              'Technique',
-              Icons.build_outlined,
-              [
-                _buildDrawerItem('Intervention', () {}),
-                _buildDrawerItem('Rapport d\'Intervention', () {}),
-                _buildDrawerItem('Historique', () {}),
-              ],
-            ),
+                  MaterialPageRoute(
+                    builder:
+                        (context) => FournisseurScreen(fournisseurData: {}),
+                  ),
+                );
+              }),
+            ]),
+            _buildExpansionTile('Finance', Icons.account_balance_outlined, [
+              _buildDrawerItem('Statut Financier', () {}),
+              _buildDrawerItem('Comptes', () {}),
+            ]),
+            _buildExpansionTile('Stock', Icons.inventory_2_outlined, [
+              _buildDrawerItem('Articles', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => ArticleFormScreen(
+                          article:
+                              null, // Pass an existing article if editing, or null for new
+                          onSave: (newArticle) async {},
+                        ),
+                  ),
+                );
+              }),
+              _buildDrawerItem('Stock Disponible', () {}),
+              _buildDrawerItem('Mouvement de Stock', () {}),
+            ]),
+            _buildExpansionTile('Technique', Icons.build_outlined, [
+              _buildDrawerItem('Intervention', () {}),
+              _buildDrawerItem('Rapport d\'Intervention', () {}),
+              _buildDrawerItem('Historique', () {}),
+            ]),
             _buildExpansionTile(
               'Ressources Humaines',
               Icons.people_alt_outlined,
               [
                 _buildDrawerItem('Création Compte Employé', () {
-      Navigator.pop(context); // Close the drawer first
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => EmployeeManagementApp()),
-      );
-    }),
-                 _buildDrawerItem('Utilisateurs', () {
-      Navigator.pop(context); // Close the drawer first
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => EmployeeManagementApp()),
-      );
-    }),
+                  Navigator.pop(context); // Close the drawer first
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EmployeeManagementApp(),
+                    ),
+                  );
+                }),
+                _buildDrawerItem('Utilisateurs', () {
+                  Navigator.pop(context); // Close the drawer first
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EmployeeManagementApp(),
+                    ),
+                  );
+                }),
               ],
             ),
-         
-           
           ],
         ),
       ),
@@ -312,7 +355,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Color? color,
   }) {
     return ListTile(
-      leading: icon != null ? Icon(icon, color: color ?? textSecondaryColor) : null,
+      leading:
+          icon != null ? Icon(icon, color: color ?? textSecondaryColor) : null,
       title: Text(
         title,
         style: TextStyle(
@@ -362,9 +406,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildDashboardCard(String title, String subtitle, IconData icon) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: cardColor,
       shadowColor: Colors.black12,
       child: Padding(
@@ -417,11 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward,
-                  size: 16,
-                  color: primaryColor,
-                ),
+                Icon(Icons.arrow_forward, size: 16, color: primaryColor),
               ],
             ),
           ],
@@ -433,9 +471,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildActivityCard() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -502,7 +538,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String time,
   ) {
     return Padding(
-      padding:  EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
           Container(
@@ -528,10 +564,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: textSecondaryColor,
-                  ),
+                  style: TextStyle(fontSize: 12, color: textSecondaryColor),
                 ),
               ],
             ),
@@ -541,18 +574,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 amount,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: iconColor,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, color: iconColor),
               ),
               SizedBox(height: 4),
               Text(
                 time,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textSecondaryColor,
-                ),
+                style: TextStyle(fontSize: 12, color: textSecondaryColor),
               ),
             ],
           ),

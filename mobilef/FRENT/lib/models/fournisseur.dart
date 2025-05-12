@@ -50,29 +50,34 @@ class Fournisseur {
       return Fournisseur(
         id: json['_id']?.toString(),
         type: json['type']?.toString() ?? 'Personne',
-        nom: json['nom']?.toString(),
-        prenom: json['prenom']?.toString(),
+        nom: json['nomF']?.toString(),
+        prenom: json['prenomF']?.toString(),
         entreprise: json['entreprise']?.toString(),
         matricule: json['matricule']?.toString(),
         adresse: json['adresse']?.toString() ?? '',
         email: json['email']?.toString() ?? '',
         telephone: json['telephone']?.toString() ?? '',
         evaluation: (json['evaluation'] as num?)?.toInt() ?? 0,
-        delaiLivraisonMoyen: (json['delaiLivraisonMoyen'] as num?)?.toInt() ?? 0,
+        delaiLivraisonMoyen:
+            (json['delaiLivraisonMoyen'] as num?)?.toInt() ?? 0,
         conditionsPaiement: json['conditionsPaiement']?.toString(),
         notes: json['notes']?.toString(),
-        dateCreation: DateTime.parse(json['dateCreation']?.toString() ?? DateTime.now().toIso8601String()),
+        dateCreation: DateTime.parse(
+          json['dateCreation']?.toString() ?? DateTime.now().toIso8601String(),
+        ),
       );
     } catch (e) {
-      throw FormatException("Erreur lors de la conversion JSON en Fournisseur: ${e.toString()}");
+      throw FormatException(
+        "Erreur lors de la conversion JSON en Fournisseur: ${e.toString()}",
+      );
     }
   }
 
   Map<String, dynamic> toJson() => {
     if (id != null) '_id': id,
     'type': type,
-    'nom': nom,
-    'prenom': prenom,
+    'nomF': nom,
+    'prenomF': prenom,
     'entreprise': entreprise,
     'matricule': matricule,
     'adresse': adresse,
@@ -85,9 +90,15 @@ class Fournisseur {
     'dateCreation': dateCreation.toIso8601String(),
   };
 
-  String get displayName => type == 'Entreprise' 
-      ? entreprise?.isNotEmpty == true ? entreprise! : 'Nom d\'entreprise non spécifié'
-      : [prenom?.trim(), nom?.trim()].where((n) => n?.isNotEmpty == true).join(' ').trim();
+  String get displayName =>
+      type == 'Entreprise'
+          ? entreprise?.isNotEmpty == true
+              ? entreprise!
+              : 'Nom d\'entreprise non spécifié'
+          : [
+            prenom?.trim(),
+            nom?.trim(),
+          ].where((n) => n?.isNotEmpty == true).join(' ').trim();
 
   bool get isEntreprise => type == 'Entreprise';
 
@@ -175,24 +186,39 @@ class Fournisseur {
   // Méthode pour éviter les NoSuchMethodError
   dynamic safeGet(String property) {
     switch (property) {
-      case 'id': return id;
-      case 'type': return type;
-      case 'nom': return nom;
-      case 'prenom': return prenom;
-      case 'entreprise': return entreprise;
-      case 'matricule': return matricule;
-      case 'adresse': return adresse;
-      case 'email': return email;
-      case 'telephone': return telephone;
-      case 'evaluation': return evaluation;
-      case 'delaiLivraisonMoyen': return delaiLivraisonMoyen;
-      case 'conditionsPaiement': return conditionsPaiement;
-      case 'notes': return notes;
-      case 'dateCreation': return dateCreation;
-      default: throw ArgumentError('Propriété non reconnue: $property');
+      case 'id':
+        return id;
+      case 'type':
+        return type;
+      case 'nom':
+        return nom;
+      case 'prenom':
+        return prenom;
+      case 'entreprise':
+        return entreprise;
+      case 'matricule':
+        return matricule;
+      case 'adresse':
+        return adresse;
+      case 'email':
+        return email;
+      case 'telephone':
+        return telephone;
+      case 'evaluation':
+        return evaluation;
+      case 'delaiLivraisonMoyen':
+        return delaiLivraisonMoyen;
+      case 'conditionsPaiement':
+        return conditionsPaiement;
+      case 'notes':
+        return notes;
+      case 'dateCreation':
+        return dateCreation;
+      default:
+        throw ArgumentError('Propriété non reconnue: $property');
     }
   }
- 
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
