@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frent/screens/bonCommandeVente.dart';
 import '../models/article.dart';
 import '../screens/fournisseur/fournisseur.dart';
+import 'CompteFin.dart';
 import 'achat_direct.dart';
 import 'bonCommandeAchat.dart';
 import 'bonLivraison.dart';
@@ -13,10 +14,14 @@ import 'article.dart';
 import 'devis.dart';
 import 'factureAchat.dart';
 import 'factureVente.dart';
+import 'finance.dart';
+import 'intervention.dart';
 import 'paiementVente.dart';
 import 'employe.dart';
 import '../services/client_service.dart';
 import '../models/Dashbord.dart';
+import 'planing_intervention.dart';
+import 'rapoort_intervention.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -283,12 +288,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _buildExpansionTile('Contact', Icons.people_outline, [
               _buildDrawerItem('Clients', () {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => Client(clientData: {}, clientId: null),
-                  ),
-                );
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Client(),
+                    ),
+                  );
               }),
               _buildDrawerItem('Fournisseurs', () {
                 Navigator.push(
