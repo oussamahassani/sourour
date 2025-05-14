@@ -1,138 +1,200 @@
-const Intervention = require('../models/Interventions');
-const InterventionRepport = require('../models/Rapportintervention');
+const Intervention = require('../models/Intervention');
+const Client = require('../models/Client');
 
-// Ajouter une intervention
-exports.ajouterInterventionRepport= async (req, res) => {
+// @desc    Get all interventions
+// @route   GET /api/interventions
+// @access  Public
+exports.getInterventions = async (req, res) => {
   try {
-
-    // Créer une nouvelle InterventionRepport
-    const intervention = new InterventionRepport(req.body);
-
-    // Sauvegarder l'intervention dans la base de données
-    await intervention.save();
-    res.status(201).json({ message: "Intervention report ajoutée avec succès", intervention });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de l'ajout de l'intervention" });
-  }
-}
-exports.getoneInterventionRepport = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const intervention = await InterventionRepport.findById(id )
-   
-
-  
-    res.status(200).json({ message: "Intervention mise à jour avec succès", intervention });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de la mise à jour de l'intervention" });
+    const { isCompleted } = req.query;
+    let query = {};
+    
+    if (isCompleted) {
+      query.isCompleted = isCompleted === 'true';
+    }
+    
+    const interventions = await Intervention.find(query)
+      .sort({ date: 1, 'time.hour': 1, 'time.minute': 1 })
+      .populate('clientId', 'name phone email');
+      
+    res.json(interventions);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 };
-exports.mettreAJourInterventionRepport = async (req, res) => {
+
+// @desc    Get single intervention
+// @route   GET /api/interventions/:id
+// @access  Public
+exports.getIntervention = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const intervention = await InterventionRepport.findByIdAndUpdate(id,req.body )
-   
-
-  
-    res.status(200).json({ message: "Intervention mise à jour avec succès", intervention });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de la mise à jour de l'intervention" });
+    const intervention = await Intervention.findById(req.params.id)
+      .populate('clientId', 'name phone email');
+      
+    if (!intervention) {
+      return res.status(404).json({ msg: 'Intervention not found' });
+    }
+    
+    res.json(intervention);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Intervention not found' });
+    }
+    res.status(500).send('Server Error');
   }
 };
-exports.listeInterventionRepport= async (req, res) => {
-  try {
-    const interventions = await InterventionRepport.find();
-    res.status(200).json(interventions);
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de la récupération des interventions" });
-  }
-};
-exports.ajouterIntervention = async (req, res) => {
-  try {
-    const { idPL, date_intervention, description, statut, rapport_intervention, duree_reelle, id_technicien, signature_client, commentaires_client } = req.body;
 
-    // Créer une nouvelle intervention
-    const intervention = new Intervention({
-      idPL,
-      date_intervention,
-      description,
-      statut,
-      rapport_intervention,
-      duree_reelle,
-      id_technicien,
-      signature_client,
-      commentaires_client
+// @desc    Create an intervention
+// @route   POST /api/interventions
+// @access  Public
+exports.createIntervention = async (req, res) => {
+  const {
+    clientId,
+    referenceNumber,
+    date,
+    time,
+    interventionType,
+    estimatedDuration,
+    technicianName,
+    technicianAddress,
+    notes
+  } = req.body;
+
+  try {
+    // Get client info
+    const client = await Client.findById(clientId);
+    if (!client) {
+      return res.status(404).json({ msg: 'Client not found' });
+    }
+
+    const newIntervention = new Intervention({
+      clientId,
+      clientName: client.name,
+      address: client.address,
+      phone: client.phone,
+      email: client.email,
+      referenceNumber,
+      date,
+      time,
+      interventionType,
+      estimatedDuration,
+      technicianName,
+      technicianAddress,
+      notes,
+      isCompleted: false
     });
 
-    // Sauvegarder l'intervention dans la base de données
-    await intervention.save();
-    res.status(201).json({ message: "Intervention ajoutée avec succès", intervention });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de l'ajout de l'intervention" });
+    const intervention = await newIntervention.save();
+    res.json(intervention);
+  } catch (err) {
+    console.error(err.message);
+    if (err.code === 11000) {
+      return res.status(400).json({ msg: 'Reference number must be unique' });
+    }
+    res.status(500).send('Server Error');
   }
 };
 
-// Lister toutes les interventions
-exports.listeInterventions = async (req, res) => {
-  try {
-    const interventions = await Intervention.find();
-    res.status(200).json({ interventions });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de la récupération des interventions" });
-  }
-};
+// @desc    Update intervention
+// @route   PUT /api/interventions/:id
+// @access  Public
+exports.updateIntervention = async (req, res) => {
+  const {
+    referenceNumber,
+    date,
+    time,
+    interventionType,
+    estimatedDuration,
+    actualDuration,
+    technicianName,
+    technicianAddress,
+    isCompleted,
+    notes
+  } = req.body;
 
-// Mettre à jour une intervention
-exports.mettreAJourIntervention = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { idPL, date_intervention, description, statut, rapport_intervention, duree_reelle, id_technicien, signature_client, commentaires_client } = req.body;
-
-    const intervention = await Intervention.findByIdAndUpdate(id, {
-      idPL,
-      date_intervention,
-      description,
-      statut,
-      rapport_intervention,
-      duree_reelle,
-      id_technicien,
-      signature_client,
-      commentaires_client
-    }, { new: true });
+    let intervention = await Intervention.findById(req.params.id);
 
     if (!intervention) {
-      return res.status(404).json({ message: "Intervention non trouvée" });
+      return res.status(404).json({ msg: 'Intervention not found' });
     }
 
-    res.status(200).json({ message: "Intervention mise à jour avec succès", intervention });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de la mise à jour de l'intervention" });
+    const interventionFields = {
+      referenceNumber,
+      date,
+      time,
+      interventionType,
+      estimatedDuration,
+      actualDuration,
+      technicianName,
+      technicianAddress,
+      isCompleted,
+      notes
+    };
+
+    intervention = await Intervention.findByIdAndUpdate(
+      req.params.id,
+      { $set: interventionFields },
+      { new: true }
+    );
+
+    res.json(intervention);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Intervention not found' });
+    }
+    res.status(500).send('Server Error');
   }
 };
 
-// Supprimer une intervention
-exports.supprimerIntervention = async (req, res) => {
+// @desc    Delete intervention
+// @route   DELETE /api/interventions/:id
+// @access  Public
+exports.deleteIntervention = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const intervention = await Intervention.findByIdAndDelete(id);
+    const intervention = await Intervention.findById(req.params.id);
 
     if (!intervention) {
-      return res.status(404).json({ message: "Intervention non trouvée" });
+      return res.status(404).json({ msg: 'Intervention not found' });
     }
 
-    res.status(204).send(); // No content
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: "Erreur lors de la suppression de l'intervention" });
+    await intervention.remove();
+    res.json({ msg: 'Intervention removed' });
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Intervention not found' });
+    }
+    res.status(500).send('Server Error');
+  }
+};
+
+// @desc    Mark intervention as completed
+// @route   PUT /api/interventions/:id/complete
+// @access  Public
+exports.markAsCompleted = async (req, res) => {
+  try {
+    let intervention = await Intervention.findById(req.params.id);
+
+    if (!intervention) {
+      return res.status(404).json({ msg: 'Intervention not found' });
+    }
+
+    intervention = await Intervention.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isCompleted: true } },
+      { new: true }
+    );
+
+    res.json(intervention);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Intervention not found' });
+    }
+    res.status(500).send('Server Error');
   }
 };
