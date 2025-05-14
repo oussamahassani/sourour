@@ -1,0 +1,39 @@
+const express = require('express');
+const router = express.Router();
+const bonCommandeController = require('../controllers/bonCventeController');
+const multer = require('multer');
+const path = require('path');
+
+// Configuration de Multer pour l'upload d'images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../uploads/'));
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'bon-commande-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
+
+// CRUD des bons de commande
+router.route('/')
+  .get(bonCommandeController.getAllBonCommandes) // Lister tous les bons de commande
+  .post(bonCommandeController.createBonCommande); // Créer un bon de commande (méthode complète)
+
+// Route spéciale pour la méthode rapide (avec upload d'image)
+router.post('/rapide', upload.single('image'), bonCommandeController.createBonCommandeRapide);
+
+// Routes pour un bon de commande spécifique
+router.route('/:id')
+  .get(bonCommandeController.getBonCommandeById) // Obtenir un bon de commande par ID
+  .delete(bonCommandeController.deleteBonCommande); // Supprimer un bon de commande
+
+// Mettre à jour le statut d'un bon de commande
+router.put('/:id/statut', bonCommandeController.updateStatut);
+
+// Générer un PDF pour un bon de commande
+router.get('/:id/pdf', bonCommandeController.generatePdf);
+
+module.exports = router;
