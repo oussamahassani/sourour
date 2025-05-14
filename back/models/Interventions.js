@@ -18,7 +18,7 @@ const InterventionSchema = new mongoose.Schema({
     statut: { type: String, required: true },
     
     // Rapport détaillé de l'intervention
-    rapport_intervention: { type: String },
+    rapport_intervention: { type: String }, 
     
     // Durée réelle de l'intervention en heures
     duree_reelle: { type: Number },
