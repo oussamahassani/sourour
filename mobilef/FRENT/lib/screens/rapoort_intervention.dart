@@ -1274,7 +1274,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
                         );
                       },
                     ),
-            ),
+            ),  
           ],
         ),
       ),
