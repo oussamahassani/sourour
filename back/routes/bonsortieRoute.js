@@ -1,20 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const bonSortieController = require('../controllers/bonSortie.controller');
+const bonSortieController = require('../controllers/bonSortieController');
 
-// Ajouter un bon de sortie
-router.post('/bon-sortie', bonSortieController.ajouterBonSortie);
+// Apply auth middleware to all routes
 
-// Lister tous les bons de sortie
-router.get('/bon-sortie', bonSortieController.listerBonsSortie);
-
-// Récupérer un bon de sortie par ID
-router.get('/bon-sortie/:id', bonSortieController.getBonSortieById);
-
-// Modifier un bon de sortie
-router.put('/bon-sortie/:id', bonSortieController.modifierBonSortie);
-
-// Supprimer un bon de sortie
-router.delete('/bon-sortie/:id', bonSortieController.supprimerBonSortie);
+// Bon de Sortie routes
+router.post('/', bonSortieController.createBonSortie);
+router.get('/', bonSortieController.getAllBonSortie);
+router.get('/:id', bonSortieController.getBonSortieById);
+router.put('/:id', bonSortieController.updateBonSortie);
+router.patch('/:id/validate', bonSortieController.validateBonSortie);
+router.patch('/:id/cancel', bonSortieController.cancelBonSortie);
+router.get('/:id/pdf', bonSortieController.generatePdf);
 
 module.exports = router;
