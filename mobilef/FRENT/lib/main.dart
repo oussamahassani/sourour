@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:nested/nested.dart';
 
-import 'providers/achat_provider.dart';
 import 'providers/devis_provider.dart';
 import 'providers/fournisseur_provider.dart';
 import 'providers/client_provider.dart';
@@ -90,10 +89,7 @@ providers: <SingleChildWidget>[
     ),
   ),
   
- ChangeNotifierProvider(
-  create: (context) => AchatDirectProvider(),
-  child: AchatDirectMobileScreen(),
-)
+ 
 
   
 ],
