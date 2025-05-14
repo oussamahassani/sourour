@@ -8,6 +8,7 @@ const { ajouterInterventionRepport,
      getoneInterventionRepport
      } = require('../controllers/interventions.contoller');
 
+
 // Route POST pour ajouter une intervention
 router.post('/ajouter', ajouterIntervention);
 router.post('/ajouterRepport', ajouterInterventionRepport);

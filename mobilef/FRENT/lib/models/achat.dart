@@ -7,6 +7,7 @@ class Purchase {
   final int quantite;
   final double prixTTC;
   final int? delaiLivraison; // Optional, used only for OrderedPurchase
+  String? type_achat;
 
   Purchase({
     this.id,
@@ -16,7 +17,9 @@ class Purchase {
     required this.tva,
     required this.quantite,
     required this.prixTTC,
-    this.delaiLivraison, required DateTime date,
+    this.delaiLivraison,
+    required DateTime date,
+    this.type_achat,
   });
 
   // Calculate TTC price
@@ -27,13 +30,13 @@ class Purchase {
   // Convert to JSON for database storage
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'articleId': articleId,
       'supplierId': supplierId,
       'prixHT': prixHT,
       'tva': tva,
       'quantite': quantite,
       'prixTTC': prixTTC,
+      'type_achat': type_achat,
       if (delaiLivraison != null) 'delaiLivraison': delaiLivraison,
     };
   }
@@ -48,7 +51,9 @@ class Purchase {
       tva: json['tva'],
       quantite: json['quantite'],
       prixTTC: json['prixTTC'],
-      delaiLivraison: json['delaiLivraison'], date:  json['date'],
+      delaiLivraison: json['delaiLivraison'],
+      date: json['date'],
+      type_achat: json['type_achat'],
     );
   }
 

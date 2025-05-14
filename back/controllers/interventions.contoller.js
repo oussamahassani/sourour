@@ -1,6 +1,9 @@
 const Intervention = require('../models/Interventions');
 const InterventionRepport = require('../models/Rapportintervention');
 
+const Client = require('../models/Client');
+
+
 // Ajouter une intervention
 exports.ajouterInterventionRepport= async (req, res) => {
   try {

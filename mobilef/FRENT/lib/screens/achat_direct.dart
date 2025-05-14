@@ -17,10 +17,21 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
   String? _supplierId;
   double _tva = 20.0;
   double _prixTTC = 0.0;
+  late Future<List<Map<String, String>>> _suppliersFuture;
+  late Future<List<Map<String, String>>> _articlesFuture;
+
+  void _loadSuppliers() {
+    _suppliersFuture = _purchaseService.getfetchSuppliers();
+    print(_purchaseService.getfetchSuppliers());
+  }
 
   final TextEditingController _prixHTController = TextEditingController();
-  final TextEditingController _quantiteController = TextEditingController(text: '1');
-  final TextEditingController _tvaController = TextEditingController(text: '20');
+  final TextEditingController _quantiteController = TextEditingController(
+    text: '1',
+  );
+  final TextEditingController _tvaController = TextEditingController(
+    text: '20',
+  );
 
   @override
   void initState() {
@@ -28,6 +39,8 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
     _prixHTController.addListener(_calculateTTC);
     _tvaController.addListener(_calculateTTC);
     _quantiteController.addListener(_calculateTTC);
+    _loadSuppliers();
+    _articlesFuture = _purchaseService.getArticles();
   }
 
   void _calculateTTC() {
@@ -78,82 +91,163 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // Dropdown pour les articles
                     FutureBuilder<List<Map<String, String>>>(
-                      future: _purchaseService.getArticles(),
+                      future: _articlesFuture, // Utilisation de _articlesFuture
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         if (snapshot.hasError) {
-                          return const Text('Erreur de chargement des articles');
+                          return const Text(
+                            'Erreur de chargement des articles',
+                          );
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Text('Aucun article disponible');
                         }
+
+                        List<Map<String, String>> articles = snapshot.data!;
+
+                        if (_articleId == null ||
+                            !articles.any(
+                              (article) => article['id'] == _articleId,
+                            )) {
+                          _articleId = null;
+                        }
+
                         return DropdownButtonFormField<String>(
+                          value: _articleId,
                           decoration: _inputDecoration('Article'),
-                          items: snapshot.data!
-                              .map((article) => DropdownMenuItem(
-                                    value: article['id'],
-                                    child: Text(article['name']!),
-                                  ))
-                              .toList(),
-                          onChanged: (value) => setState(() => _articleId = value),
-                          validator: (value) => value == null ? 'Veuillez sélectionner un article' : null,
+                          items: [
+                            DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Sélectionner un article'),
+                            ),
+                            ...articles.map((article) {
+                              return DropdownMenuItem<String>(
+                                value: article['id'],
+                                child: Text(article['name'] ?? 'Sans nom'),
+                              );
+                            }).toList(),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _articleId = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Veuillez sélectionner un article';
+                            }
+                            return null;
+                          },
                         );
                       },
                     ),
+
                     const SizedBox(height: 16),
                     FutureBuilder<List<Map<String, String>>>(
-                      future: _purchaseService.getSuppliers(),
+                      future:
+                          _suppliersFuture, // Utilisation de _suppliersFuture
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         if (snapshot.hasError) {
-                          return const Text('Erreur de chargement des fournisseurs');
+                          return const Text(
+                            'Erreur de chargement des fournisseurs',
+                          );
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Text('Aucun fournisseur disponible');
                         }
+
+                        List<Map<String, String>> suppliers = snapshot.data!;
+
+                        // Si _supplierId est null ou ne correspond pas à un id valide, réinitialiser à null ou à un fournisseur par défaut
+                        if (_supplierId == null ||
+                            !suppliers.any(
+                              (supplier) => supplier['id'] == _supplierId,
+                            )) {
+                          _supplierId =
+                              null; // Réinitialiser si l'id n'est pas trouvé
+                        }
+
                         return DropdownButtonFormField<String>(
+                          value:
+                              _supplierId, // La valeur sélectionnée, elle peut être null
                           decoration: _inputDecoration('Fournisseur'),
-                          items: snapshot.data!
-                              .map((supplier) => DropdownMenuItem(
-                                    value: supplier['id'],
-                                    child: Text(supplier['name']!),
-                                  ))
-                              .toList(),
-                          onChanged: (value) => setState(() => _supplierId = value),
-                          validator: (value) => value == null ? 'Veuillez sélectionner un fournisseur' : null,
+                          items: [
+                            DropdownMenuItem<String>(
+                              value: null, // Option par défaut ou vide
+                              child: Text('Sélectionner un fournisseur'),
+                            ),
+                            ...suppliers.map((supplier) {
+                              return DropdownMenuItem<String>(
+                                value: supplier['id'], // ID du fournisseur
+                                child: Text(supplier['name'] ?? 'Sans nom'),
+                              );
+                            }).toList(),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _supplierId = value; // Mise à jour de _supplierId
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Veuillez sélectionner un fournisseur';
+                            }
+                            return null;
+                          },
                         );
                       },
                     ),
+
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _prixHTController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
                       ],
                       decoration: _inputDecoration('Prix HT (€)'),
                       validator: (value) {
-                        if (value?.isEmpty ?? true) return 'Ce champ est requis';
-                        if (double.tryParse(value!) == null) return 'Valeur invalide';
+                        if (value?.isEmpty ?? true)
+                          return 'Ce champ est requis';
+                        if (double.tryParse(value!) == null)
+                          return 'Valeur invalide';
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _tvaController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
                       ],
                       decoration: _inputDecoration('TVA (%)'),
                       validator: (value) {
-                        if (value?.isEmpty ?? true) return 'Ce champ est requis';
-                        if (double.tryParse(value!) == null) return 'Valeur invalide';
+                        if (value?.isEmpty ?? true)
+                          return 'Ce champ est requis';
+                        if (double.tryParse(value!) == null)
+                          return 'Valeur invalide';
                         return null;
                       },
                     ),
@@ -161,13 +255,13 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                     TextFormField(
                       controller: _quantiteController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: _inputDecoration('Quantité'),
                       validator: (value) {
-                        if (value?.isEmpty ?? true) return 'Ce champ est requis';
-                        if (int.tryParse(value!) == null || int.parse(value) <= 0) {
+                        if (value?.isEmpty ?? true)
+                          return 'Ce champ est requis';
+                        if (int.tryParse(value!) == null ||
+                            int.parse(value) <= 0) {
                           return 'Quantité doit être un nombre positif';
                         }
                         return null;
@@ -179,7 +273,9 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                       decoration: _inputDecoration('Prix TTC (€)').copyWith(
                         prefixIcon: const Icon(Icons.euro, color: Colors.grey),
                       ),
-                      controller: TextEditingController(text: _prixTTC.toStringAsFixed(2)),
+                      controller: TextEditingController(
+                        text: _prixTTC.toStringAsFixed(2),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Row(
@@ -212,7 +308,8 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                                 prixTTC: _prixTTC,
                                 date: DateTime.now(),
                               );
-                              bool success = await _purchaseService.savePurchase(purchase);
+                              bool success = await _purchaseService
+                                  .savePurchase(purchase);
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -221,7 +318,8 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                                         ? 'Achat enregistré avec succès'
                                         : 'Erreur lors de l\'enregistrement',
                                   ),
-                                  backgroundColor: success ? Colors.green : Colors.red,
+                                  backgroundColor:
+                                      success ? Colors.green : Colors.red,
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
@@ -239,7 +337,10 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -264,9 +365,7 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       filled: true,
       fillColor: Colors.grey[50],
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

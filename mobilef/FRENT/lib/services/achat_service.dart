@@ -1,48 +1,157 @@
 import 'package:intl/intl.dart';
-
+import '../config.dart';
+import 'package:http/http.dart' as http;
 import '../models/achat.dart'; // For date formatting
+import 'dart:convert';
+import './article_service.dart';
+
 class PurchaseService {
+  static const String _baseUrl =
+      '${AppConfig.baseUrl}/achat'; // Remplacez par l'URL de votre API
+  static Map<String, String> get _headers {
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      // Si vous utilisez l'authentification :
+      // 'Authorization': 'Bearer $token',
+    };
+  }
+
+  final Map<String, String> _articles = {'1': 'Article 1', '2': 'Article 2'};
+
+  final Map<String, String> _suppliers = {};
+  /*
+  Future<void> initData() async {
+    await Future.wait([getArticles(), getfetchSuppliers()]);
+  }
+*/
+  Future<List<Map<String, String>>> getfetchSuppliers() async {
+    final url = Uri.parse('${AppConfig.baseUrl}/fournisseurs');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+
+        _suppliers.clear(); // optionnel si tu utilises un cache
+
+        final suppliers =
+            data
+                .where(
+                  (item) =>
+                      item['_id'] != null &&
+                      (item['nomF'] != null || item['prenomF'] != null),
+                )
+                .map<Map<String, String>>((supplier) {
+                  final id = supplier['_id'];
+                  final name =
+                      supplier['nomF'] ?? supplier['nomF'] ?? 'Sans nom';
+                  _suppliers[id] = name; // mise en cache (facultatif)
+                  return {'id': id, 'name': name};
+                })
+                .toList();
+        print(suppliers);
+
+        return suppliers;
+      } else {
+        print('Erreur API fournisseurs: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Erreur de connexion fournisseurs: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, String>>> getArticles() async {
+    final url = Uri.parse('${AppConfig.baseUrl}/product');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+
+        // Assurez-vous que chaque item a bien un 'id' et un 'name'
+        return data
+            .where(
+              (item) =>
+                  item['_id'] != null &&
+                  (item['article'] != null || item['article'] != null),
+            )
+            .map<Map<String, String>>((item) {
+              return {
+                'id': item['_id'],
+                'name': item['article'] ?? item['article'],
+              };
+            })
+            .toList();
+      } else {
+        print('Erreur API product: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Erreur de connexion product: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, String>>> getSupplierss() async {
+    if (_suppliers.isEmpty) {
+      await getfetchSuppliers();
+    }
+    return _suppliers.entries
+        .map((e) => {'id': e.key, 'name': e.value})
+        .toList();
+  }
+
+  final List<Purchase> _purchases = [];
   // Mock database (replace with actual database like Firestore or SQLite)
-  final List<Purchase> _purchases = [
-    Purchase(
-      id: '1',
-      articleId: '1',
-      supplierId: '1',
-      prixHT: 100.0,
-      tva: 20.0,
-      quantite: 1,
-      prixTTC: 120.0,
-      date: DateTime(2023, 5, 10),
-    ),
-    Purchase(
-      id: '2',
-      articleId: '2',
-      supplierId: '2',
-      prixHT: 74.99,
-      tva: 20.0,
-      quantite: 1,
-      prixTTC: 89.99,
-      delaiLivraison: 7,
-      date: DateTime(2023, 5, 12),
-    ),
-  ];
+  static Future<List<Purchase>> fetchAchat() async {
+    try {
+      final response = await http.get(Uri.parse(_baseUrl), headers: _headers);
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        final rawList = decodedData is List ? decodedData : decodedData ?? [];
+
+        final dataJson =
+            rawList.map<Purchase>((json) => Purchase.fromJson(json)).toList();
+        return dataJson;
+      } else {
+        throw Exception(
+          'Échec du chargement (${response.statusCode}): ${response.body}',
+        );
+      }
+    } catch (e) {
+      print('[ERROR fetchClients] $e');
+      throw Exception('Erreur réseau: ${e.toString()}');
+    }
+  }
 
   // Mock article and supplier data
-  final Map<String, String> _articles = {
-    '1': 'Article 1',
-    '2': 'Article 2',
-  };
-  final Map<String, String> _suppliers = {
-    '1': 'Fournisseur A',
-    '2': 'Fournisseur B',
-  };
 
   // Save a purchase
   Future<bool> savePurchase(Purchase purchase) async {
     try {
-      _purchases.add(purchase);
-      print('Purchase saved: ${purchase.toJson()}');
-      return true;
+      final headers = {'Content-Type': 'application/json'};
+      String type_achat = getPurchaseType(purchase);
+      purchase.type_achat = type_achat;
+      String jsonBody = jsonEncode(purchase.toJson());
+
+      final response = await http.post(
+        Uri.parse(_baseUrl+'/ajouter'),
+        headers: headers,
+        body: jsonBody,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _purchases.add(purchase);
+        print('Purchase saved: ${purchase.toJson()}');
+        return true;
+      } else {
+        print('Erreur API: ${response.statusCode} - ${response.body}');
+        return false;
+      }
     } catch (e) {
       print('Error saving purchase: $e');
       return false;
@@ -79,13 +188,6 @@ class PurchaseService {
       print('Error updating purchase: $e');
       return false;
     }
-  }
-
-  // Fetch articles
-  Future<List<Map<String, String>>> getArticles() async {
-    return _articles.entries
-        .map((e) => {'id': e.key, 'name': e.value})
-        .toList();
   }
 
   // Fetch suppliers

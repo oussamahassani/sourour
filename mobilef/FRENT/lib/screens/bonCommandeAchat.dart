@@ -4,7 +4,7 @@ import '../services/achat_service.dart';
 
 class OrderedPurchaseScreen extends StatefulWidget {
   const OrderedPurchaseScreen({Key? key}) : super(key: key);
-  
+
   @override
   _OrderedPurchaseScreenState createState() => _OrderedPurchaseScreenState();
 }
@@ -19,9 +19,15 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
   int _delaiLivraison = 7;
 
   final TextEditingController _prixHTController = TextEditingController();
-  final TextEditingController _quantiteController = TextEditingController(text: '1');
-  final TextEditingController _tvaController = TextEditingController(text: '20');
-  final TextEditingController _delaiController = TextEditingController(text: '7');
+  final TextEditingController _quantiteController = TextEditingController(
+    text: '1',
+  );
+  final TextEditingController _tvaController = TextEditingController(
+    text: '20',
+  );
+  final TextEditingController _delaiController = TextEditingController(
+    text: '7',
+  );
 
   @override
   void initState() {
@@ -47,7 +53,7 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -87,40 +93,66 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
                       label: 'Article',
                       future: _purchaseService.getArticles(),
                       onChanged: (value) => setState(() => _articleId = value),
-                      validator: (value) => value == null ? 'Veuillez sélectionner un article' : null,
+                      validator:
+                          (value) =>
+                              value == null
+                                  ? 'Veuillez sélectionner un article'
+                                  : null,
                     ),
                     const SizedBox(height: 16),
                     _buildDropdownField(
                       context: context,
                       label: 'Fournisseur',
-                      future: _purchaseService.getSuppliers(),
+                      future: _purchaseService.getfetchSuppliers(),
                       onChanged: (value) => setState(() => _supplierId = value),
-                      validator: (value) => value == null ? 'Veuillez sélectionner un fournisseur' : null,
+                      validator:
+                          (value) =>
+                              value == null
+                                  ? 'Veuillez sélectionner un fournisseur'
+                                  : null,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _prixHTController,
                       label: 'Prix HT (€)',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (value) => value?.isEmpty ?? true ? 'Ce champ est requis' : null,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator:
+                          (value) =>
+                              value?.isEmpty ?? true
+                                  ? 'Ce champ est requis'
+                                  : null,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _tvaController,
                       label: 'TVA (%)',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (value) => value?.isEmpty ?? true ? 'Ce champ est requis' : null,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator:
+                          (value) =>
+                              value?.isEmpty ?? true
+                                  ? 'Ce champ est requis'
+                                  : null,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
                       controller: _quantiteController,
                       label: 'Quantité',
                       keyboardType: TextInputType.number,
-                      validator: (value) => value?.isEmpty ?? true ? 'Ce champ est requis' : null,
+                      validator:
+                          (value) =>
+                              value?.isEmpty ?? true
+                                  ? 'Ce champ est requis'
+                                  : null,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
-                      controller: TextEditingController(text: _prixTTC.toStringAsFixed(2)),
+                      controller: TextEditingController(
+                        text: _prixTTC.toStringAsFixed(2),
+                      ),
                       label: 'Prix TTC (€)',
                       readOnly: true,
                     ),
@@ -129,7 +161,11 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
                       controller: _delaiController,
                       label: 'Délai de livraison (jours)',
                       keyboardType: TextInputType.number,
-                      validator: (value) => value?.isEmpty ?? true ? 'Ce champ est requis' : null,
+                      validator:
+                          (value) =>
+                              value?.isEmpty ?? true
+                                  ? 'Ce champ est requis'
+                                  : null,
                       onChanged: (value) {
                         setState(() {
                           _delaiLivraison = int.tryParse(value) ?? 7;
@@ -152,7 +188,9 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
                               delaiLivraison: _delaiLivraison,
                               date: DateTime.now(),
                             );
-                            bool success = await _purchaseService.savePurchase(purchase);
+                            bool success = await _purchaseService.savePurchase(
+                              purchase,
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -160,7 +198,8 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
                                       ? 'Commande enregistrée avec succès'
                                       : 'Erreur lors de l\'enregistrement',
                                 ),
-                                backgroundColor: success ? Colors.green : Colors.red,
+                                backgroundColor:
+                                    success ? Colors.green : Colors.red,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -177,7 +216,10 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
                         ),
                         child: const Text(
                           'Enregistrer la Commande',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
@@ -207,12 +249,13 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         filled: true,
         fillColor: Colors.grey[100],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -230,22 +273,28 @@ class _OrderedPurchaseScreenState extends State<OrderedPurchaseScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
+        // ✅ Print the data to check its contents
+        print('$label dropdown data: ${snapshot.data}');
         return DropdownButtonFormField<String>(
           decoration: InputDecoration(
             labelText: label,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             filled: true,
             fillColor: Colors.grey[100],
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
-          items: snapshot.data!
-              .map((item) => DropdownMenuItem(
-                    value: item['id'],
-                    child: Text(item['name']!),
-                  ))
-              .toList(),
+          items:
+              snapshot.data!
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item['id'],
+                      child: Text(item['name']!),
+                    ),
+                  )
+                  .toList(),
           onChanged: onChanged,
           validator: validator,
         );
