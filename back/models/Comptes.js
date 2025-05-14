@@ -1,42 +1,60 @@
 const mongoose = require('mongoose');
 
-// Schéma pour le modèle Compte
 const CompteSchema = new mongoose.Schema({
   nom_compte: {
     type: String,
-    required: true,
-    trim: true // Enlever les espaces avant et après le nom
+    required: [true, 'Veuillez ajouter un nom pour le compte'],
+    trim: true,
+    maxlength: [50, 'Le nom ne peut pas dépasser 50 caractères']
   },
   type_compte: {
     type: String,
-    enum: ['Banque', 'Caisse', 'Autre'],
-    required: true // Un compte doit avoir un type
-  },
-  solde: {
-    type: Number,
-    default: 0.00, // Valeur par défaut à 0 si non fourni
-    min: [0, 'Le solde ne peut pas être négatif'] // Validation du solde positif
-  },
-  date_creation: {
-    type: Date,
-    default: Date.now // Date actuelle comme valeur par défaut
+    required: [true, 'Veuillez spécifier le type de compte'],
+    enum: ['Banque', 'Caisse', 'Portefeuille', 'Placement', 'Autre'],
+    default: 'Banque'
   },
   numero_compte: {
     type: String,
-    unique: true, // Garantir que chaque compte ait un numéro unique
-    sparse: true // Permettre à ce champ d'être nul, mais s'il est renseigné, il doit être unique
+    trim: true,
+    maxlength: [30, 'Le numéro de compte ne peut pas dépasser 30 caractères']
   },
   banque: {
     type: String,
-    default: null // Champ optionnel
+    trim: true,
+    maxlength: [50, 'Le nom de la banque ne peut pas dépasser 50 caractères']
   },
   devise: {
     type: String,
+    required: [true, 'Veuillez spécifier la devise'],
     default: 'TND',
-    enum: ['TND', 'USD', 'EUR', 'GBP'], // Liste des devises possibles
-    required: true
+    trim: true,
+    maxlength: [5, 'La devise ne peut pas dépasser 5 caractères']
+  },
+  rib: {
+    type: String,
+    required: function() {
+      return this.type_compte === 'Banque';
+    },
+    trim: true,
+    maxlength: [24, 'Le RIB ne peut pas dépasser 24 caractères']
+  },
+  solde: {
+    type: Number,
+    required: [true, 'Veuillez spécifier le solde initial'],
+    default: 0.0
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
-// Création du modèle basé sur le schéma
+// Validation conditionnelle pour les comptes bancaires
+CompteSchema.pre('save', function(next) {
+  if (this.type_compte === 'Banque' && !this.banque) {
+    this.invalidate('banque', 'Veuillez spécifier la banque pour un compte bancaire');
+  }
+  next();
+});
+
 module.exports = mongoose.model('Compte', CompteSchema);
