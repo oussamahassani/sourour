@@ -1,79 +1,117 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/achat.dart';
-import '../config.dart';
+import 'package:intl/intl.dart';
 
-class AchatDirectService {
-  static final AchatDirectService _instance = AchatDirectService._internal();
-  factory AchatDirectService() => _instance;
-  AchatDirectService._internal();
+import '../models/achat.dart'; // For date formatting
+class PurchaseService {
+  // Mock database (replace with actual database like Firestore or SQLite)
+  final List<Purchase> _purchases = [
+    Purchase(
+      id: '1',
+      articleId: '1',
+      supplierId: '1',
+      prixHT: 100.0,
+      tva: 20.0,
+      quantite: 1,
+      prixTTC: 120.0,
+      date: DateTime(2023, 5, 10),
+    ),
+    Purchase(
+      id: '2',
+      articleId: '2',
+      supplierId: '2',
+      prixHT: 74.99,
+      tva: 20.0,
+      quantite: 1,
+      prixTTC: 89.99,
+      delaiLivraison: 7,
+      date: DateTime(2023, 5, 12),
+    ),
+  ];
 
-  final String _baseUrl = '${AppConfig.baseUrl}/api/achats';
+  // Mock article and supplier data
+  final Map<String, String> _articles = {
+    '1': 'Article 1',
+    '2': 'Article 2',
+  };
+  final Map<String, String> _suppliers = {
+    '1': 'Fournisseur A',
+    '2': 'Fournisseur B',
+  };
 
-  Future<List<AchatDirect>> fetchAchatsDirects() async {
-    final response = await http.get(Uri.parse('$_baseUrl/achats-directs'));
-    
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((item) => AchatDirect.fromJson(item)).toList();
-    } else {
-      throw Exception('Failed to load achats directs: ${response.statusCode}');
+  // Save a purchase
+  Future<bool> savePurchase(Purchase purchase) async {
+    try {
+      _purchases.add(purchase);
+      print('Purchase saved: ${purchase.toJson()}');
+      return true;
+    } catch (e) {
+      print('Error saving purchase: $e');
+      return false;
     }
   }
 
-  Future<AchatDirect> getAchatDirectById(String id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/achats-directs/$id'));
-    
-    if (response.statusCode == 200) {
-      return AchatDirect.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load achat direct: ${response.statusCode}');
+  // Fetch all purchases
+  Future<List<Purchase>> getPurchases() async {
+    // Simulate database fetch
+    return _purchases;
+  }
+
+  // Delete a purchase
+  Future<bool> deletePurchase(String id) async {
+    try {
+      _purchases.removeWhere((purchase) => purchase.id == id);
+      return true;
+    } catch (e) {
+      print('Error deleting purchase: $e');
+      return false;
     }
   }
 
-  Future<AchatDirect> createAchatDirect(AchatDirect achatDirect) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/achats-directs'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(achatDirect.toJson()),
-    );
-    
-    if (response.statusCode == 201) {
-      return AchatDirect.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to create achat direct: ${response.statusCode} - ${response.body}');
+  // Update a purchase (for modify action)
+  Future<bool> updatePurchase(Purchase updatedPurchase) async {
+    try {
+      int index = _purchases.indexWhere((p) => p.id == updatedPurchase.id);
+      if (index != -1) {
+        _purchases[index] = updatedPurchase;
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error updating purchase: $e');
+      return false;
     }
   }
 
-  Future<AchatDirect> updateAchatDirect(String id, AchatDirect achatDirect) async {
-    final response = await http.put(
-      Uri.parse('$_baseUrl/achats-directs/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(achatDirect.toJson()),
-    );
-    
-    if (response.statusCode == 200) {
-      return AchatDirect.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to update achat direct: ${response.statusCode}');
-    }
+  // Fetch articles
+  Future<List<Map<String, String>>> getArticles() async {
+    return _articles.entries
+        .map((e) => {'id': e.key, 'name': e.value})
+        .toList();
   }
 
-  Future<void> deleteAchatDirect(String id) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/achats-directs/$id'));
-    
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete achat direct: ${response.statusCode}');
-    }
+  // Fetch suppliers
+  Future<List<Map<String, String>>> getSuppliers() async {
+    return _suppliers.entries
+        .map((e) => {'id': e.key, 'name': e.value})
+        .toList();
   }
 
-  Future<String> generatePdf(String id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/achats-directs/$id/pdf'));
-    
-    if (response.statusCode == 200) {
-      return response.body;
-    } else {
-      throw Exception('Failed to generate PDF: ${response.statusCode}');
-    }
+  // Resolve article name
+  String getArticleName(String articleId) {
+    return _articles[articleId] ?? 'Unknown Article';
+  }
+
+  // Resolve supplier name
+  String getSupplierName(String supplierId) {
+    return _suppliers[supplierId] ?? 'Unknown Supplier';
+  }
+
+  // Get purchase type (Direct or Commandé)
+  String getPurchaseType(Purchase purchase) {
+    return purchase.delaiLivraison != null ? 'Commandé' : 'Direct';
+  }
+
+  // Format date for display
+  String formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 }
