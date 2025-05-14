@@ -214,12 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 );
               }),
-              _buildDrawerItem('Facture', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => FactureScreen1()),
-                );
-              }),
+            
               _buildDrawerItem('Paiement', () {}),
             ]),
             _buildExpansionTile('Vente', Icons.store_outlined, [
@@ -257,18 +252,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   MaterialPageRoute(builder: (context) => BonTransfertPage()),
                 );
               }),
-              _buildDrawerItem('Facture', () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => FactureScreen()),
-                );
-              }),
+            
               _buildDrawerItem('Paiement', () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => FormulaireVenteScreen(),
                   ),
+                );
+              }),
+            ]),
+             _buildExpansionTile('Facturation', Icons.people_outline, [
+              _buildDrawerItem('Facture Achat', () {
+               Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => FactureHistoriquePage(
+     
+    ),
+  ),
+);
+              }),
+              _buildDrawerItem('Facture Vente', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FactureHistoriquePage1()),
                 );
               }),
             ]),
@@ -292,10 +300,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }),
             ]),
-            _buildExpansionTile('Finance', Icons.account_balance_outlined, [
-              _buildDrawerItem('Statut Financier', () {}),
-              _buildDrawerItem('Comptes', () {}),
-            ]),
+           _buildExpansionTile(
+              'Finance',
+              Icons.account_balance_outlined,
+              [
+                _buildDrawerItem('Statut Financier', () {Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FinanceApp()),
+                  );}),
+                _buildDrawerItem('Comptes', () {Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ComptaApp()),
+                  );}),
+              ],
+            ),
             _buildExpansionTile('Stock', Icons.inventory_2_outlined, [
               _buildDrawerItem('Articles', () {
                 Navigator.push(
@@ -310,14 +328,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 );
               }),
-              _buildDrawerItem('Stock Disponible', () {}),
-              _buildDrawerItem('Mouvement de Stock', () {}),
+             
             ]),
-            _buildExpansionTile('Technique', Icons.build_outlined, [
-              _buildDrawerItem('Intervention', () {}),
-              _buildDrawerItem('Rapport d\'Intervention', () {}),
-              _buildDrawerItem('Historique', () {}),
-            ]),
+            _buildExpansionTile(
+              'Technique',
+              Icons.build_outlined,
+              [
+                _buildDrawerItem('Intervention', () {Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => InterventionApp()),
+                  );}),
+                _buildDrawerItem('Rapport d\'Intervention', () {Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => InterventionReportForm()),
+                  );}),
+                _buildDrawerItem('planning', () {Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => InterventionListApp()),
+                  );}),
+              ],
+            ),
             _buildExpansionTile(
               'Ressources Humaines',
               Icons.people_alt_outlined,
@@ -331,15 +361,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   );
                 }),
-                _buildDrawerItem('Utilisateurs', () {
-                  Navigator.pop(context); // Close the drawer first
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EmployeeManagementApp(),
-                    ),
-                  );
-                }),
+               
               ],
             ),
           ],
