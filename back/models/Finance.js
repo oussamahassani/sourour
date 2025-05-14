@@ -1,37 +1,66 @@
 const mongoose = require('mongoose');
 
-const FinanceSchema = new mongoose.Schema({
-  id_bordereau: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Bordereau',
-    default: null
-  },
-  situation_comptes: {
-    type: Number,
-    required: true
-  },
-  mouvement_financier: {
-    type: Number,
-    required: true
-  },
-  date_mouvement: {
+const FinanceRecordSchema = new mongoose.Schema({
+  date: {
     type: Date,
+    required: true,
     default: Date.now
   },
-  description: {
+  type: {
     type: String,
-    default: null
+    required: true,
+    enum: ['Achat', 'Vente', 'Frais', 'Autre']
   },
-  id_compte: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Compte',
-    default: null
-  },
-  type_mouvement: {
-    type: String,
-    enum: ['Crédit', 'Débit', 'Transfert'],
+  amount: {
+    type: Number,
     required: true
+  },
+  tvaAchat: {
+    type: Number,
+    default: 0
+  },
+  tvaVente: {
+    type: Number,
+    default: 0
+  },
+  tvaDeductible: {
+    type: Number,
+    default: 0
+  },
+  tvaCollectee: {
+    type: Number,
+    default: 0
+  },
+  tvaNet: {
+    type: Number,
+    default: 0
+  },
+  description: String,
+  reference: String,
+  category: {
+    type: String,
+    enum: [
+      'Matériel',
+      'Services',
+      'Prestations',
+      'Fournitures',
+      'Taxes',
+      'Salaires',
+      'Loyer',
+      'Autre'
+    ],
+    default: 'Autre'
   }
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('Finance', FinanceSchema);
+// Middleware pour calculer les valeurs TVA avant sauvegarde
+FinanceRecordSchema.pre('save', function(next) {
+  this.tvaDeductible = this.type === 'Achat' ? this.tvaAchat : 0;
+  this.tvaCollectee = this.type === 'Vente' ? this.tvaVente : 0;
+  this.tvaNet = this.tvaCollectee - this.tvaDeductible;
+  next();
+});
+
+module.exports = mongoose.model('FinanceRecord', FinanceRecordSchema);
