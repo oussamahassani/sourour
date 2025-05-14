@@ -1,15 +1,21 @@
 const express = require('express');
+const {
+  getComptes,
+  getCompte,
+  createCompte,
+  updateCompte,
+  deleteCompte
+} = require('../controllers/compteController');
+
 const router = express.Router();
-const financeController = require('../controllers/financeController');
 
-// Routes pour les transactions
-router.post('/', financeController.createRecord);
-router.get('/records', financeController.getAllRecords);
-router.get('/records/:id', financeController.getRecordById);
-router.put('/records/:id', financeController.updateRecord);
-router.delete('/records/:id', financeController.deleteRecord);
+router.route('/')
+  .get(getComptes)
+  .post(createCompte);
 
-// Routes pour les statistiques
-router.get('/stats', financeController.getFinancialStats);
+router.route('/:id')
+  .get(getCompte)
+  .put(updateCompte)
+  .delete(deleteCompte);
 
 module.exports = router;
