@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const devisController = require('../controllers/devisController');
-const authMiddleware = require('../middleware/auth');
-const uploadMiddleware = require('../middleware/uploadMiddleware');
+const devisController = require('../controllers/vente.contoller');
 
 
 // Complete method devis routes
@@ -13,7 +11,6 @@ router.patch('/:id/status', devisController.updateDevisStatus);
 router.delete('/:id', devisController.deleteDevis);
 router.get('/:id/pdf', devisController.generateDevisPDF);
 
-// Quick method devis routes
-router.post('/rapide', uploadMiddleware.single('imageDevis'), devisController.createDevisRapide);
+router.post('/rapide', devisController.createDevisRapide);
 
 module.exports = router;
