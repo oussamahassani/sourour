@@ -3,6 +3,8 @@ import 'package:frent/screens/bonCommandeVente.dart';
 import '../models/article.dart';
 import '../screens/fournisseur/fournisseur.dart';
 import 'CompteFin.dart';
+import 'paiementAchat.dart';
+
 import 'achat_direct.dart';
 import 'bonCommandeAchat.dart';
 import 'bonLivraison.dart';
@@ -220,7 +222,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }),
             
-              _buildDrawerItem('Paiement', () {}),
+              _buildDrawerItem('Paiement', () {_buildDrawerItem('Paiement', () {  Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FormulairePaiementScreen()),
+                );}),
             ]),
             _buildExpansionTile('Vente', Icons.store_outlined, [
               _buildDrawerItem('Devis', () {
