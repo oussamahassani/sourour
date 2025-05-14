@@ -59,7 +59,7 @@ exports.modifierBonTransfert = async (req, res) => {
 
     res.status(200).json({ message: 'Bon de transfert mis à jour avec succès', bonTransfert: updatedBonTransfert });
   } catch (error) {
-    res.status(500).json({ error: 'Erreur serveur lors de la mise à jour du bon de transfert' });
+    res.status(500).json({ error: 'Erreur serveur lors de la mise à jour du bon de transfert' }); 
   }
 };
 
