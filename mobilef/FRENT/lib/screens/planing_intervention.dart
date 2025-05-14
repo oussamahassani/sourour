@@ -443,7 +443,7 @@ Widget build(BuildContext context) {
                 ),
                 if (!showCompleted)
                   IconButton(
-                    icon: Icon(Icons.check, color: Colors.teal),
+                    icon: Icon(Icons.check, color: Colors.teal), 
                     onPressed: () => _markAsCompleted(intervention.id),
                     tooltip: 'Marquer comme terminé',
                   ),
