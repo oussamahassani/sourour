@@ -1,0 +1,39 @@
+const mongoose = require('mongoose');
+const Counter = require('./Counter');
+
+// Vérifier si le modèle existe déjà pour éviter l'OverwriteModelError
+const modelName = 'PaiementVente';
+const existingModel = mongoose.models[modelName];
+
+if (existingModel) {
+  module.exports = existingModel;
+} else {
+  const PaiementVenteSchema = new mongoose.Schema({
+    idPaiement: { type: Number, unique: true },
+    clientId: { type: Number, ref: 'Client', required: true },
+    datePaiement: { type: Date, required: true, default: Date.now },
+    montantRecu: { type: Number, required: true, min: 0 },
+    modePaiement: { type: String, required: true, enum: ['Espèces', 'Carte', 'Virement', 'Chèque', 'Mobile'] },
+    statut: { type: String, required: true, enum: ['Payé', 'Partiellement payé', 'En attente'] },
+    description: { type: String },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+  }, { timestamps: true });
+
+  PaiementVenteSchema.pre('save', async function(next) {
+    if (this.isNew) {
+      const counter = await Counter.findByIdAndUpdate(
+        { _id: 'paiementId' },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      this.idPaiement = counter.seq;
+      next();
+    } else {
+      this.updatedAt = Date.now();
+      next();
+    }
+  });
+
+  module.exports = mongoose.model('PaiementVente', PaiementVenteSchema);
+}
