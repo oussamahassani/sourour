@@ -1,21 +1,12 @@
-// routes/bonLivraisonVenteRoutes.js
 const express = require('express');
 const router = express.Router();
-const bonLivraisonVenteController = require('../controllers/bonLivraisonVenteController');
+const controller = require('../controllers/bonLivraisonController');
 
-// Ajouter un bon de livraison de vente
-router.post('/ajouter', bonLivraisonVenteController.ajouterBonLivraisonVente);
-
-// Lister tous les bons de livraison de vente
-router.get('/', bonLivraisonVenteController.listerBonsLivraisonVente);
-
-// Récupérer un bon de livraison de vente par ID
-router.get('/:id', bonLivraisonVenteController.getBonLivraisonVenteById);
-
-// Modifier un bon de livraison de vente
-router.put('/:id', bonLivraisonVenteController.modifierBonLivraisonVente);
-
-// Supprimer un bon de livraison de vente
-router.delete('/:id', bonLivraisonVenteController.supprimerBonLivraisonVente);
+// Routes de base CRUD
+router.post('/', controller.create);
+router.get('/', controller.getAll);
+router.get('/:id', controller.getById);
+router.put('/:id', controller.update);
+router.delete('/:id', controller.delete);
 
 module.exports = router;
