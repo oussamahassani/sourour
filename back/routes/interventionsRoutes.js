@@ -1,23 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getInterventions,
-  getIntervention,
-  createIntervention,
-  updateIntervention,
-  deleteIntervention,
-  markAsCompleted
-} = require('../controllers/interventionController');
+const { ajouterInterventionRepport,
+    ajouterIntervention, listeInterventions,
+     mettreAJourIntervention, supprimerIntervention,
+     mettreAJourInterventionRepport,
+     listeInterventionRepport,
+     getoneInterventionRepport
+     } = require('../controllers/interventions.contoller');
 
-router.route('/')
-  .get(getInterventions)
-  .post(createIntervention);
+// Route POST pour ajouter une intervention
+router.post('/ajouter', ajouterIntervention);
+router.post('/ajouterRepport', ajouterInterventionRepport);
+router.get('/all/report', listeInterventionRepport);
+router.get('/all/report/:id', getoneInterventionRepport);
 
-router.route('/:id')
-  .get(getIntervention)
-  .put(updateIntervention)
-  .delete(deleteIntervention);
+router.put('/all/report/:id', mettreAJourInterventionRepport);
 
-router.put('/:id/complete', markAsCompleted);
+// Route GET pour lister toutes les interventions
+router.get('/', listeInterventions);
+
+// Route PUT pour mettre à jour une intervention
+router.put('/:id', mettreAJourIntervention);
+
+// Route DELETE pour supprimer une intervention
+router.delete('/:id', supprimerIntervention);
 
 module.exports = router;
