@@ -1,20 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const compteController = require('../controllers/compte.Controller');
+const financeController = require('../controllers/financeController');
 
-// 📌 Ajouter un compte
-router.post('/compte', compteController.ajouterCompte);
+// Routes pour les transactions
+router.post('/', financeController.createRecord);
+router.get('/records', financeController.getAllRecords);
+router.get('/records/:id', financeController.getRecordById);
+router.put('/records/:id', financeController.updateRecord);
+router.delete('/records/:id', financeController.deleteRecord);
 
-// 📌 Lister tous les comptes
-router.get('/compte', compteController.listerComptes);
-
-// 📌 Récupérer un compte par ID
-router.get('/compte/:id', compteController.getCompteById);
-
-// 📌 Modifier un compte
-router.put('/compte/:id', compteController.modifierCompte);
-
-// 📌 Supprimer un compte
-router.delete('/compte/:id', compteController.supprimerCompte);
+// Routes pour les statistiques
+router.get('/stats', financeController.getFinancialStats);
 
 module.exports = router;
