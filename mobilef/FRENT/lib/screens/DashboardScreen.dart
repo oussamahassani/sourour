@@ -194,7 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AchatDirectMobileScreen(),
+                    builder: (context) => DirectPurchaseScreen(),
                   ),
                 );
               }),
@@ -202,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BonDeCommandeScreen(),
+                    builder: (context) => OrderedPurchaseScreen(),
                   ),
                 );
               }),
