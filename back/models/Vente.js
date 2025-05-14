@@ -1,61 +1,33 @@
 const mongoose = require('mongoose');
 
-// Schéma pour une vente
-const VenteSchema = new mongoose.Schema({
-    // Identifiant unique de la vente
-    idV: { type: mongoose.Schema.Types.ObjectId, auto: true },
-
-    // Identifiant du client concerné par la vente
-    idCL: { type: mongoose.Schema.Types.ObjectId, required: true },
-
-    // Identifiant de l'utilisateur (vendeur) ayant réalisé la vente
-    idU: { type: mongoose.Schema.Types.ObjectId, required: true },
-
-    // Identifiant du produit ou service vendu
-    idP: { type: mongoose.Schema.Types.ObjectId, required: true },
-
-    // Identifiant de l'article spécifique (si applicable)
-    id_article: { type: mongoose.Schema.Types.ObjectId },
-
-    // Date de la vente
-    date_vente: { type: Date, required: true },
-
-    // Type de vente (par exemple : directe, en ligne, etc.)
-    type_vente: { type: String, required: true },
-
-    // Remise appliquée à la vente (en pourcentage)
-    remise: { type: Number, default: 0 },
-
-    // Validation par l'administrateur de la vente
-    validation_admin: { type: Boolean, default: false },
-
-    // Prix hors taxes de la vente
-    prixHTV: { type: Number, required: true },
-
-    // Taux de TVA applicable
-    TVA: { type: Number, required: true },
-
-    // Prix TTC (avec TVA)
-    prixTTC: { type: Number, required: true },
-
-    // Quantité de l'article vendu
-    quantité: { type: Number, required: true },
-
-    // Numéro de la vente
-    numVENTE: { type: String, required: true },
-
-    // Date de livraison prévue
-    date_livraison: { type: Date, required: true },
-
-    // Statut de la vente (par exemple : en attente, livrée, annulée, etc.)
-    statut: { type: String, required: true },
-
-    // Identifiant du document associé à la vente (facture, bon de commande, etc.)
-    id_document: { type: mongoose.Schema.Types.ObjectId },
-
-    // Garantie en mois associée au produit/service vendu
-    garantie_mois: { type: Number, default: 0 }
+const articleDevisSchema = new mongoose.Schema({
+  article: { type: mongoose.Schema.Types.ObjectId, ref: 'Article', required: true },
+  nom: { type: String, required: true },
+  description: { type: String },
+  quantite: { type: Number, required: true, min: 1 },
+  prixHT: { type: Number, required: true, min: 0 },
+  tva: { type: Number, required: true, min: 0, max: 100 },
+  montantHT: { type: Number, required: true },
+  montantTVA: { type: Number, required: true },
+  montantTTC: { type: Number, required: true }
 });
 
-// Exporter le modèle pour utilisation dans d'autres fichiers
-module.exports = mongoose.model('Vente', VenteSchema);
+const devisSchema = new mongoose.Schema({
+  reference: { type: String, unique: true, required: true },
+  client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true },
+  dateCreation: { type: Date, default: Date.now },
+  dateValidite: { type: Date, required: true },
+  adresseLivraison: { type: String, required: true },
+  conditionsPaiement: { type: String, default: '30 jours fin de mois' },
+  remise: { type: Number, default: 0, min: 0 },
+  sousTotalHT: { type: Number, required: true },
+  totalTVA: { type: Number, required: true },
+  totalHT: { type: Number, required: true },
+  totalTTC: { type: Number, required: true },
+  articles: [articleDevisSchema],
+  methode: { type: String, required: true, enum: ['complete', 'rapide'], default: 'complete' },
+  imageDevis: { type: String },
+  statut: { type: String, enum: ['En attente', 'Accepté', 'Refusé', 'Annulé'], default: 'En attente' }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Devis', devisSchema);
