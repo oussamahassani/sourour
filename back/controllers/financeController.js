@@ -1,86 +1,124 @@
-const Finance = require('../models/finance');
+const FinanceRecord = require('../models/FinanceRecord');
 
-// 📌 Ajouter un mouvement financier
-exports.ajouterMouvement = async (req, res) => {
+// Créer une nouvelle transaction
+exports.createRecord = async (req, res) => {
   try {
-    const { id_bordereau, situation_comptes, mouvement_financier, date_mouvement, description, id_compte, type_mouvement } = req.body;
+    const newRecord = new FinanceRecord(req.body);
+    const savedRecord = await newRecord.save();
+    res.status(201).json(savedRecord);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
-    const newMouvement = new Finance({
-      id_bordereau,
-      situation_comptes,
-      mouvement_financier,
-      date_mouvement,
-      description,
-      id_compte,
-      type_mouvement
+// Récupérer toutes les transactions avec filtres
+exports.getAllRecords = async (req, res) => {
+  try {
+    const { type, startDate, endDate, search, category } = req.query;
+    
+    let query = {};
+    
+    // Filtre par type
+    if (type && type !== 'Tous') {
+      query.type = type;
+    }
+    
+    // Filtre par date
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+    
+    // Filtre par catégorie
+    if (category) {
+      query.category = category;
+    }
+    
+    // Recherche texte
+    if (search) {
+      query.$or = [
+        { description: { $regex: search, $options: 'i' } },
+        { reference: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const records = await FinanceRecord.find(query).sort({ date: -1 });
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Récupérer une transaction par ID
+exports.getRecordById = async (req, res) => {
+  try {
+    const record = await FinanceRecord.findById(req.params.id);
+    if (!record) {
+      return res.status(404).json({ message: 'Transaction non trouvée' });
+    }
+    res.json(record);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Mettre à jour une transaction
+exports.updateRecord = async (req, res) => {
+  try {
+    const updatedRecord = await FinanceRecord.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedRecord) {
+      return res.status(404).json({ message: 'Transaction non trouvée' });
+    }
+    res.json(updatedRecord);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Supprimer une transaction
+exports.deleteRecord = async (req, res) => {
+  try {
+    const deletedRecord = await FinanceRecord.findByIdAndDelete(req.params.id);
+    if (!deletedRecord) {
+      return res.status(404).json({ message: 'Transaction non trouvée' });
+    }
+    res.json({ message: 'Transaction supprimée avec succès' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Statistiques financières
+exports.getFinancialStats = async (req, res) => {
+  try {
+    const records = await FinanceRecord.find();
+    
+    const totalIncome = records
+      .filter(r => r.type === 'Vente')
+      .reduce((sum, r) => sum + r.amount, 0);
+    
+    const totalExpense = records
+      .filter(r => ['Achat', 'Frais'].includes(r.type))
+      .reduce((sum, r) => sum + r.amount, 0);
+    
+    const totalTVA = records
+      .reduce((sum, r) => sum + r.tvaNet, 0);
+    
+    const netBalance = totalIncome - totalExpense;
+    
+    res.json({
+      totalIncome,
+      totalExpense,
+      totalTVA,
+      netBalance
     });
-
-    await newMouvement.save();
-    res.status(201).json({ message: 'Mouvement financier ajouté avec succès', mouvement: newMouvement });
   } catch (error) {
-    console.error("Erreur lors de l'ajout du mouvement financier :", error);
-    res.status(500).json({ error: "Erreur serveur lors de l'ajout du mouvement financier" });
-  }
-};
-
-// 📌 Lister tous les mouvements financiers
-exports.listerMouvements = async (req, res) => {
-  try {
-    const mouvements = await Finance.find().populate('id_bordereau id_compte');
-    res.status(200).json({ mouvements });
-  } catch (error) {
-    console.error("Erreur lors de la récupération des mouvements financiers :", error);
-    res.status(500).json({ error: "Erreur serveur lors de la récupération des mouvements financiers" });
-  }
-};
-
-// 📌 Récupérer un mouvement financier par ID
-exports.getMouvementById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const mouvement = await Finance.findById(id).populate('id_bordereau id_compte');
-
-    if (!mouvement) {
-      return res.status(404).json({ error: "Mouvement financier non trouvé" });
-    }
-
-    res.status(200).json({ mouvement });
-  } catch (error) {
-    console.error("Erreur lors de la récupération du mouvement financier :", error);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-};
-
-// 📌 Modifier un mouvement financier
-exports.modifierMouvement = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updatedMouvement = await Finance.findByIdAndUpdate(id, req.body, { new: true });
-
-    if (!updatedMouvement) {
-      return res.status(404).json({ error: "Mouvement financier non trouvé" });
-    }
-
-    res.status(200).json({ message: "Mouvement financier mis à jour avec succès", mouvement: updatedMouvement });
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour du mouvement financier :", error);
-    res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mouvement financier" });
-  }
-};
-
-// 📌 Supprimer un mouvement financier
-exports.supprimerMouvement = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const mouvement = await Finance.findByIdAndDelete(id);
-
-    if (!mouvement) {
-      return res.status(404).json({ error: "Mouvement financier non trouvé" });
-    }
-
-    res.status(200).json({ message: "Mouvement financier supprimé avec succès" });
-  } catch (error) {
-    console.error("Erreur lors de la suppression du mouvement financier :", error);
-    res.status(500).json({ error: "Erreur serveur lors de la suppression du mouvement financier" });
+    res.status(500).json({ message: error.message });
   }
 };
