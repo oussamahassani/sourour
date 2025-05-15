@@ -4,6 +4,7 @@ import '../models/article.dart';
 import '../screens/fournisseur/fournisseur.dart';
 import 'CompteFin.dart';
 import 'paiementAchat.dart';
+import 'historiqueAchat.dart';
 
 import 'achat_direct.dart';
 import 'bonCommandeAchat.dart';
@@ -232,6 +233,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => FormulairePaiementScreen(),
+                  ),
+                );
+              }),
+               _buildDrawerItem('Historique', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PurchaseHistoryScreen(),
                   ),
                 );
               }),
