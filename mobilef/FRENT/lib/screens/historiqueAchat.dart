@@ -1,625 +1,309 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:open_file/open_file.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import '../models/achat.dart';
+import '../services/achat_service.dart';
+import 'achat_direct.dart';
+import 'bonCommandeAchat.dart';
 
-class HistoriqueAchatsDirectsScreen extends StatefulWidget {
+class PurchaseHistoryScreen extends StatefulWidget {
+  const PurchaseHistoryScreen({super.key});
+
   @override
-  _HistoriqueAchatsDirectsScreenState createState() => _HistoriqueAchatsDirectsScreenState();
+  _PurchaseHistoryScreenState createState() => _PurchaseHistoryScreenState();
 }
 
-class _HistoriqueAchatsDirectsScreenState extends State<HistoriqueAchatsDirectsScreen> {
-  List<Map<String, dynamic>> _commandes = [
-    {
-      'reference': 'CMD-2023-001',
-      'fournisseur': 'Fournisseur A',
-      'date': DateTime(2023, 1, 15),
-      'total': 1250.50,
-      'statut': 'Terminé',
-      'adresse': '123 Rue du Commerce, Paris',
-      'email': 'contact@fournisseura.com',
-      'telephone': '0123456789',
-      'notes': 'Livraison prévue le 20/01/2023',
-      'articles': [
-        {'nom': 'Produit X', 'quantite': 2, 'prixHT': 250.00, 'tva': 20.0},
-        {'nom': 'Produit Y', 'quantite': 1, 'prixHT': 750.50, 'tva': 20.0},
-      ],
-    },
-    {
-      'reference': 'CMD-2023-002',
-      'fournisseur': 'Fournisseur B',
-      'date': DateTime(2023, 2, 10),
-      'total': 845.75,
-      'statut': 'En cours',
-      'adresse': '456 Avenue des Affaires, Lyon',
-      'email': 'contact@fournisseurb.com',
-      'telephone': '0987654321',
-      'notes': '',
-      'articles': [
-        {'nom': 'Produit Z', 'quantite': 5, 'prixHT': 150.00, 'tva': 10.0},
-        {'nom': 'Produit W', 'quantite': 3, 'prixHT': 65.25, 'tva': 10.0},
-      ],
-    },
-  ];
-
-  List<Map<String, dynamic>> _commandesFiltrees = [];
-  final TextEditingController _rechercheController = TextEditingController();
-  final currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: '€', decimalDigits: 2);
+class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
+  final PurchaseService _purchaseService = PurchaseService();
+  String _searchQuery = '';
+  String _selectedType = 'Tous';
+  final TextEditingController _searchController = TextEditingController();
+  late Future<List<Map<String, String>>> _articlesFuture;
+  late Future<List<Map<String, String>>> _suppliersFuture;
 
   @override
   void initState() {
     super.initState();
-    _commandesFiltrees = List.from(_commandes);
+    _articlesFuture = _purchaseService.getArticles();
+    _suppliersFuture = _purchaseService.getfetchSuppliers();
   }
 
-  void _filtrerCommandes(String query) {
-    setState(() {
-      _commandesFiltrees = _commandes.where((commande) {
-        final reference = commande['reference'].toString().toLowerCase();
-        final fournisseur = commande['fournisseur'].toString().toLowerCase();
-        final searchLower = query.toLowerCase();
-       
-        return reference.contains(searchLower) ||
-               fournisseur.contains(searchLower);
-      }).toList();
-    });
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  Future<void> _genererPDF(Map<String, dynamic> commande) async {
+  Future<String> _getArticleName(String id_article) async {
     try {
-      final pdf = pw.Document();
-
-      // Définir les styles
-      final headerStyle = pw.TextStyle(
-        fontSize: 18,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColors.blue800,
-      );
-
-      final normalStyle = pw.TextStyle(
-        fontSize: 10,
-      );
-
-      final boldStyle = pw.TextStyle(
-        fontSize: 10,
-        fontWeight: pw.FontWeight.bold,
-      );
-
-      pdf.addPage(
-        pw.Page(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(30),
-          build: (pw.Context context) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Header(
-                  level: 0,
-                  child: pw.Text('BON D\'ACHAT - ${commande['reference']}',
-                      style: headerStyle),
-                ),
-                pw.SizedBox(height: 20),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text('Date: ${DateFormat('dd/MM/yyyy').format(commande['date'])}',
-                            style: boldStyle),
-                        if (commande['notes'] != null && commande['notes'].isNotEmpty)
-                          pw.Text('Notes: ${commande['notes']}', style: normalStyle),
-                      ],
-                    ),
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text('Fournisseur: ${commande['fournisseur']}',
-                            style: boldStyle),
-                        pw.Text('Tél: ${commande['telephone']}', style: normalStyle),
-                        pw.Text('Email: ${commande['email']}', style: normalStyle),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 30),
-                pw.Text('Liste des articles:', style: headerStyle),
-                pw.SizedBox(height: 10),
-                pw.Table.fromTextArray(
-                  context: context,
-                  border: pw.TableBorder.all(color: PdfColors.grey400),
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-                  headerDecoration: pw.BoxDecoration(color: PdfColors.blue800),
-                  headers: ['Article', 'Qté', 'Prix HT', 'TVA', 'Total HT'],
-                  data: commande['articles'].map<List<String>>((article) {
-                    return [
-                      article['nom'],
-                      article['quantite'].toString(),
-                      '${article['prixHT'].toStringAsFixed(2)} €',
-                      '${article['tva']}%',
-                      '${(article['prixHT'] * article['quantite']).toStringAsFixed(2)} €',
-                    ];
-                  }).toList(),
-                ),
-                pw.SizedBox(height: 30),
-                pw.Divider(),
-                pw.SizedBox(height: 10),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.end,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          'Total: ${currencyFormat.format(commande['total'])}',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.SizedBox(height: 40),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-                  children: [
-                    pw.Column(
-                      children: [
-                        pw.Text('Signature fournisseur', style: boldStyle),
-                        pw.SizedBox(height: 50),
-                      ],
-                    ),
-                    pw.Column(
-                      children: [
-                        pw.Text('Signature client', style: boldStyle),
-                        pw.SizedBox(height: 50),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
-      );
-
-      // Sauvegarder le PDF
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File("${directory.path}/commande_${commande['reference']}.pdf");
-      await file.writeAsBytes(await pdf.save());
-
-      // Ouvrir le PDF
-      final result = await OpenFile.open(file.path);
-      if (result.type != ResultType.done) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Impossible d'ouvrir le PDF: ${result.message}")),
-        );
-      }
+      final articles = await _articlesFuture;
+      return articles.firstWhere(
+        (article) => article['id'] == id_article,
+        orElse: () => {'name': 'Article inconnu'},
+      )['name']!;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors de la génération du PDF: $e")),
-      );
+      return 'Article inconnu';
     }
   }
 
-  void _supprimerCommande(int index) {
-    setState(() {
-      _commandes.removeAt(index);
-      _filtrerCommandes(_rechercheController.text);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Commande supprimée avec succès")),
-    );
+  Future<String> _getSupplierName(String id_fournisseur) async {
+    try {
+      final suppliers = await _suppliersFuture;
+      return suppliers.firstWhere(
+        (supplier) => supplier['id'] == id_fournisseur,
+        orElse: () => {'name': 'Fournisseur inconnu'},
+      )['name']!;
+    } catch (e) {
+      return 'Fournisseur inconnu';
+    }
   }
 
-  void _modifierCommande(int index) {
-    final commande = _commandes[index];
-    final referenceController = TextEditingController(text: commande['reference']);
-    final fournisseurController = TextEditingController(text: commande['fournisseur']);
-    final dateController = TextEditingController(text: DateFormat('dd/MM/yyyy').format(commande['date']));
-    final statutController = TextEditingController(text: commande['statut']);
-    final adresseController = TextEditingController(text: commande['adresse']);
-    final emailController = TextEditingController(text: commande['email']);
-    final telephoneController = TextEditingController(text: commande['telephone']);
-    final notesController = TextEditingController(text: commande['notes']);
-   
-    List<Map<String, dynamic>> articles = List.from(commande['articles']);
-    List<TextEditingController> articleNomControllers = [];
-    List<TextEditingController> articleQteControllers = [];
-    List<TextEditingController> articlePrixControllers = [];
-    List<TextEditingController> articleTvaControllers = [];
-   
-    for (var article in articles) {
-      articleNomControllers.add(TextEditingController(text: article['nom']));
-      articleQteControllers.add(TextEditingController(text: article['quantite'].toString()));
-      articlePrixControllers.add(TextEditingController(text: article['prixHT'].toString()));
-      articleTvaControllers.add(TextEditingController(text: article['tva'].toString()));
+  Future<List<Purchase>> _filterPurchases(List<Purchase> purchases) async {
+    if (_searchQuery.isEmpty && _selectedType == 'Tous') {
+      return purchases;
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text("Modifier la commande"),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: referenceController,
-                    decoration: InputDecoration(labelText: 'Référence'),
-                  ),
-                  TextField(
-                    controller: fournisseurController,
-                    decoration: InputDecoration(labelText: 'Fournisseur'),
-                  ),
-                  TextField(
-                    controller: dateController,
-                    decoration: InputDecoration(labelText: 'Date (dd/MM/yyyy)'),
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: commande['date'],
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (date != null) {
-                        dateController.text = DateFormat('dd/MM/yyyy').format(date);
-                      }
-                    },
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: statutController.text,
-                    items: ['Terminé', 'En cours', 'Annulé']
-                        .map((statut) => DropdownMenuItem(
-                              value: statut,
-                              child: Text(statut),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      statutController.text = value!;
-                    },
-                    decoration: InputDecoration(labelText: 'Statut'),
-                  ),
-                  TextField(
-                    controller: adresseController,
-                    decoration: InputDecoration(labelText: 'Adresse'),
-                  ),
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  TextField(
-                    controller: telephoneController,
-                    decoration: InputDecoration(labelText: 'Téléphone'),
-                    keyboardType: TextInputType.phone,
-                  ),
-                 
-                  SizedBox(height: 16),
-                  Text("Articles:", style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                 
-                  for (int i = 0; i < articles.length; i++)
-                    Card(
-                      margin: EdgeInsets.symmetric(vertical: 4),
-                      child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: articleNomControllers[i],
-                              decoration: InputDecoration(labelText: 'Nom article'),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: articleQteControllers[i],
-                                    decoration: InputDecoration(labelText: 'Quantité'),
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: articlePrixControllers[i],
-                                    decoration: InputDecoration(labelText: 'Prix HT'),
-                                    keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            TextField(
-                              controller: articleTvaControllers[i],
-                              decoration: InputDecoration(labelText: 'TVA (%)'),
-                              keyboardType: TextInputType.number,
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                setState(() {
-                                  articles.removeAt(i);
-                                  articleNomControllers.removeAt(i);
-                                  articleQteControllers.removeAt(i);
-                                  articlePrixControllers.removeAt(i);
-                                  articleTvaControllers.removeAt(i);
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                 
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        articles.add({
-                          'nom': 'Nouvel article',
-                          'quantite': 1,
-                          'prixHT': 0.0,
-                          'tva': 20.0,
-                        });
-                        articleNomControllers.add(TextEditingController(text: 'Nouvel article'));
-                        articleQteControllers.add(TextEditingController(text: '1'));
-                        articlePrixControllers.add(TextEditingController(text: '0.0'));
-                        articleTvaControllers.add(TextEditingController(text: '20.0'));
-                      });
-                    },
-                    child: Text("Ajouter un article"),
-                  ),
-                 
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: notesController,
-                    decoration: InputDecoration(labelText: 'Notes'),
-                    maxLines: 3,
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Annuler"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  List<Map<String, dynamic>> updatedArticles = [];
-                  for (int i = 0; i < articles.length; i++) {
-                    updatedArticles.add({
-                      'nom': articleNomControllers[i].text,
-                      'quantite': int.tryParse(articleQteControllers[i].text) ?? 0,
-                      'prixHT': double.tryParse(articlePrixControllers[i].text) ?? 0.0,
-                      'tva': double.tryParse(articleTvaControllers[i].text) ?? 20.0,
-                    });
-                  }
-                 
-                  double newTotal = updatedArticles.fold(0.0, (sum, article) {
-                    return sum + (article['prixHT'] * article['quantite'] * (1 + article['tva'] / 100));
-                  });
-                 
-                  setState(() {
-                    _commandes[index] = {
-                      'reference': referenceController.text,
-                      'fournisseur': fournisseurController.text,
-                      'date': DateFormat('dd/MM/yyyy').parse(dateController.text),
-                      'total': newTotal,
-                      'articles': updatedArticles,
-                      'statut': statutController.text,
-                      'adresse': adresseController.text,
-                      'email': emailController.text,
-                      'telephone': telephoneController.text,
-                      'notes': notesController.text,
-                    };
-                    _filtrerCommandes(_rechercheController.text);
-                  });
-                 
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Commande modifiée avec succès")),
-                  );
-                },
-                child: Text("Enregistrer"),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
+    final filtered = <Purchase>[];
+    for (final purchase in purchases) {
+      // Filter by type first (synchronous)
+      if (_selectedType != 'Tous' && purchase.type_achat != _selectedType) {
+        continue;
+      }
 
-  void _afficherDetails(int index) {
-    final commande = _commandesFiltrees[index];
-   
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Détails de la commande ${commande['reference']}"),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow("Référence:", commande['reference']),
-              _buildDetailRow("Fournisseur:", commande['fournisseur']),
-              _buildDetailRow("Date:", DateFormat('dd/MM/yyyy').format(commande['date'])),
-              _buildDetailRow("Statut:", commande['statut']),
-              _buildDetailRow("Adresse:", commande['adresse']),
-              _buildDetailRow("Email:", commande['email']),
-              _buildDetailRow("Téléphone:", commande['telephone']),
-             
-              SizedBox(height: 16),
-              Text("Articles:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              SizedBox(height: 8),
-              for (var article in commande['articles'])
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("- ${article['nom']}", style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Padding(
-                        padding: EdgeInsets.only(left: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Quantité: ${article['quantite']}"),
-                            Text("Prix HT: ${currencyFormat.format(article['prixHT'])}"),
-                            Text("TVA: ${article['tva']}%"),
-                            Text("Total HT: ${currencyFormat.format(article['prixHT'] * article['quantite'])}"),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-             
-              SizedBox(height: 16),
-              _buildDetailRow("Total:", currencyFormat.format(commande['total']), isBold: true),
-             
-              if (commande['notes'] != null && commande['notes'].isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 16),
-                    Text("Notes:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    SizedBox(height: 8),
-                    Text(commande['notes']),
-                  ],
-                ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Fermer"),
-          ),
-        ],
-      ),
-    );
-  }
+      // Filter by search query if needed
+      if (_searchQuery.isNotEmpty) {
+        final articleName = await _getArticleName(purchase.id_article);
+        final supplierName = await _getSupplierName(purchase.id_fournisseur);
+        if (!articleName.toLowerCase().contains(_searchQuery.toLowerCase()) &&
+            !supplierName.toLowerCase().contains(_searchQuery.toLowerCase())) {
+          continue;
+        }
+      }
 
-  Widget _buildDetailRow(String label, String value, {bool isBold = false}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("$label ", style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(
-            child: Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-          ),
-        ],
-      ),
-    );
+      filtered.add(purchase);
+    }
+    return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const cardMargin = EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
+    const contentPadding = EdgeInsets.all(16.0);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Historique des Achats Directs"),
-        backgroundColor: Colors.teal.shade700,
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: CustomSearchDelegate(_commandes),
-              );
-            },
-          ),
-        ],
+        title: const Text(
+          'Historique des Achats',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+        ),
+        elevation: 2,
+        backgroundColor: theme.primaryColor,
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _rechercheController,
-              decoration: InputDecoration(
-                labelText: 'Rechercher par référence ou fournisseur',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: _filtrerCommandes,
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher un article ou fournisseur',
+                      prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
+                      filled: true,
+                      fillColor: theme.cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                    ),
+                    style: const TextStyle(fontSize: 16),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12.0),
+                SizedBox(
+                  width: 150,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedType,
+                    items: ['Tous', 'Direct', 'Commandé'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value, style: const TextStyle(fontSize: 16)),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedType = value!;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: theme.cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _commandesFiltrees.length,
-              itemBuilder: (context, index) {
-                final commande = _commandesFiltrees[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: ListTile(
-                    title: Text(commande['reference']),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Fournisseur: ${commande['fournisseur']}"),
-                        Text("Date: ${DateFormat('dd/MM/yyyy').format(commande['date'])}"),
-                        Text("Total: ${currencyFormat.format(commande['total'])}"),
-                        Row(
-                          children: [
-                            Chip(
-                              label: Text(commande['statut']),
-                              backgroundColor: _getStatusColor(commande['statut']),
-                            ),
-                          ],
-                        ),
-                      ],
+            child: FutureBuilder<List<Purchase>>(
+              future: _purchaseService.fetchPurchases(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Erreur lors du chargement des achats',
+                      style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error),
                     ),
-                    trailing: PopupMenuButton(
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          child: Text("Détails"),
-                          value: 'details',
+                  );
+                }
+                final purchases = snapshot.data ?? [];
+                if (purchases.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Aucun achat trouvé',
+                      style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                    ),
+                  );
+                }
+
+                return FutureBuilder<List<Purchase>>(
+                  future: _filterPurchases(purchases),
+                  builder: (context, filteredSnapshot) {
+                    if (filteredSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (filteredSnapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Erreur lors du filtrage',
+                          style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error),
                         ),
-                        PopupMenuItem(
-                          child: Text("Modifier"),
-                          value: 'modifier',
+                      );
+                    }
+                    final filteredPurchases = filteredSnapshot.data ?? [];
+                    if (filteredPurchases.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Aucun achat correspondant',
+                          style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
                         ),
-                        PopupMenuItem(
-                          child: Text("Générer PDF"),
-                          value: 'pdf',
-                        ),
-                        PopupMenuItem(
-                          child: Text("Supprimer", style: TextStyle(color: Colors.red)),
-                          value: 'supprimer',
-                        ),
-                      ],
-                      onSelected: (value) {
-                        switch (value) {
-                          case 'details':
-                            _afficherDetails(index);
-                            break;
-                          case 'modifier':
-                            _modifierCommande(index);
-                            break;
-                          case 'pdf':
-                            _genererPDF(commande);
-                            break;
-                          case 'supprimer':
-                            _supprimerCommande(index);
-                            break;
-                        }
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      itemCount: filteredPurchases.length,
+                      itemBuilder: (context, index) {
+                        final purchase = filteredPurchases[index];
+                        return FutureBuilder<List<String>>(
+                          future: Future.wait([
+                            _getArticleName(purchase.id_article),
+                            _getSupplierName(purchase.id_fournisseur),
+                          ]),
+                          builder: (context, nameSnapshot) {
+                            if (nameSnapshot.connectionState == ConnectionState.waiting) {
+                              return const Card(
+                                margin: cardMargin,
+                                child: ListTile(
+                                  title: SizedBox(
+                                    height: 24,
+                                    child: LinearProgressIndicator(),
+                                  ),
+                                ),
+                              );
+                            }
+                            final articleName = nameSnapshot.data?[0] ?? 'Article inconnu';
+                            final supplierName = nameSnapshot.data?[1] ?? 'Fournisseur inconnu';
+
+                            return Card(
+                              margin: cardMargin,
+                              elevation: 3,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                              child: ListTile(
+                                contentPadding: contentPadding,
+                                title: Text(
+                                  articleName,
+                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Fournisseur: $supplierName', style: theme.textTheme.bodyMedium),
+                                      const SizedBox(height: 4),
+                                      Text('Type: ${purchase.type_achat}', style: theme.textTheme.bodyMedium),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Date: ${DateFormat('yyyy-MM-dd').format(purchase.date_achat)}',
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Prix TTC: ${purchase.prix_achatTTC.toStringAsFixed(2)} €',
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                trailing: PopupMenuButton<String>(
+                                  icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'details', child: Text('Détails')),
+                                    const PopupMenuItem(value: 'modify', child: Text('Modifier')),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text(
+                                        'Supprimer',
+                                        style: TextStyle(color: theme.colorScheme.error),
+                                      ),
+                                    ),
+                                    const PopupMenuItem(value: 'pdf', child: Text('Générer PDF')),
+                                  ],
+                                  onSelected: (value) {
+                                    switch (value) {
+                                      case 'details':
+                                        _showPurchaseDetails(purchase);
+                                        break;
+                                      case 'modify':
+                                        _navigateToEditScreen(purchase);
+                                        break;
+                                      case 'delete':
+                                        _confirmDelete(purchase);
+                                        break;
+                                      case 'pdf':
+                                        _generatePdf(purchase);
+                                        break;
+                                    }
+                                  },
+                                ),
+                                onTap: () => _showPurchaseDetails(purchase),
+                              ),
+                            );
+                          },
+                        );
                       },
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -629,88 +313,147 @@ class _HistoriqueAchatsDirectsScreenState extends State<HistoriqueAchatsDirectsS
     );
   }
 
-  Color _getStatusColor(String statut) {
-    switch (statut) {
-      case 'Terminé':
-        return Colors.green.shade100;
-      case 'En cours':
-        return Colors.blue.shade100;
-      case 'Annulé':
-        return Colors.red.shade100;
-      default:
-        return Colors.grey.shade100;
-    }
-  }
-}
+  void _showPurchaseDetails(Purchase purchase) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => FutureBuilder<List<String>>(
+        future: Future.wait([
+          _getArticleName(purchase.id_article),
+          _getSupplierName(purchase.id_fournisseur),
+        ]),
+        builder: (context, snapshot) {
+          final articleName = snapshot.data?[0] ?? 'Article inconnu';
+          final supplierName = snapshot.data?[1] ?? 'Fournisseur inconnu';
 
-class CustomSearchDelegate extends SearchDelegate {
-  final List<Map<String, dynamic>> commandes;
-
-  CustomSearchDelegate(this.commandes);
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: Icon(Icons.clear),
-        onPressed: () {
-          query = '';
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            title: Text(
+              'Détails de l\'achat',
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDetailRow('Article', articleName, theme),
+                  _buildDetailRow('Fournisseur', supplierName, theme),
+                  _buildDetailRow('Type', purchase.type_achat, theme),
+                  _buildDetailRow('Date', DateFormat('yyyy-MM-dd').format(purchase.date_achat), theme),
+                  _buildDetailRow('Prix HT', '${purchase.prix_achatHT.toStringAsFixed(2)} €', theme),
+                  _buildDetailRow('TVA', '${purchase.TVA.toStringAsFixed(2)} %', theme),
+                  _buildDetailRow('Quantité', '${purchase.quantite}', theme),
+                  _buildDetailRow('Prix TTC', '${purchase.prix_achatTTC.toStringAsFixed(2)} €', theme),
+                  if (purchase.delai_livraison != null)
+                    _buildDetailRow('Délai de livraison', '${purchase.delai_livraison} jours', theme),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Fermer', style: TextStyle(color: theme.colorScheme.primary)),
+              ),
+            ],
+          );
         },
       ),
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null);
-      },
     );
   }
 
-  @override
-  Widget buildResults(BuildContext context) {
-    final results = commandes.where((commande) {
-      final reference = commande['reference'].toString().toLowerCase();
-      final fournisseur = commande['fournisseur'].toString().toLowerCase();
-      final searchLower = query.toLowerCase();
-     
-      return reference.contains(searchLower) ||
-             fournisseur.contains(searchLower);
-    }).toList();
-
-    return _buildSearchResults(results);
+  Widget _buildDetailRow(String label, String value, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label: ',
+            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final suggestions = commandes.where((commande) {
-      final reference = commande['reference'].toString().toLowerCase();
-      final fournisseur = commande['fournisseur'].toString().toLowerCase();
-      final searchLower = query.toLowerCase();
-     
-      return reference.contains(searchLower) ||
-             fournisseur.contains(searchLower);
-    }).toList();
-
-    return _buildSearchResults(suggestions);
+  void _confirmDelete(Purchase purchase) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+        title: Text(
+          'Confirmer la suppression',
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        content: const Text('Voulez-vous vraiment supprimer cet achat ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Annuler', style: TextStyle(color: theme.colorScheme.onSurface)),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (purchase.id != null) {
+                bool success = await _purchaseService.deletePurchase(purchase.id!);
+                Navigator.pop(context);
+                if (success) {
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Achat supprimé avec succès'),
+                      backgroundColor: theme.colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Erreur lors de la suppression'),
+                      backgroundColor: theme.colorScheme.error,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text(
+              'Supprimer',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildSearchResults(List<Map<String, dynamic>> results) {
-    return ListView.builder(
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final commande = results[index];
-        return ListTile(
-          title: Text(commande['reference']),
-          subtitle: Text("Fournisseur: ${commande['fournisseur']} - Total: ${NumberFormat.currency(locale: 'fr_FR', symbol: '€').format(commande['total'])}"),
-          onTap: () {
-            close(context, commande);
-          },
-        );
-      },
+  void _navigateToEditScreen(Purchase purchase) {
+    final route = purchase.type_achat == 'Commandé'
+        ? MaterialPageRoute(builder: (context) => OrderedPurchaseScreen(purchase: purchase))
+        : MaterialPageRoute(builder: (context) => DirectPurchaseScreen(purchase: purchase));
+    Navigator.push(context, route).then((value) {
+      setState(() {});
+    });
+  }
+
+  void _generatePdf(Purchase purchase) {
+    final theme = Theme.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Fonctionnalité PDF non implémentée'),
+        backgroundColor: theme.colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+      ),
     );
   }
 }
