@@ -4,7 +4,8 @@ import '../models/achat.dart';
 import '../services/achat_service.dart';
 
 class DirectPurchaseScreen extends StatefulWidget {
-  const DirectPurchaseScreen({super.key});
+  final Purchase? purchase;
+  const DirectPurchaseScreen({super.key, this.purchase});
 
   @override
   _DirectPurchaseScreenState createState() => _DirectPurchaseScreenState();
@@ -13,68 +14,93 @@ class DirectPurchaseScreen extends StatefulWidget {
 class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
   final _formKey = GlobalKey<FormState>();
   final PurchaseService _purchaseService = PurchaseService();
-  String? _articleId;
-  String? _supplierId;
-  double _tva = 20.0;
-  double _prixTTC = 0.0;
+  String? _id_article;
+  String? _id_fournisseur;
+  double _TVA = 20.0;
+  double _prix_achatTTC = 0.0;
+
+  final TextEditingController _prix_achatHTController = TextEditingController();
+  final TextEditingController _quantiteController = TextEditingController(text: '1');
+  final TextEditingController _TVAController = TextEditingController(text: '20');
+
   late Future<List<Map<String, String>>> _suppliersFuture;
   late Future<List<Map<String, String>>> _articlesFuture;
-
-  void _loadSuppliers() {
-    _suppliersFuture = _purchaseService.getfetchSuppliers();
-    print(_purchaseService.getfetchSuppliers());
-  }
-
-  final TextEditingController _prixHTController = TextEditingController();
-  final TextEditingController _quantiteController = TextEditingController(
-    text: '1',
-  );
-  final TextEditingController _tvaController = TextEditingController(
-    text: '20',
-  );
 
   @override
   void initState() {
     super.initState();
-    _prixHTController.addListener(_calculateTTC);
-    _tvaController.addListener(_calculateTTC);
+    _refreshData();
+    _prix_achatHTController.addListener(_calculateTTC);
+    _TVAController.addListener(_calculateTTC);
     _quantiteController.addListener(_calculateTTC);
-    _loadSuppliers();
-    _articlesFuture = _purchaseService.getArticles();
+
+    if (widget.purchase != null) {
+      _id_article = widget.purchase!.id_article;
+      _id_fournisseur = widget.purchase!.id_fournisseur;
+      _prix_achatHTController.text = widget.purchase!.prix_achatHT.toString();
+      _TVAController.text = widget.purchase!.TVA.toString();
+      _quantiteController.text = widget.purchase!.quantite.toString();
+      _TVA = widget.purchase!.TVA;
+      _prix_achatTTC = widget.purchase!.prix_achatTTC;
+    }
+  }
+
+  void _refreshData() {
+    setState(() {
+      _suppliersFuture = _purchaseService.getfetchSuppliers();
+      _articlesFuture = _purchaseService.getArticles();
+    });
   }
 
   void _calculateTTC() {
-    if (_prixHTController.text.isNotEmpty && _tvaController.text.isNotEmpty) {
-      double prixHT = double.tryParse(_prixHTController.text) ?? 0;
-      double tva = double.tryParse(_tvaController.text) ?? 0;
+    if (_prix_achatHTController.text.isNotEmpty && _TVAController.text.isNotEmpty) {
+      double prixHT = double.tryParse(_prix_achatHTController.text) ?? 0;
+      double tva = double.tryParse(_TVAController.text) ?? 0;
       int quantite = int.tryParse(_quantiteController.text) ?? 1;
 
       setState(() {
-        _tva = tva;
-        _prixTTC = Purchase.calculateTTC(prixHT, tva, quantite);
+        _TVA = tva;
+        _prix_achatTTC = Purchase.calculateTTC(prixHT, tva, quantite);
       });
     }
+  }
+
+  void _resetForm() {
+    _prix_achatHTController.clear();
+    _TVAController.text = '20';
+    _quantiteController.text = '1';
+    setState(() {
+      _id_article = null;
+      _id_fournisseur = null;
+      _prix_achatTTC = 0.0;
+    });
+    _formKey.currentState?.reset();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Achat Direct',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        title: Text(
+          widget.purchase != null ? 'Modifier Achat Direct' : 'Achat Direct',
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshData,
+            tooltip: 'Rafraîchir les données',
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
           child: Card(
             elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Form(
@@ -82,217 +108,75 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Nouvel Achat',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Text(
+                      widget.purchase != null ? 'Modifier Achat Direct' : 'Nouvel Achat Direct',
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
                     ),
                     const SizedBox(height: 16),
-                    // Dropdown pour les articles
-                    FutureBuilder<List<Map<String, String>>>(
-                      future: _articlesFuture, // Utilisation de _articlesFuture
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return const Text(
-                            'Erreur de chargement des articles',
-                          );
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Text('Aucun article disponible');
-                        }
-
-                        List<Map<String, String>> articles = snapshot.data!;
-
-                        if (_articleId == null ||
-                            !articles.any(
-                              (article) => article['id'] == _articleId,
-                            )) {
-                          _articleId = null;
-                        }
-
-                        return DropdownButtonFormField<String>(
-                          value: _articleId,
-                          decoration: _inputDecoration('Article'),
-                          items: [
-                            DropdownMenuItem<String>(
-                              value: null,
-                              child: Text('Sélectionner un article'),
-                            ),
-                            ...articles.map((article) {
-                              return DropdownMenuItem<String>(
-                                value: article['id'],
-                                child: Text(article['name'] ?? 'Sans nom'),
-                              );
-                            }).toList(),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _articleId = value;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null) {
-                              return 'Veuillez sélectionner un article';
-                            }
-                            return null;
-                          },
-                        );
-                      },
+                    _buildDropdownField(
+                      label: 'Article',
+                      future: _articlesFuture,
+                      value: _id_article,
+                      onChanged: (value) => setState(() => _id_article = value),
                     ),
-
                     const SizedBox(height: 16),
-                    FutureBuilder<List<Map<String, String>>>(
-                      future:
-                          _suppliersFuture, // Utilisation de _suppliersFuture
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return const Text(
-                            'Erreur de chargement des fournisseurs',
-                          );
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Text('Aucun fournisseur disponible');
-                        }
-
-                        List<Map<String, String>> suppliers = snapshot.data!;
-
-                        // Si _supplierId est null ou ne correspond pas à un id valide, réinitialiser à null ou à un fournisseur par défaut
-                        if (_supplierId == null ||
-                            !suppliers.any(
-                              (supplier) => supplier['id'] == _supplierId,
-                            )) {
-                          _supplierId =
-                              null; // Réinitialiser si l'id n'est pas trouvé
-                        }
-
-                        return DropdownButtonFormField<String>(
-                          value:
-                              _supplierId, // La valeur sélectionnée, elle peut être null
-                          decoration: _inputDecoration('Fournisseur'),
-                          items: [
-                            DropdownMenuItem<String>(
-                              value: null, // Option par défaut ou vide
-                              child: Text('Sélectionner un fournisseur'),
-                            ),
-                            ...suppliers.map((supplier) {
-                              return DropdownMenuItem<String>(
-                                value: supplier['id'], // ID du fournisseur
-                                child: Text(supplier['name'] ?? 'Sans nom'),
-                              );
-                            }).toList(),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              _supplierId = value; // Mise à jour de _supplierId
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null) {
-                              return 'Veuillez sélectionner un fournisseur';
-                            }
-                            return null;
-                          },
-                        );
-                      },
+                    _buildDropdownField(
+                      label: 'Fournisseur',
+                      future: _suppliersFuture,
+                      value: _id_fournisseur,
+                      onChanged: (value) => setState(() => _id_fournisseur = value),
                     ),
-
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _prixHTController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d{0,2}'),
-                        ),
-                      ],
-                      decoration: _inputDecoration('Prix HT (€)'),
+                    _buildTextField(
+                      controller: _prix_achatHTController,
+                      label: 'Prix HT (€)',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
                       validator: (value) {
-                        if (value?.isEmpty ?? true)
-                          return 'Ce champ est requis';
-                        if (double.tryParse(value!) == null)
-                          return 'Valeur invalide';
+                        if (value?.isEmpty ?? true) return 'Ce champ est requis';
+                        if (double.tryParse(value!) == null) return 'Valeur invalide';
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _tvaController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d{0,2}'),
-                        ),
-                      ],
-                      decoration: _inputDecoration('TVA (%)'),
+                    _buildTextField(
+                      controller: _TVAController,
+                      label: 'TVA (%)',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
                       validator: (value) {
-                        if (value?.isEmpty ?? true)
-                          return 'Ce champ est requis';
-                        if (double.tryParse(value!) == null)
-                          return 'Valeur invalide';
+                        if (value?.isEmpty ?? true) return 'Ce champ est requis';
+                        if (double.tryParse(value!) == null) return 'Valeur invalide';
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    _buildTextField(
                       controller: _quantiteController,
+                      label: 'Quantité',
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: _inputDecoration('Quantité'),
                       validator: (value) {
-                        if (value?.isEmpty ?? true)
-                          return 'Ce champ est requis';
-                        if (int.tryParse(value!) == null ||
-                            int.parse(value) <= 0) {
+                        if (value?.isEmpty ?? true) return 'Ce champ est requis';
+                        if (int.tryParse(value!) == null || int.parse(value) <= 0) {
                           return 'Quantité doit être un nombre positif';
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    _buildTextField(
+                      controller: TextEditingController(text: _prix_achatTTC.toStringAsFixed(2)),
+                      label: 'Prix TTC (€)',
                       readOnly: true,
-                      decoration: _inputDecoration('Prix TTC (€)').copyWith(
-                        prefixIcon: const Icon(Icons.euro, color: Colors.grey),
-                      ),
-                      controller: TextEditingController(
-                        text: _prixTTC.toStringAsFixed(2),
-                      ),
+                      prefixIcon: const Icon(Icons.euro, color: Colors.grey),
                     ),
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         TextButton(
-                          onPressed: () {
-                            _prixHTController.clear();
-                            _tvaController.text = '20';
-                            _quantiteController.text = '1';
-                            setState(() {
-                              _articleId = null;
-                              _supplierId = null;
-                              _prixTTC = 0.0;
-                            });
-                            _formKey.currentState?.reset();
-                          },
+                          onPressed: _resetForm,
                           child: const Text('Réinitialiser'),
                         ),
                         const SizedBox(width: 16),
@@ -300,54 +184,46 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
                           onPressed: () async {
                             if (_formKey.currentState?.validate() ?? false) {
                               final purchase = Purchase(
-                                articleId: _articleId!,
-                                supplierId: _supplierId!,
-                                prixHT: double.parse(_prixHTController.text),
-                                tva: double.parse(_tvaController.text),
+                                id: widget.purchase?.id,
+                                id_article: _id_article!,
+                                id_fournisseur: _id_fournisseur!,
+                                prix_achatHT: double.parse(_prix_achatHTController.text),
+                                TVA: double.parse(_TVAController.text),
                                 quantite: int.parse(_quantiteController.text),
-                                prixTTC: _prixTTC,
-                                date: DateTime.now(),
+                                prix_achatTTC: _prix_achatTTC,
+                                type_achat: 'Direct',
+                                date_achat: DateTime.now(),
                               );
-                              bool success = await _purchaseService
-                                  .savePurchase(purchase);
+                              bool success = widget.purchase != null
+                                  ? await _purchaseService.updatePurchase(purchase)
+                                  : await _purchaseService.savePurchase(purchase);
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     success
-                                        ? 'Achat enregistré avec succès'
+                                        ? widget.purchase != null
+                                            ? 'Achat modifié avec succès'
+                                            : 'Achat direct enregistré avec succès'
                                         : 'Erreur lors de l\'enregistrement',
                                   ),
-                                  backgroundColor:
-                                      success ? Colors.green : Colors.red,
+                                  backgroundColor: success ? Colors.green : Colors.red,
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
                               if (success) {
-                                _formKey.currentState?.reset();
-                                _prixHTController.clear();
-                                _tvaController.text = '20';
-                                _quantiteController.text = '1';
-                                setState(() {
-                                  _articleId = null;
-                                  _supplierId = null;
-                                  _prixTTC = 0.0;
-                                });
+                                _resetForm();
+                                if (widget.purchase != null) Navigator.pop(context);
                               }
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
-                          child: const Text(
-                            'Enregistrer l\'achat',
-                            style: TextStyle(fontSize: 16),
+                          child: Text(
+                            widget.purchase != null ? 'Modifier l\'achat' : 'Enregistrer l\'achat',
+                            style: const TextStyle(fontSize: 16),
                           ),
                         ),
                       ],
@@ -362,20 +238,128 @@ class _DirectPurchaseScreenState extends State<DirectPurchaseScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      filled: true,
-      fillColor: Colors.grey[50],
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    bool readOnly = false,
+    Icon? prefixIcon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      readOnly: readOnly,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        prefixIcon: prefixIcon,
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required Future<List<Map<String, String>>> future,
+    required String? value,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return FutureBuilder<List<Map<String, String>>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.red),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Erreur: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _refreshData,
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          );
+        }
+        final data = snapshot.data ?? [];
+        if (data.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Aucun $label disponible. Vérifiez la connexion.',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                TextButton(
+                  onPressed: _refreshData,
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        bool isValidValue = value == null || data.any((item) => item['id'] == value);
+
+        return DropdownButtonFormField<String>(
+          value: isValidValue ? value : null,
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          items: [
+            DropdownMenuItem<String>(
+              value: null,
+              child: Text('Sélectionner un $label'),
+            ),
+            ...data.map((item) => DropdownMenuItem<String>(
+                  value: item['id'],
+                  child: Text(item['name'] ?? 'Sans nom'),
+                )),
+          ],
+          onChanged: onChanged,
+          validator: (value) => value == null ? 'Veuillez sélectionner un $label' : null,
+        );
+      },
     );
   }
 
   @override
   void dispose() {
-    _prixHTController.dispose();
-    _tvaController.dispose();
+    _prix_achatHTController.dispose();
+    _TVAController.dispose();
     _quantiteController.dispose();
     super.dispose();
   }
