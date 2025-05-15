@@ -14,6 +14,7 @@ class PurchaseHistoryScreen extends StatefulWidget {
 }
 
 class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
+  /*
   final PurchaseService _purchaseService = PurchaseService();
   String _searchQuery = '';
   String _selectedType = 'Tous';
@@ -360,4 +361,5 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
       ),
     );
   }
+  */
 }

@@ -7,6 +7,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import '../models/facture.dart';
 import '../services/FactureService.dart';
+import '../services/article_service.dart';
+import '../services/achat_service.dart';
+import '../services/user_rh_service.dart';
+import '../models/User.dart';
+import '../models/article.dart';
+
 // Page principale - Historique des factures
 class FactureHistoriquePage extends StatefulWidget {
   @override
@@ -15,17 +21,28 @@ class FactureHistoriquePage extends StatefulWidget {
 
 class _FactureHistoriquePageState extends State<FactureHistoriquePage> {
   List<FactureAchat> _factures = [];
-  
+
   @override
   void initState() {
     super.initState();
-    _factures = FactureService.getFacturesAchat();
+    _loadData();
+
+    // _factures = FactureService.getFacturesAchat();
+  }
+
+  Future<void> _loadData() async {
+    final fournisseurService = FactureService();
+    final facturesChargees = await fournisseurService.fetchFacturesVenteAchat();
+    setState(() {
+      _factures = facturesChargees;
+    });
   }
 
   void _rafraichirFactures() {
-    setState(() {
+    _loadData();
+    /* setState(() {
       _factures = FactureService.getFacturesAchat();
-    });
+    });*/
   }
 
   Color _getStatutColor(String statut) {
@@ -50,200 +67,237 @@ class _FactureHistoriquePageState extends State<FactureHistoriquePage> {
         title: Text('Historique des Factures d\'Achat'),
         elevation: 2,
       ),
-      body: _factures.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.receipt_long, size: 80, color: Colors.teal.shade200),
-                  SizedBox(height: 20),
-                  Text(
-                    'Aucune facture d\'achat enregistrée',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    icon: Icon(Icons.add),
-                    label: Text('Créer une nouvelle facture'),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FactureAchatForm(
-                            onFactureAdded: _rafraichirFactures,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            )
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Card(
-                    color: Colors.teal.shade50,
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+      body:
+          _factures.isEmpty
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.receipt_long,
+                      size: 80,
+                      color: Colors.teal.shade200,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.teal),
-                          SizedBox(width: 16),
-                          Expanded(
+                    SizedBox(height: 20),
+                    Text(
+                      'Aucune facture d\'achat enregistrée',
+                      style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      icon: Icon(Icons.add),
+                      label: Text('Créer une nouvelle facture'),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => FactureAchatForm(
+                                  onFactureAdded: _rafraichirFactures,
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )
+              : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Card(
+                      color: Colors.teal.shade50,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.teal),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Gestion des Factures d\'Achat',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Consultez, créez, modifiez vos factures et générez des PDF en quelques clics.',
+                                    style: TextStyle(color: Colors.grey[700]),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.all(16),
+                      itemCount: _factures.length,
+                      itemBuilder: (context, index) {
+                        final facture = _factures[index];
+                        return Card(
+                          margin: EdgeInsets.only(bottom: 16),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => FactureDetailPage(
+                                        facture: facture,
+                                        onFactureUpdated: _rafraichirFactures,
+                                      ),
+                                ),
+                              );
+                            },
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Gestion des Factures d\'Achat',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.teal,
+                                    child: Icon(
+                                      Icons.receipt,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    facture.numeroFacture,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(facture.fournisseur ?? ""),
+                                  trailing: Chip(
+                                    label: Text(
+                                      facture.statut,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    backgroundColor: _getStatutColor(
+                                      facture.statut,
+                                    ),
                                   ),
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Consultez, créez, modifiez vos factures et générez des PDF en quelques clics.',
-                                  style: TextStyle(
-                                    color: Colors.grey[700],
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 16),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Échéance: ${DateFormat('dd/MM/yyyy').format(facture.dateEcheance)}',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      Text(
+                                        '${facture.prixTTC.toStringAsFixed(2)} €',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.teal.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton.icon(
+                                        icon: Icon(Icons.edit, size: 18),
+                                        label: Text('Modifier'),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (context) => FactureAchatForm(
+                                                    facture: facture,
+                                                    onFactureAdded:
+                                                        _rafraichirFactures,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      SizedBox(width: 8),
+                                      TextButton.icon(
+                                        icon: Icon(
+                                          Icons.picture_as_pdf,
+                                          size: 18,
+                                        ),
+                                        label: Text('PDF'),
+                                        onPressed: () async {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Génération du PDF...',
+                                              ),
+                                            ),
+                                          );
+
+                                          final pdfPath =
+                                              await FactureService.genererPDF(
+                                                facture,
+                                              );
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).hideCurrentSnackBar();
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'PDF généré avec succès',
+                                              ),
+                                            ),
+                                          );
+
+                                          OpenFile.open(pdfPath);
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: _factures.length,
-                    itemBuilder: (context, index) {
-                      final facture = _factures[index];
-                      return Card(
-                        margin: EdgeInsets.only(bottom: 16),
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FactureDetailPage(
-                                  facture: facture,
-                                  onFactureUpdated: _rafraichirFactures,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Column(
-                            children: [
-                              ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.teal,
-                                  child: Icon(Icons.receipt, color: Colors.white),
-                                ),
-                                title: Text(
-                                  facture.numeroFacture,
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(facture.fournisseur),
-                                trailing: Chip(
-                                  label: Text(
-                                    facture.statut,
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: _getStatutColor(facture.statut),
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Échéance: ${DateFormat('dd/MM/yyyy').format(facture.dateEcheance)}',
-                                      style: TextStyle(color: Colors.grey[600]),
-                                    ),
-                                    Text(
-                                      '${facture.prixTTC.toStringAsFixed(2)} €',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.teal.shade700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.all(8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    TextButton.icon(
-                                      icon: Icon(Icons.edit, size: 18),
-                                      label: Text('Modifier'),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => FactureAchatForm(
-                                              facture: facture,
-                                              onFactureAdded: _rafraichirFactures,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    SizedBox(width: 8),
-                                    TextButton.icon(
-                                      icon: Icon(Icons.picture_as_pdf, size: 18),
-                                      label: Text('PDF'),
-                                      onPressed: () async {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Génération du PDF...')),
-                                        );
-                                        
-                                        final pdfPath = await FactureService.genererPDF(facture);
-                                        
-                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('PDF généré avec succès')),
-                                        );
-                                        
-                                        OpenFile.open(pdfPath);
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => FactureAchatForm(
-                onFactureAdded: _rafraichirFactures,
-              ),
+              builder:
+                  (context) =>
+                      FactureAchatForm(onFactureAdded: _rafraichirFactures),
             ),
           );
         },
@@ -277,10 +331,11 @@ class FactureDetailPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => FactureAchatForm(
-                    facture: facture,
-                    onFactureAdded: onFactureUpdated,
-                  ),
+                  builder:
+                      (context) => FactureAchatForm(
+                        facture: facture,
+                        onFactureAdded: onFactureUpdated,
+                      ),
                 ),
               );
             },
@@ -288,17 +343,17 @@ class FactureDetailPage extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.picture_as_pdf),
             onPressed: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Génération du PDF...')),
-              );
-              
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Génération du PDF...')));
+
               final pdfPath = await FactureService.genererPDF(facture);
-              
+
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('PDF généré avec succès')),
-              );
-              
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('PDF généré avec succès')));
+
               OpenFile.open(pdfPath);
             },
           ),
@@ -342,18 +397,22 @@ class FactureDetailPage extends StatelessWidget {
                       ],
                     ),
                     Divider(height: 32),
-                    _infoRow('Fournisseur', facture.fournisseur),
-                    _infoRow('Produit', facture.produit),
-                    _infoRow('Date de création', 
-                      DateFormat('dd/MM/yyyy').format(facture.dateCreation)),
-                    _infoRow('Date d\'échéance', 
-                      DateFormat('dd/MM/yyyy').format(facture.dateEcheance)),
+                    _infoRow('Fournisseur', facture.fournisseur ?? ""),
+                    _infoRow('Produit', facture.produit ?? ""),
+                    _infoRow(
+                      'Date de création',
+                      DateFormat('dd/MM/yyyy').format(facture.dateCreation),
+                    ),
+                    _infoRow(
+                      'Date d\'échéance',
+                      DateFormat('dd/MM/yyyy').format(facture.dateEcheance),
+                    ),
                     _infoRow('Créé par', facture.createur),
                   ],
                 ),
               ),
             ),
-            
+
             // Détails financiers
             Card(
               margin: EdgeInsets.only(bottom: 16),
@@ -375,10 +434,15 @@ class FactureDetailPage extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 16),
-                    _infoRow('Prix HT', '${facture.prixHT.toStringAsFixed(2)} €'),
+                    _infoRow(
+                      'Prix HT',
+                      '${facture.prixHT.toStringAsFixed(2)} €',
+                    ),
                     _infoRow('TVA', '${facture.tva.toStringAsFixed(2)} %'),
-                    _infoRow('Montant TVA', 
-                      '${(facture.prixTTC - facture.prixHT).toStringAsFixed(2)} €'),
+                    _infoRow(
+                      'Montant TVA',
+                      '${(facture.prixTTC - facture.prixHT).toStringAsFixed(2)} €',
+                    ),
                     Divider(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -404,7 +468,7 @@ class FactureDetailPage extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Actions
             Card(
               shape: RoundedRectangleBorder(
@@ -428,22 +492,18 @@ class FactureDetailPage extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _actionButton(
-                          context,
-                          'Modifier',
-                          Icons.edit,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FactureAchatForm(
-                                  facture: facture,
-                                  onFactureAdded: onFactureUpdated,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                        _actionButton(context, 'Modifier', Icons.edit, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => FactureAchatForm(
+                                    facture: facture,
+                                    onFactureAdded: onFactureUpdated,
+                                  ),
+                            ),
+                          );
+                        }),
                         _actionButton(
                           context,
                           'Générer PDF',
@@ -452,27 +512,28 @@ class FactureDetailPage extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Génération du PDF...')),
                             );
-                            
-                            final pdfPath = await FactureService.genererPDF(facture);
-                            
+
+                            final pdfPath = await FactureService.genererPDF(
+                              facture,
+                            );
+
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('PDF généré avec succès')),
                             );
-                            
+
                             OpenFile.open(pdfPath);
                           },
                         ),
-                        _actionButton(
-                          context,
-                          'Partager',
-                          Icons.share,
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Fonctionnalité de partage à implémenter')),
-                            );
-                          },
-                        ),
+                        _actionButton(context, 'Partager', Icons.share, () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Fonctionnalité de partage à implémenter',
+                              ),
+                            ),
+                          );
+                        }),
                       ],
                     ),
                   ],
@@ -504,25 +565,26 @@ class FactureDetailPage extends StatelessWidget {
           SizedBox(width: 8),
           Expanded(
             flex: 3,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            child: Text(value, style: TextStyle(fontWeight: FontWeight.w500)),
           ),
         ],
       ),
     );
   }
 
-  Widget _actionButton(BuildContext context, String label, IconData icon, VoidCallback onPressed) {
+  Widget _actionButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
     return Column(
       children: [
         ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.teal.shade800, backgroundColor: Colors.teal.shade50,
+            foregroundColor: Colors.teal.shade800,
+            backgroundColor: Colors.teal.shade50,
             shape: CircleBorder(),
             padding: EdgeInsets.all(16),
           ),
@@ -533,7 +595,7 @@ class FactureDetailPage extends StatelessWidget {
       ],
     );
   }
-  
+
   Color _getStatutColor(String statut) {
     switch (statut.toLowerCase()) {
       case 'payée':
@@ -549,16 +611,14 @@ class FactureDetailPage extends StatelessWidget {
     }
   }
 }
+
 // Formulaire de facture d'achat
 class FactureAchatForm extends StatefulWidget {
   final FactureAchat? facture;
   final Function onFactureAdded;
 
-  const FactureAchatForm({
-    Key? key,
-    this.facture,
-    required this.onFactureAdded,
-  }) : super(key: key);
+  const FactureAchatForm({Key? key, this.facture, required this.onFactureAdded})
+    : super(key: key);
 
   @override
   _FactureAchatFormState createState() => _FactureAchatFormState();
@@ -570,17 +630,23 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
   final _prixHTController = TextEditingController();
   final _tvaController = TextEditingController();
   final _prixTTCController = TextEditingController();
-  
+
   DateTime? _dateEcheance;
   String? _selectedFournisseur;
   String? _selectedProduit;
   String? _selectedCreateur;
   String _selectedStatut = 'Brouillon';
 
-  List<String> _fournisseurs = ['Fournisseur 1', 'Fournisseur 2', 'Fournisseur 3'];
-  List<String> _produits = ['Produit A', 'Produit B', 'Produit C'];
-  List<String> _createurs = ['User 1', 'User 2', 'User 3'];
-  List<String> _statuts = ['Brouillon', 'Émise', 'Payée', 'Annulée', 'En retard'];
+  List<Map<String, String>> _fournisseurs = [];
+  List<Article> _produits = [];
+  List<User> _createurs = [];
+  List<String> _statuts = [
+    'Brouillon',
+    'Émise',
+    'Payée',
+    'Annulée',
+    'En retard',
+  ];
 
   @override
   void initState() {
@@ -601,8 +667,20 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
       // Mode création - valeurs par défaut
       _tvaController.text = '20.0';
       _dateEcheance = DateTime.now().add(const Duration(days: 30));
-      _selectedCreateur = _createurs.first;
+      _selectedCreateur = null;
     }
+    _loadData();
+  }
+
+  // Appelle une méthode async sans await
+  Future<void> _loadData() async {
+    final articleService = ArticleService();
+    final fournisseurService = PurchaseService();
+
+    _produits = await articleService.fetchAllArticles();
+    _fournisseurs = await fournisseurService.getfetchSuppliers();
+    _createurs = await UserRhService.fetchALLadmin();
+    print(_produits);
   }
 
   @override
@@ -637,22 +715,24 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
     }
   }
 
-  void _enregistrerFacture() {
+  void _enregistrerFacture() async {
     if (_formKey.currentState!.validate()) {
       final facture = FactureAchat(
-        id: widget.facture?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id:
+            widget.facture?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         numeroFacture: _numeroFactureController.text,
         fournisseur: _selectedFournisseur!,
         produit: _selectedProduit!,
-        prixHT: double.parse(_prixHTController.text),
-        tva: double.parse(_tvaController.text),
-        prixTTC: double.parse(_prixTTCController.text),
+        prixHT: int.parse(_prixHTController.text),
+        tva: int.parse(_tvaController.text),
+        prixTTC: int.parse(_prixTTCController.text),
         statut: _selectedStatut,
         dateCreation: widget.facture?.dateCreation ?? DateTime.now(),
         dateEcheance: _dateEcheance!,
         createur: _selectedCreateur!,
       );
-
+      final success = await FactureService().saveFactureAchat(facture);
       widget.onFactureAdded(facture);
       Navigator.pop(context);
     }
@@ -662,7 +742,11 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.facture == null ? 'Nouvelle Facture d\'Achat' : 'Modifier Facture'),
+        title: Text(
+          widget.facture == null
+              ? 'Nouvelle Facture d\'Achat'
+              : 'Modifier Facture',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -699,12 +783,13 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.business),
                 ),
-                items: _fournisseurs.map((fournisseur) {
-                  return DropdownMenuItem<String>(
-                    value: fournisseur,
-                    child: Text(fournisseur),
-                  );
-                }).toList(),
+                items:
+                    _fournisseurs.map((fournisseur) {
+                      return DropdownMenuItem<String>(
+                        value: fournisseur['id'],
+                        child: Text(fournisseur['name'].toString()),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedFournisseur = value;
@@ -718,31 +803,35 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
                 },
               ),
               const SizedBox(height: 16),
+
               DropdownButtonFormField<String>(
                 value: _selectedProduit,
                 decoration: const InputDecoration(
-                  labelText: 'Produit',
+                  labelText: 'Article',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.shopping_bag),
                 ),
-                items: _produits.map((produit) {
-                  return DropdownMenuItem<String>(
-                    value: produit,
-                    child: Text(produit),
-                  );
-                }).toList(),
+                items:
+                    _produits.map((article) {
+                      print('Article in Dropdown: ${article}');
+                      return DropdownMenuItem<String>(
+                        value: article.id,
+                        child: Text(article.nomArticle),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedProduit = value;
                   });
                 },
                 validator: (value) {
-                  if (value == null) {
-                    return 'Veuillez sélectionner un produit';
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez sélectionner un article';
                   }
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -755,7 +844,9 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
                         prefixIcon: Icon(Icons.attach_money),
                         suffixText: '€',
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       onChanged: (value) => _calculateTTC(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -778,7 +869,9 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
                         prefixIcon: Icon(Icons.percent),
                         suffixText: '%',
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       onChanged: (value) => _calculateTTC(),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -812,12 +905,13 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.star),
                 ),
-                items: _statuts.map((statut) {
-                  return DropdownMenuItem<String>(
-                    value: statut,
-                    child: Text(statut),
-                  );
-                }).toList(),
+                items:
+                    _statuts.map((statut) {
+                      return DropdownMenuItem<String>(
+                        value: statut,
+                        child: Text(statut),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedStatut = value!;
@@ -832,12 +926,13 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
-                items: _createurs.map((createur) {
-                  return DropdownMenuItem<String>(
-                    value: createur,
-                    child: Text(createur),
-                  );
-                }).toList(),
+                items:
+                    _createurs.map((createur) {
+                      return DropdownMenuItem<String>(
+                        value: createur.id,
+                        child: Text(createur.nom),
+                      );
+                    }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedCreateur = value;
@@ -876,10 +971,17 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
               Center(
                 child: ElevatedButton.icon(
                   icon: Icon(widget.facture == null ? Icons.add : Icons.save),
-                  label: Text(widget.facture == null ? 'Créer la facture' : 'Enregistrer les modifications'),
+                  label: Text(
+                    widget.facture == null
+                        ? 'Créer la facture'
+                        : 'Enregistrer les modifications',
+                  ),
                   onPressed: _enregistrerFacture,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ),

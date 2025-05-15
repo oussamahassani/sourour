@@ -34,15 +34,40 @@ exports.ajouterFacture = async (req, res) => {
 exports.listerFactures = async (req, res) => {
   try {
     const factures = await Facture.find()
-      .populate('idACH', 'nom')
-      .populate('idV', 'nom')
-      .populate('idF', 'nom')
-      .populate('idP', 'nom')
-      .populate('idCL', 'nom')
-      .populate('idU', 'nom')
-      .populate('id_document', 'titre');
+    for (let fact of factures) {
+    if (fact.idACH) {
+        await fact.populate('idACH');
+    }
+  }
+  for (let fact of factures) {
+    if (fact.idV) {
+        await fact.populate('idV');
+    }
+  }
+      for (let fact of factures) {
+    if (fact.idF) {
+        await fact.populate('idF','nomF');
+    }
+  }
+  for (let fact of factures) {
+    if (fact.idP) {
+        await fact.populate('idP','nom');
+    }
+  }
+      for (let fact of factures) {
+    if (fact.idCL) {
+        await fact.populate('idCL','nom');
+    }
+  }
+      for (let fact of factures) {
+    if (fact.idU) {
+        await fact.populate('idU','nom');
+    }
+  }
+      
+   
 
-    res.status(200).json({ factures });
+    res.status(200).json( factures );
   } catch (error) {
     console.error("Erreur lors de la récupération des factures :", error);
     res.status(500).json({ error: "Erreur serveur lors de la récupération des factures" });
@@ -54,18 +79,27 @@ exports.getFactureById = async (req, res) => {
   try {
     const { id } = req.params;
     const facture = await Facture.findById(id)
-      .populate('idACH', 'nom')
-      .populate('idV', 'nom')
-      .populate('idF', 'nom')
-      .populate('idP', 'nom')
-      .populate('idCL', 'nom')
-      .populate('idU', 'nom')
-      .populate('id_document', 'titre');
+   
+  
+      
+   
 
     if (!facture) {
       return res.status(404).json({ error: "Facture non trouvée" });
     }
-
+  if (facture.idACH) {
+        await facture.populate('idACH', 'nom');
+    }
+        if (facture.idV) {
+        await facture.populate('idV', 'nom');
+    }
+        if (facture.idF) {
+        await facture.populate('idF', 'nomF');
+    }
+    
+          if (facture.idCL) {
+        await facture.populate('idCL', 'nom');
+    }
     res.status(200).json({ facture });
   } catch (error) {
     console.error("Erreur lors de la récupération de la facture :", error);

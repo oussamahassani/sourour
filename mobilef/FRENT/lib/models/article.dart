@@ -86,4 +86,9 @@ class Article {
     'image': image,
     'dateAjout': dateAjout?.toIso8601String(),
   };
+
+  @override
+  String toString() {
+    return 'Article(id: $id, nomArticle: $nomArticle, reference: $reference, prixVente: $prixVente, prixAchat: $prixAchat, stock: $stock)';
+  }
 }

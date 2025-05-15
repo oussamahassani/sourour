@@ -18,12 +18,12 @@ const FactureSchema = new mongoose.Schema({
   },
   idF: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Fournisseur',
+    ref: 'fournisseur',
     default: null
   },
   idP: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Produit',
+    ref: 'Article',
     default: null
   },
   idCL: {
@@ -33,7 +33,7 @@ const FactureSchema = new mongoose.Schema({
   },
   idU: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Utilisateur',
+    ref: 'User',
     default: null
   },
   date_creation: {
