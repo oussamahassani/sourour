@@ -5,23 +5,33 @@ import 'dart:io';
 import 'article.dart';
 import 'client.dart';
 import 'historiqueDevis.dart';
+import '../services/achat_service.dart';
+
 class DevisMobileScreen extends StatefulWidget {
   @override
   _DevisMobileScreenState createState() => _DevisMobileScreenState();
 }
 
-class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTickerProviderStateMixin {
+class _DevisMobileScreenState extends State<DevisMobileScreen>
+    with SingleTickerProviderStateMixin {
   // Contrôleurs pour la méthode complète
   final TextEditingController _clientController = TextEditingController();
   final TextEditingController _referenceController = TextEditingController();
-  final TextEditingController _adresseLivraisonController = TextEditingController();
-  final TextEditingController _remiseController = TextEditingController(text: '0');
-  final TextEditingController _conditionsPaiementController = TextEditingController(text: '30 jours fin de mois');
-  final TextEditingController _validiteController = TextEditingController(text: '30');
+  final TextEditingController _adresseLivraisonController =
+      TextEditingController();
+  final TextEditingController _remiseController = TextEditingController(
+    text: '0',
+  );
+  final TextEditingController _conditionsPaiementController =
+      TextEditingController(text: '30 jours fin de mois');
+  final TextEditingController _validiteController = TextEditingController(
+    text: '30',
+  );
 
   // Contrôleurs pour la méthode rapide
   final TextEditingController _rapideClientController = TextEditingController();
-  final TextEditingController _rapideReferenceController = TextEditingController();
+  final TextEditingController _rapideReferenceController =
+      TextEditingController();
 
   // Variables d'état
   DateTime _selectedDate = DateTime.now();
@@ -35,35 +45,56 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
   TabController? _tabController;
 
   // Données
-  List<String> _clients = ['Client 1', 'Client 2', 'Client 3'];
-  List<Map<String, dynamic>> _listeArticles = [
-    {'nom': 'Produit A', 'prixHT': 100.0},
-    {'nom': 'Produit B', 'prixHT': 75.0},
-    {'nom': 'Service C', 'prixHT': 50.0},
-  ];
+  List<Map<String, String>> _clients = [];
+
+  List<Map<String, String>> _listeArticles = [];
 
   List<Map<String, dynamic>> _historiqueDevis = [];
   String? _selectedArticle;
   final TextEditingController _prixController = TextEditingController();
   final TextEditingController _quantiteController = TextEditingController();
-  final TextEditingController _tvaController = TextEditingController(text: '20.0');
+  final TextEditingController _tvaController = TextEditingController(
+    text: '20.0',
+  );
   final TextEditingController _descriptionController = TextEditingController();
 
-  final currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: 'DT', decimalDigits: 2);
+  final currencyFormat = NumberFormat.currency(
+    locale: 'fr_FR',
+    symbol: 'DT',
+    decimalDigits: 2,
+  );
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _formRapideKey = GlobalKey<FormState>();
+  final PurchaseService _purchaseService = PurchaseService();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _chargerHistorique();
+    _refreshData();
   }
 
   @override
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _refreshData() {
+    setState(() {
+      _purchaseService.getfetchClient().then((clients) {
+        setState(() {
+          _clients = clients;
+        });
+      });
+      ;
+      _purchaseService.getArticles().then((articles) {
+        setState(() {
+          _listeArticles = articles;
+        });
+      });
+    });
   }
 
   void _chargerHistorique() {
@@ -123,7 +154,6 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
       });
       _calculerTotal();
 
-      _selectedArticle = null;
       _prixController.clear();
       _quantiteController.clear();
       _tvaController.text = '20.0';
@@ -132,8 +162,14 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
   }
 
   void _calculerTotal() {
-    double sousTotal = _articles.fold(0.0, (sum, article) => sum + article['montantHT']);
-    double totalTVA = _articles.fold(0.0, (sum, article) => sum + article['montantTVA']);
+    double sousTotal = _articles.fold(
+      0.0,
+      (sum, article) => sum + article['montantHT'],
+    );
+    double totalTVA = _articles.fold(
+      0.0,
+      (sum, article) => sum + article['montantTVA'],
+    );
     double remise = double.tryParse(_remiseController.text) ?? 0.0;
 
     setState(() {
@@ -166,7 +202,7 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
     }
   }
 
-  void _enregistrerDevis() {
+  void _enregistrerDevis() async {
     if (_formKey.currentState!.validate() && _articles.isNotEmpty) {
       setState(() {
         _historiqueDevis.insert(0, {
@@ -183,7 +219,19 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
           'methode': 'complète',
         });
       });
-
+      await _purchaseService.saveVente({
+        'reference': _referenceController.text,
+        'client': _selectedClient ?? "",
+        'date': DateFormat('dd/MM/yyyy').format(_selectedDate),
+        'total': _totalDevis.toString(),
+        'statut': 'En attente',
+        'articles': List.from(_articles),
+        'adresse': _adresseLivraisonController.text,
+        'conditions': _conditionsPaiementController.text,
+        'validite': _validiteController.text,
+        'remise': _remiseController.text,
+        'methode': 'complète',
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Devis enregistré avec succès"),
@@ -273,39 +321,32 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
   Future<void> _navigateToAddArticle() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ArticleFormScreen(
-    onSave: (article) async {
-      // Handle saving the article here
-      print('Saving article: $article');
-      // You can return something if needed
-      return;
-    },
-  ),),
+      MaterialPageRoute(
+        builder:
+            (context) => ArticleFormScreen(
+              onSave: (article) async {
+                // Handle saving the article here
+                print('Saving article: $article');
+                // You can return something if needed
+                return;
+              },
+            ),
+      ),
     );
-    
-    if (result != null) {
+
+    /* if (result != null) {
       _ajouterArticle(result);
       setState(() {
-        _listeArticles.add({
-          'nom': result['nom'],
-          'prixHT': result['prixHT'],
-        });
+        _listeArticles.add({'nom': result['nom'], 'prixHT': result['prixHT']});
       });
-    }
+    }*/
   }
 
   Future<void> _navigateToAddClient() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Client(clientData: {},)),
+      MaterialPageRoute(builder: (context) => Client(clientData: {})),
     );
-
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        _clients.add(result);
-        _selectedClient = result;
-      });
-    }
   }
 
   @override
@@ -317,31 +358,28 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
       appBar: AppBar(
         title: Text(
           'Création de devis',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: Colors.teal, // Changement de couleur pour différencier des bons de commande
+        backgroundColor:
+            Colors
+                .teal, // Changement de couleur pour différencier des bons de commande
         elevation: 0,
         centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(Icons.history),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => HistoriqueDevisScreen(),
-              ),
-            ),
+            onPressed:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoriqueDevisScreen(),
+                  ),
+                ),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: [
-            Tab(icon: Icon(Icons.list_alt)), 
-            Tab(icon: Icon(Icons.bolt)),
-          ],
+          tabs: [Tab(icon: Icon(Icons.list_alt)), Tab(icon: Icon(Icons.bolt))],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
@@ -377,15 +415,23 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                     if (isSmallScreen) ...[
                       TextFormField(
                         controller: _referenceController,
-                        decoration: _inputDecoration('Référence du devis', Icons.numbers),
+                        decoration: _inputDecoration(
+                          'Référence du devis',
+                          Icons.numbers,
+                        ),
                         validator: _requiredValidator,
                       ),
                       SizedBox(height: 8),
                       InkWell(
                         onTap: () => _selectDate(context),
                         child: InputDecorator(
-                          decoration: _inputDecoration('Date', Icons.calendar_today),
-                          child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
+                          decoration: _inputDecoration(
+                            'Date',
+                            Icons.calendar_today,
+                          ),
+                          child: Text(
+                            DateFormat('dd/MM/yyyy').format(_selectedDate),
+                          ),
                         ),
                       ),
                     ] else
@@ -394,7 +440,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                           Expanded(
                             child: TextFormField(
                               controller: _referenceController,
-                              decoration: _inputDecoration('Référence du devis', Icons.numbers),
+                              decoration: _inputDecoration(
+                                'Référence du devis',
+                                Icons.numbers,
+                              ),
                               validator: _requiredValidator,
                             ),
                           ),
@@ -403,8 +452,15 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                             child: InkWell(
                               onTap: () => _selectDate(context),
                               child: InputDecorator(
-                                decoration: _inputDecoration('Date', Icons.calendar_today),
-                                child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
+                                decoration: _inputDecoration(
+                                  'Date',
+                                  Icons.calendar_today,
+                                ),
+                                child: Text(
+                                  DateFormat(
+                                    'dd/MM/yyyy',
+                                  ).format(_selectedDate),
+                                ),
                               ),
                             ),
                           ),
@@ -413,14 +469,20 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     TextFormField(
                       controller: _validiteController,
-                      decoration: _inputDecoration('Validité (jours)', Icons.timer),
+                      decoration: _inputDecoration(
+                        'Validité (jours)',
+                        Icons.timer,
+                      ),
                       keyboardType: TextInputType.number,
                       validator: _requiredValidator,
                     ),
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     TextFormField(
                       controller: _conditionsPaiementController,
-                      decoration: _inputDecoration('Conditions de paiement', Icons.payment),
+                      decoration: _inputDecoration(
+                        'Conditions de paiement',
+                        Icons.payment,
+                      ),
                       validator: _requiredValidator,
                     ),
                   ],
@@ -440,19 +502,32 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: _selectedClient,
-                            onChanged: (String? newValue) => setState(() => _selectedClient = newValue),
-                            items: _clients.map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                            decoration: _inputDecoration('Sélectionner un client', Icons.person),
-                            validator: (value) => value == null ? 'Veuillez sélectionner un client' : null,
+                            onChanged:
+                                (String? newValue) =>
+                                    setState(() => _selectedClient = newValue),
+                            items:
+                                _clients.map((value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value['id'],
+                                    child: Text(value['name'] ?? "inconu"),
+                                  );
+                                }).toList(),
+                            decoration: _inputDecoration(
+                              'Sélectionner un client',
+                              Icons.person,
+                            ),
+                            validator:
+                                (value) =>
+                                    value == null
+                                        ? 'Veuillez sélectionner un client'
+                                        : null,
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.add_circle_outline, color: Colors.teal),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.teal,
+                          ),
                           onPressed: _navigateToAddClient,
                         ),
                       ],
@@ -460,7 +535,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     TextFormField(
                       controller: _adresseLivraisonController,
-                      decoration: _inputDecoration('Adresse de livraison', Icons.location_on),
+                      decoration: _inputDecoration(
+                        'Adresse de livraison',
+                        Icons.location_on,
+                      ),
                       validator: _requiredValidator,
                       maxLines: 2,
                     ),
@@ -485,23 +563,30 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                               setState(() {
                                 _selectedArticle = value;
                                 var article = _listeArticles.firstWhere(
-                                  (article) => article['nom'] == value,
-                                  orElse: () => {'prixHT': 0.0},
+                                  (article) => article['name'] == value,
                                 );
-                                _prixController.text = article['prixHT'].toString();
+                                _prixController.text =
+                                    article['prixHT'].toString();
                               });
                             },
-                            items: _listeArticles.map((article) {
-                              return DropdownMenuItem<String>(
-                                value: article['nom'],
-                                child: Text(article['nom']),
-                              );
-                            }).toList(),
-                            decoration: _inputDecoration('Sélectionner un article', Icons.list),
+                            items:
+                                _listeArticles.map((article) {
+                                  return DropdownMenuItem<String>(
+                                    value: article['id'],
+                                    child: Text(article['nom'] ?? "inconu"),
+                                  );
+                                }).toList(),
+                            decoration: _inputDecoration(
+                              'Sélectionner un article',
+                              Icons.list,
+                            ),
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.add_circle_outline, color: Colors.teal),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.teal,
+                          ),
                           onPressed: _navigateToAddArticle,
                         ),
                       ],
@@ -510,20 +595,29 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                     if (isSmallScreen) ...[
                       TextFormField(
                         controller: _descriptionController,
-                        decoration: _inputDecoration('Description détaillée', Icons.description),
+                        decoration: _inputDecoration(
+                          'Description détaillée',
+                          Icons.description,
+                        ),
                         maxLines: 2,
                       ),
                       SizedBox(height: 8),
                       TextFormField(
                         controller: _quantiteController,
-                        decoration: _inputDecoration('Quantité', Icons.format_list_numbered),
+                        decoration: _inputDecoration(
+                          'Quantité',
+                          Icons.format_list_numbered,
+                        ),
                         keyboardType: TextInputType.number,
                         validator: _quantityValidator,
                       ),
                       SizedBox(height: 8),
                       TextFormField(
                         controller: _prixController,
-                        decoration: _inputDecoration('Prix unitaire HT', Icons.attach_money),
+                        decoration: _inputDecoration(
+                          'Prix unitaire HT',
+                          Icons.attach_money,
+                        ),
                         keyboardType: TextInputType.number,
                         validator: _priceValidator,
                       ),
@@ -541,7 +635,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                             flex: 2,
                             child: TextFormField(
                               controller: _descriptionController,
-                              decoration: _inputDecoration('Description détaillée', Icons.description),
+                              decoration: _inputDecoration(
+                                'Description détaillée',
+                                Icons.description,
+                              ),
                               maxLines: 2,
                             ),
                           ),
@@ -549,7 +646,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                           Expanded(
                             child: TextFormField(
                               controller: _quantiteController,
-                              decoration: _inputDecoration('Quantité', Icons.format_list_numbered),
+                              decoration: _inputDecoration(
+                                'Quantité',
+                                Icons.format_list_numbered,
+                              ),
                               keyboardType: TextInputType.number,
                               validator: _quantityValidator,
                             ),
@@ -558,7 +658,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                           Expanded(
                             child: TextFormField(
                               controller: _prixController,
-                              decoration: _inputDecoration('Prix HT', Icons.attach_money),
+                              decoration: _inputDecoration(
+                                'Prix HT',
+                                Icons.attach_money,
+                              ),
                               keyboardType: TextInputType.number,
                               validator: _priceValidator,
                             ),
@@ -567,7 +670,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                           Expanded(
                             child: TextFormField(
                               controller: _tvaController,
-                              decoration: _inputDecoration('TVA (%)', Icons.percent),
+                              decoration: _inputDecoration(
+                                'TVA (%)',
+                                Icons.percent,
+                              ),
                               keyboardType: TextInputType.number,
                               validator: _tvaValidator,
                             ),
@@ -577,7 +683,8 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     ElevatedButton(
                       onPressed: () {
-                        if (_selectedArticle != null && _formKey.currentState!.validate()) {
+                        if (_selectedArticle != null &&
+                            _formKey.currentState!.validate()) {
                           _ajouterArticle({
                             'nom': _selectedArticle!,
                             'description': _descriptionController.text,
@@ -599,33 +706,38 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
             ),
             if (_articles.isNotEmpty) ...[
               SizedBox(height: 16),
-              _buildSectionHeader('Détail des articles proposés', isSmallScreen),
+              _buildSectionHeader(
+                'Détail des articles proposés',
+                isSmallScreen,
+              ),
               Card(
                 elevation: 2,
                 child: Padding(
                   padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
                   child: Column(
-                    children: _articles.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final article = entry.value;
-                      return ListTile(
-                        title: Text(article['nom']),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (article['description'] != null && article['description'].isNotEmpty)
-                              Text(article['description']),
-                            Text(
-                              'Quantité: ${article['quantite']} - Prix HT: ${currencyFormat.format(article['prixHT'])} - TVA: ${article['tva']}%',
+                    children:
+                        _articles.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final article = entry.value;
+                          return ListTile(
+                            title: Text(article['nom']),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (article['description'] != null &&
+                                    article['description'].isNotEmpty)
+                                  Text(article['description']),
+                                Text(
+                                  'Quantité: ${article['quantite']} - Prix HT: ${currencyFormat.format(article['prixHT'])} - TVA: ${article['tva']}%',
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _supprimerArticle(index),
-                        ),
-                      );
-                    }).toList(),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _supprimerArticle(index),
+                            ),
+                          );
+                        }).toList(),
                   ),
                 ),
               ),
@@ -640,7 +752,10 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                   children: [
                     TextFormField(
                       controller: _remiseController,
-                      decoration: _inputDecoration('Remise (€)', Icons.discount),
+                      decoration: _inputDecoration(
+                        'Remise (€)',
+                        Icons.discount,
+                      ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _calculerTotal(),
                       validator: _discountValidator,
@@ -649,7 +764,11 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                     _buildTotalLine('Sous-total HT:', _sousTotal),
                     _buildTotalLine('TVA:', _totalTVA),
                     if (double.parse(_remiseController.text) > 0)
-                      _buildTotalLine('Remise:', -double.parse(_remiseController.text), isDiscount: true),
+                      _buildTotalLine(
+                        'Remise:',
+                        -double.parse(_remiseController.text),
+                        isDiscount: true,
+                      ),
                     Divider(),
                     _buildTotalLine('Total HT:', _totalHT, isBold: true),
                     _buildTotalLine('Total TTC:', _totalDevis, isBold: true),
@@ -672,11 +791,17 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate() && _articles.isNotEmpty) {
+                    if (_formKey.currentState!.validate() &&
+                        _articles.isNotEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("PDF généré avec succès"),
-                          backgroundColor: const Color.fromARGB(255, 66, 73, 66),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            66,
+                            73,
+                            66,
+                          ),
                         ),
                       );
                     }
@@ -697,132 +822,163 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
     );
   }
 
- Widget _buildMethodeRapide(bool isSmallScreen) {
-  return SingleChildScrollView(
-    padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
-    child: Form(
-      key: _formRapideKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Méthode Rapide', isSmallScreen),
-          Text(
-            'Prenez simplement une photo du devis papier et saisissez les informations essentielles.',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-          SizedBox(height: 20),
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _rapideReferenceController,
-                    decoration: _inputDecoration('Référence du devis', Icons.numbers),
-                    validator: _requiredValidator,
-                  ),
-                  SizedBox(height: isSmallScreen ? 8.0 : 16.0),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedClient,
-                          onChanged: (String? newValue) => setState(() => _selectedClient = newValue),
-                          items: _clients.map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          decoration: _inputDecoration('Sélectionner un client', Icons.person),
-                          validator: (value) => value == null ? 'Veuillez sélectionner un client' : null,
+  Widget _buildMethodeRapide(bool isSmallScreen) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
+      child: Form(
+        key: _formRapideKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader('Méthode Rapide', isSmallScreen),
+            Text(
+              'Prenez simplement une photo du devis papier et saisissez les informations essentielles.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            SizedBox(height: 20),
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _rapideReferenceController,
+                      decoration: _inputDecoration(
+                        'Référence du devis',
+                        Icons.numbers,
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    SizedBox(height: isSmallScreen ? 8.0 : 16.0),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _selectedClient,
+                            onChanged:
+                                (String? newValue) =>
+                                    setState(() => _selectedClient = newValue),
+                            items:
+                                (_clients as List<Map<String, String>>).map((
+                                  client,
+                                ) {
+                                  return DropdownMenuItem<String>(
+                                    value: client["id"],
+                                    child: Text(client["name"] ?? "Inconnu"),
+                                  );
+                                }).toList(),
+
+                            decoration: _inputDecoration(
+                              'Sélectionner un client',
+                              Icons.person,
+                            ),
+                            validator:
+                                (value) =>
+                                    value == null
+                                        ? 'Veuillez sélectionner un client'
+                                        : null,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.add_circle_outline, color: Colors.teal),
-                        onPressed: _navigateToAddClient,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: isSmallScreen ? 8.0 : 16.0),
-                  Text(
-                    'Photo du devis',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
+                        IconButton(
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.teal,
+                          ),
+                          onPressed: _navigateToAddClient,
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: _prendrePhoto,
-                    child: Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
+                    SizedBox(height: isSmallScreen ? 8.0 : 16.0),
+                    Text(
+                      'Photo du devis',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal,
                       ),
-                      child: _imageDevis == null
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                                SizedBox(height: 8),
-                                Text('Appuyez pour prendre une photo'),
-                              ],
-                            )
-                          : Image.file(_imageDevis!, fit: BoxFit.cover),
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  if (_imageDevis != null)
-                    TextButton(
-                      onPressed: _prendrePhoto,
-                      child: Text('Reprendre la photo'),
+                    SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: _prendrePhoto,
+                      child: Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child:
+                            _imageDevis == null
+                                ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.camera_alt,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text('Appuyez pour prendre une photo'),
+                                  ],
+                                )
+                                : Image.file(_imageDevis!, fit: BoxFit.cover),
+                      ),
                     ),
-                ],
+                    SizedBox(height: 10),
+                    if (_imageDevis != null)
+                      TextButton(
+                        onPressed: _prendrePhoto,
+                        child: Text('Reprendre la photo'),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: _enregistrerDevisRapide,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size(150, 50),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _enregistrerDevisRapide,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(150, 50),
+                  ),
+                  child: Text('Enregistrer'),
                 ),
-                child: Text('Enregistrer'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formRapideKey.currentState!.validate() && _imageDevis != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("PDF généré avec succès"),
-                        backgroundColor: const Color.fromARGB(255, 66, 73, 66),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.blue,
-                  minimumSize: Size(150, 50),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formRapideKey.currentState!.validate() &&
+                        _imageDevis != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("PDF généré avec succès"),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            66,
+                            73,
+                            66,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blue,
+                    minimumSize: Size(150, 50),
+                  ),
+                  child: Text('Générer PDF'),
                 ),
-                child: Text('Générer PDF'),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-        ],
+              ],
+            ),
+            SizedBox(height: 20),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildSectionHeader(String title, bool isSmallScreen) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.0),
@@ -831,7 +987,9 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
         style: TextStyle(
           fontSize: isSmallScreen ? 18 : 20,
           fontWeight: FontWeight.bold,
-          color: Colors.teal, // Changement de couleur pour correspondre au thème devis
+          color:
+              Colors
+                  .teal, // Changement de couleur pour correspondre au thème devis
         ),
       ),
     );
@@ -845,7 +1003,12 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
     );
   }
 
-  Widget _buildTotalLine(String label, double value, {bool isBold = false, bool isDiscount = false}) {
+  Widget _buildTotalLine(
+    String label,
+    double value, {
+    bool isBold = false,
+    bool isDiscount = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -870,25 +1033,29 @@ class _DevisMobileScreenState extends State<DevisMobileScreen> with SingleTicker
 
   String? _quantityValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (int.tryParse(value) == null || int.parse(value) <= 0) return 'Quantité invalide';
+    if (int.tryParse(value) == null || int.parse(value) <= 0)
+      return 'Quantité invalide';
     return null;
   }
 
   String? _priceValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (double.tryParse(value) == null || double.parse(value) <= 0) return 'Prix invalide';
+    if (double.tryParse(value) == null || double.parse(value) <= 0)
+      return 'Prix invalide';
     return null;
   }
 
   String? _tvaValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (double.tryParse(value) == null || double.parse(value) < 0) return 'TVA invalide';
+    if (double.tryParse(value) == null || double.parse(value) < 0)
+      return 'TVA invalide';
     return null;
   }
 
   String? _discountValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (double.tryParse(value) == null || double.parse(value) < 0) return 'Remise invalide';
+    if (double.tryParse(value) == null || double.parse(value) < 0)
+      return 'Remise invalide';
     return null;
   }
 }

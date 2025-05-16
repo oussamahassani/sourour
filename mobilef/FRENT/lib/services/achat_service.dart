@@ -5,14 +5,53 @@ import '../models/achat.dart';
 
 class PurchaseService {
   static const String _baseUrl = '${AppConfig.baseUrl}/achat';
+  static const String _baseUrlVente = '${AppConfig.baseUrl}/vente';
   static const String _fournisseurUrl = '${AppConfig.baseUrl}/fournisseurs';
   static const String _articleUrl = '${AppConfig.baseUrl}/product';
+  static const String _ClientUrl = '${AppConfig.baseUrl}/clients';
   static const Duration _timeout = Duration(seconds: 10);
 
   static Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  Future<List<Map<String, String>>> getfetchClient() async {
+    final url = Uri.parse(_ClientUrl);
+    try {
+      final response = await http.get(url, headers: _headers).timeout(_timeout);
+      print('Raw supplier response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final data = decoded['clients']; // <- ici on récupère la liste
+
+        if (data is! List) {
+          print('Erreur: réponse inattendue: $data');
+          return [];
+        }
+
+        return data
+            .where((item) => item['_id'] != null)
+            .map<Map<String, String>>((supplier) {
+              final id = supplier['_id'].toString();
+              final name =
+                  '${supplier['prenom'] ?? ''} ${supplier['nom'] ?? ''}'.trim();
+              return {
+                'id': id,
+                'name': name.isEmpty ? 'Fournisseur ID: $id' : name,
+              };
+            })
+            .toList();
+      } else {
+        print('Erreur HTTP ${response.statusCode}: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Erreur lors de la récupération des clients: $e');
+      return [];
+    }
+  }
 
   Future<List<Map<String, String>>> getfetchSuppliers() async {
     final url = Uri.parse(_fournisseurUrl);
@@ -25,11 +64,14 @@ class PurchaseService {
           print('Erreur: Supplier response is not a list: $data');
           return [];
         }
-        final suppliers = data
-            .where((item) => item['_id'] != null)
-            .map<Map<String, String>>((supplier) {
+        final suppliers =
+            data.where((item) => item['_id'] != null).map<Map<String, String>>((
+              supplier,
+            ) {
               final id = supplier['_id'].toString();
-              final name = '${supplier['prenomF'] ?? ''} ${supplier['nomF'] ?? ''}'.trim();
+              final name =
+                  '${supplier['prenomF'] ?? ''} ${supplier['nomF'] ?? ''}'
+                      .trim();
               return {
                 'id': id,
                 'name': name.isEmpty ? 'Fournisseur ID: $id' : name,
@@ -38,7 +80,9 @@ class PurchaseService {
         print('Fetched suppliers: $suppliers');
         return suppliers;
       } else {
-        print('Erreur API fournisseurs: ${response.statusCode} - ${response.body}');
+        print(
+          'Erreur API fournisseurs: ${response.statusCode} - ${response.body}',
+        );
         return [];
       }
     } catch (e) {
@@ -58,14 +102,17 @@ class PurchaseService {
           print('Erreur: Article response is not a list: $data');
           return [];
         }
-        final articles = data
-            .where((item) => item['_id'] != null && item['article'] != null)
-            .map<Map<String, String>>((item) {
-              return {
-                'id': item['_id'].toString(),
-                'name': item['article'].toString(),
-              };
-            }).toList();
+        final articles =
+            data
+                .where((item) => item['_id'] != null && item['article'] != null)
+                .map<Map<String, String>>((item) {
+                  return {
+                    'id': item['_id'].toString(),
+                    'name': item['article'].toString(),
+                    'prixHT': item['prix_achat'].toString(),
+                  };
+                })
+                .toList();
         print('Fetched articles: $articles');
         return articles;
       } else {
@@ -80,7 +127,9 @@ class PurchaseService {
 
   Future<List<Purchase>> fetchPurchases() async {
     try {
-      final response = await http.get(Uri.parse('$_baseUrl/liste'), headers: _headers).timeout(_timeout);
+      final response = await http
+          .get(Uri.parse('$_baseUrl/liste'), headers: _headers)
+          .timeout(_timeout);
       print('Raw purchase response: ${response.body}'); // Log raw response
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -97,7 +146,9 @@ class PurchaseService {
         }
         return purchaseList.map((json) => Purchase.fromJson(json)).toList();
       } else {
-        throw Exception('Échec du chargement (${response.statusCode}): ${response.body}');
+        throw Exception(
+          'Échec du chargement (${response.statusCode}): ${response.body}',
+        );
       }
     } catch (e) {
       print('Erreur fetchPurchases: $e');
@@ -107,11 +158,35 @@ class PurchaseService {
 
   Future<bool> savePurchase(Purchase purchase) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/ajouter'),
-        headers: _headers,
-        body: jsonEncode(purchase.toJson()),
-      ).timeout(_timeout);
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/ajouter'),
+            headers: _headers,
+            body: jsonEncode(purchase.toJson()),
+          )
+          .timeout(_timeout);
+      if (response.statusCode == 201) {
+        print('Achat enregistré: ${response.body}');
+        return true;
+      } else {
+        print('Erreur API: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Erreur savePurchase: $e');
+      return false;
+    }
+  }
+
+  Future<bool> saveVente(Map<String, Object> purchase) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrlVente'),
+            headers: _headers,
+            body: jsonEncode(purchase),
+          )
+          .timeout(_timeout);
       if (response.statusCode == 201) {
         print('Achat enregistré: ${response.body}');
         return true;
@@ -127,10 +202,9 @@ class PurchaseService {
 
   Future<bool> deletePurchase(String id) async {
     try {
-      final response = await http.delete(
-        Uri.parse('$_baseUrl/supprimer/$id'),
-        headers: _headers,
-      ).timeout(_timeout);
+      final response = await http
+          .delete(Uri.parse('$_baseUrl/supprimer/$id'), headers: _headers)
+          .timeout(_timeout);
       if (response.statusCode == 200) {
         return true;
       } else {
@@ -146,11 +220,13 @@ class PurchaseService {
   Future<bool> updatePurchase(Purchase purchase) async {
     if (purchase.id == null) return false;
     try {
-      final response = await http.put(
-        Uri.parse('$_baseUrl/modifier/${purchase.id}'),
-        headers: _headers,
-        body: jsonEncode(purchase.toJson()),
-      ).timeout(_timeout);
+      final response = await http
+          .put(
+            Uri.parse('$_baseUrl/modifier/${purchase.id}'),
+            headers: _headers,
+            body: jsonEncode(purchase.toJson()),
+          )
+          .timeout(_timeout);
       if (response.statusCode == 200) {
         return true;
       } else {

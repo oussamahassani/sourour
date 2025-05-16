@@ -3,6 +3,12 @@ const Paiement = require('../models/Paiements'); // Assurez-vous que ce chemin e
 // Ajouter un paiement
 exports.ajouterPaiement = async (req, res) => {
     try {
+        if(!req.body.fournisseur
+){
+            delete req.body.fournisseur
+console.log("ok")
+        }
+        console.log(req.body)
         const paiement = new Paiement(req.body);
         await paiement.save();
         res.status(201).json({ message: "Paiement ajouté avec succès", paiement });

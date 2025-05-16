@@ -18,7 +18,7 @@ const paiementSchema = new mongoose.Schema({
   fournisseur: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Fournisseur',
-    required: true
+  
   },
   totalAPayer: {
     type: Number,
@@ -37,7 +37,7 @@ const paiementSchema = new mongoose.Schema({
     },
     modePaiement: {
       type: String,
-      required: true
+  
     },
     statut: {
       type: String,

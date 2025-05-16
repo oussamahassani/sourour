@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frent/providers/paiement_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:nested/nested.dart';
@@ -15,6 +16,7 @@ import 'services/article_service.dart';
 import 'screens/login.dart';
 import 'screens/signup.dart';
 import 'config.dart';
+
 void main() {
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return Material(
@@ -60,39 +62,41 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-providers: <SingleChildWidget>[
-  Provider<http.Client>(
-    create: (_) => http.Client(),
-    dispose: (_, client) => client.close(),
-  ),
-  
-  // Providers existants
-  ChangeNotifierProvider(create: (_) => ClientProvider()),
-  
-  Provider<FournisseurService>(
-    create: (context) => FournisseurService(
-      baseUrl: '${AppConfig.baseUrl}',
-      client: context.read<http.Client>(),
-    ),
-  ),
-  
-  ChangeNotifierProxyProvider<FournisseurService, FournisseurProvider>(
-    create: (context) => FournisseurProvider(
-      service: context.read<FournisseurService>(),
-    ),
-    update: (context, service, previous) => previous!..updateService(service),
-  ),
-  
-  ChangeNotifierProvider(
-    create: (context) => ArticleProvider(
-      service: ArticleService(), // Initialisation correcte du service
-    ),
-  ),
-  
- 
+      providers: <SingleChildWidget>[
+        Provider<http.Client>(
+          create: (_) => http.Client(),
+          dispose: (_, client) => client.close(),
+        ),
 
-  
-],
+        // Providers existants
+        ChangeNotifierProvider(create: (_) => ClientProvider()),
+
+        Provider<FournisseurService>(
+          create:
+              (context) => FournisseurService(
+                baseUrl: '${AppConfig.baseUrl}',
+                client: context.read<http.Client>(),
+              ),
+        ),
+
+        ChangeNotifierProxyProvider<FournisseurService, FournisseurProvider>(
+          create:
+              (context) => FournisseurProvider(
+                service: context.read<FournisseurService>(),
+              ),
+          update:
+              (context, service, previous) => previous!..updateService(service),
+        ),
+
+        ChangeNotifierProvider(
+          create:
+              (context) => ArticleProvider(
+                service: ArticleService(), // Initialisation correcte du service
+              ),
+        ),
+
+        ChangeNotifierProvider(create: (_) => PaiementProvider()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Mon Application',
@@ -105,11 +109,12 @@ providers: <SingleChildWidget>[
         },
         onGenerateRoute: (settings) {
           return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              body: Center(
-                child: Text('Page non trouvée: ${settings.name}'),
-              ),
-            ),
+            builder:
+                (context) => Scaffold(
+                  body: Center(
+                    child: Text('Page non trouvée: ${settings.name}'),
+                  ),
+                ),
           );
         },
       ),
@@ -140,11 +145,23 @@ providers: <SingleChildWidget>[
         ),
       ),
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.w600),
+        displayLarge: TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+        ),
+        displayMedium: TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+        ),
         bodyLarge: TextStyle(fontFamily: 'Poppins', fontSize: 18),
         bodyMedium: TextStyle(fontFamily: 'Poppins', fontSize: 16),
-        labelLarge: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600),
+        labelLarge: TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -154,8 +171,7 @@ providers: <SingleChildWidget>[
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          padding: 
-           EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           textStyle: const TextStyle(
             fontFamily: 'Poppins',
             fontSize: 16,
@@ -170,8 +186,7 @@ providers: <SingleChildWidget>[
         ),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: 
-         EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
     );
   }
@@ -199,8 +214,7 @@ class WelcomeScreen extends StatelessWidget {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
-                    padding: 
-                     EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -219,9 +233,11 @@ class WelcomeScreen extends StatelessWidget {
                             const SizedBox(height: 40),
                             Text(
                               'Bienvenue',
-                              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                    color: Theme.of(context).primaryColor,
-                                  ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.displayMedium?.copyWith(
+                                color: Theme.of(context).primaryColor,
+                              ),
                             ),
                           ],
                         ),
@@ -232,7 +248,11 @@ class WelcomeScreen extends StatelessWidget {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                                  onPressed:
+                                      () => Navigator.pushNamed(
+                                        context,
+                                        '/login',
+                                      ),
                                   child: const Text('Se connecter'),
                                 ),
                               ),
@@ -240,7 +260,11 @@ class WelcomeScreen extends StatelessWidget {
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton(
-                                  onPressed: () => Navigator.pushNamed(context, '/signup'),
+                                  onPressed:
+                                      () => Navigator.pushNamed(
+                                        context,
+                                        '/signup',
+                                      ),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
                                       color: Theme.of(context).primaryColor,
@@ -249,8 +273,7 @@ class WelcomeScreen extends StatelessWidget {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30),
                                     ),
-                                    padding: 
-                                     EdgeInsets.symmetric(vertical: 16),
+                                    padding: EdgeInsets.symmetric(vertical: 16),
                                   ),
                                   child: Text(
                                     'S\'inscrire',

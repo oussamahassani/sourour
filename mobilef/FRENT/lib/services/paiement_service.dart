@@ -5,7 +5,7 @@ import '../config.dart';
 import '../models/paiement.dart';
 
 class PaiementService {
-    static const String _baseUrl = '${AppConfig.baseUrl}/payment';
+  static const String _baseUrl = '${AppConfig.baseUrl}/payment';
 
   // Get all paiements
   Future<List<Paiement>> fetchPaiements() async {
@@ -18,10 +18,31 @@ class PaiementService {
     }
   }
 
+  Future<List<Paiement>> fetchAchatPaiements() async {
+    final response = await http.get(Uri.parse(_baseUrl));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      //   final Iterable<dynamic> datas = data.where((el) => el['type'] == 'Vente');
+      return data.map((json) => Paiement.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load paiements');
+    }
+  }
+
+  Future<List<Paiement>> fetchVentePaiements() async {
+    final response = await http.get(Uri.parse(_baseUrl));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Paiement.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load paiements');
+    }
+  }
+
   // Create a new paiement
   Future<Paiement> createPaiement(Paiement paiement) async {
     final response = await http.post(
-      Uri.parse(_baseUrl),
+      Uri.parse('${_baseUrl}/ajouter'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(paiement.toJson()),
     );

@@ -6,6 +6,11 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:open_file/open_file.dart';
 import 'dart:io';
+import '../services/client_service.dart';
+import '../services/article_service.dart';
+import '../models/Client.dart';
+import '../services/paiement_service.dart';
+import '../models/paiement.dart';
 
 class FormulaireVenteScreen extends StatefulWidget {
   @override
@@ -17,7 +22,9 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
   final TextEditingController _referenceController = TextEditingController();
   final TextEditingController _montantRecuController = TextEditingController();
   final TextEditingController _modePaiementController = TextEditingController();
-  final TextEditingController _statutPaiementController = TextEditingController(text: 'Payé');
+  final TextEditingController _statutPaiementController = TextEditingController(
+    text: 'Payé',
+  );
   final TextEditingController _totalVenteController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
@@ -28,16 +35,30 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
   double _resteARecvoir = 0.0;
 
   // Liste de clients existants (simulée)
-  List<String> _clients = ['Client 1', 'Client 2'];
+  List<Client> _clients = [];
 
   // Formatter pour les montants
-  final currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: '€', decimalDigits: 2);
+  final currencyFormat = NumberFormat.currency(
+    locale: 'fr_FR',
+    symbol: '€',
+    decimalDigits: 2,
+  );
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    _clients = await ClientService.fetchClients();
+  }
 
   // Fonction pour ajouter un paiement à la liste
   void _ajouterPaiement() {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        double montantRecu = double.tryParse(_montantRecuController.text) ?? 0.0;
+        double montantRecu =
+            double.tryParse(_montantRecuController.text) ?? 0.0;
 
         _paiements.add({
           'date': _selectedDate,
@@ -94,8 +115,32 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
   }
 
   // Enregistrer la vente
-  void _enregistrerVente() {
+  void _enregistrerVente() async {
+    final venteData = {
+      'reference': _referenceController.text,
+      'date': _selectedDate.toIso8601String(),
+      'responsable': _responsableController.text,
+      'totalVente': _totalVente,
+
+      'clientId': _selectedClient,
+      'paiements':
+          _paiements
+              .map(
+                (p) => {
+                  'montantRecu': p['montantRecu'],
+                  'modePaiement': p['modePaiement'],
+                  'statut': p['statut'],
+                  'date': p['date'].toIso8601String(),
+                },
+              )
+              .toList(),
+    };
     if (_formKey.currentState!.validate() && _paiements.isNotEmpty) {
+      print(venteData);
+      final paiementService = PaiementService();
+      Paiement paiement = Paiement.fromMap(venteData);
+
+      await paiementService.createPaiement(paiement);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Paiement de vente enregistré avec succès"),
@@ -128,7 +173,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
               children: [
                 pw.Header(
                   level: 0,
-                  child: pw.Text('FORMULAIRE DE VENTE', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  child: pw.Text(
+                    'FORMULAIRE DE VENTE',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
                 ),
                 pw.SizedBox(height: 10),
                 pw.Row(
@@ -138,7 +186,9 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('Référence: ${_referenceController.text}'),
-                        pw.Text('Date de paiement: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'),
+                        pw.Text(
+                          'Date de paiement: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
+                        ),
                         pw.Text('Responsable: ${_responsableController.text}'),
                       ],
                     ),
@@ -146,15 +196,24 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
                         pw.Text('Client: ${_selectedClient ?? ""}'),
-                        pw.Text('Total vente: ${currencyFormat.format(_totalVente)}'),
-                        pw.Text('Total reçu: ${currencyFormat.format(_totalRecu)}'),
-                        pw.Text('Reste à recevoir: ${currencyFormat.format(_resteARecvoir)}'),
+                        pw.Text(
+                          'Total vente: ${currencyFormat.format(_totalVente)}',
+                        ),
+                        pw.Text(
+                          'Total reçu: ${currencyFormat.format(_totalRecu)}',
+                        ),
+                        pw.Text(
+                          'Reste à recevoir: ${currencyFormat.format(_resteARecvoir)}',
+                        ),
                       ],
                     ),
                   ],
                 ),
                 pw.SizedBox(height: 20),
-                pw.Text('Liste des paiements:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  'Liste des paiements:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(height: 10),
                 pw.Table(
                   border: pw.TableBorder.all(),
@@ -162,19 +221,47 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                     pw.TableRow(
                       decoration: pw.BoxDecoration(color: PdfColors.grey300),
                       children: [
-                        pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text('Date')),
-                        pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text('Montant reçu')),
-                        pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text('Mode de paiement')),
-                        pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text('Statut')),
+                        pw.Padding(
+                          padding: pw.EdgeInsets.all(5),
+                          child: pw.Text('Date'),
+                        ),
+                        pw.Padding(
+                          padding: pw.EdgeInsets.all(5),
+                          child: pw.Text('Montant reçu'),
+                        ),
+                        pw.Padding(
+                          padding: pw.EdgeInsets.all(5),
+                          child: pw.Text('Mode de paiement'),
+                        ),
+                        pw.Padding(
+                          padding: pw.EdgeInsets.all(5),
+                          child: pw.Text('Statut'),
+                        ),
                       ],
                     ),
                     for (var paiement in _paiements)
                       pw.TableRow(
                         children: [
-                          pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text(DateFormat('dd/MM/yyyy').format(paiement['date']))),
-                          pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text('${currencyFormat.format(paiement['montantRecu'])}')),
-                          pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text(paiement['modePaiement'])),
-                          pw.Padding(padding: pw.EdgeInsets.all(5), child: pw.Text(paiement['statut'])),
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(5),
+                            child: pw.Text(
+                              DateFormat('dd/MM/yyyy').format(paiement['date']),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(5),
+                            child: pw.Text(
+                              '${currencyFormat.format(paiement['montantRecu'])}',
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(5),
+                            child: pw.Text(paiement['modePaiement']),
+                          ),
+                          pw.Padding(
+                            padding: pw.EdgeInsets.all(5),
+                            child: pw.Text(paiement['statut']),
+                          ),
                         ],
                       ),
                   ],
@@ -187,7 +274,9 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
 
       // Enregistrer le PDF
       final output = await getTemporaryDirectory();
-      final file = File("${output.path}/vente_${_referenceController.text}_${DateFormat('yyyyMMdd').format(_selectedDate)}.pdf");
+      final file = File(
+        "${output.path}/vente_${_referenceController.text}_${DateFormat('yyyyMMdd').format(_selectedDate)}.pdf",
+      );
       await file.writeAsBytes(await pdf.save());
 
       // Ouvrir le PDF
@@ -247,7 +336,9 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.numbers),
                               ),
-                              validator: (value) => value!.isEmpty ? 'Champ requis' : null,
+                              validator:
+                                  (value) =>
+                                      value!.isEmpty ? 'Champ requis' : null,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -261,7 +352,9 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                                   prefixIcon: Icon(Icons.calendar_today),
                                 ),
                                 child: Text(
-                                  DateFormat('dd/MM/yyyy').format(_selectedDate),
+                                  DateFormat(
+                                    'dd/MM/yyyy',
+                                  ).format(_selectedDate),
                                 ),
                               ),
                             ),
@@ -276,7 +369,8 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person),
                         ),
-                        validator: (value) => value!.isEmpty ? 'Champ requis' : null,
+                        validator:
+                            (value) => value!.isEmpty ? 'Champ requis' : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -291,7 +385,8 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                           if (value!.isEmpty) {
                             return 'Champ requis';
                           }
-                          if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                          if (double.tryParse(value) == null ||
+                              double.parse(value) <= 0) {
                             return 'Montant invalide';
                           }
                           return null;
@@ -319,23 +414,33 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                     children: [
                       DropdownButtonFormField<String>(
                         value: _selectedClient,
-                        onChanged: (value) => setState(() => _selectedClient = value),
-                        items: _clients
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
+                        onChanged:
+                            (value) => setState(() => _selectedClient = value),
+                        items:
+                            _clients
+                                .map(
+                                  (c) => DropdownMenuItem(
+                                    value: c.id,
+                                    child: Text(c.nom),
+                                  ),
+                                )
+                                .toList(),
                         decoration: InputDecoration(
                           labelText: 'Sélectionner un client',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person_outline),
                         ),
-                        validator: (value) => value == null ? 'Champ requis' : null,
+                        validator:
+                            (value) => value == null ? 'Champ requis' : null,
                       ),
                       const SizedBox(height: 8),
-                      TextButton.icon(
+                      /* TextButton.icon(
                         onPressed: () {
                           // Logique pour ajouter un nouveau client
                           setState(() {
-                            _clients.add('Nouveau Client ${_clients.length + 1}');
+                            _clients.add(
+                              'Nouveau Client ${_clients.length + 1}',
+                            );
                             _selectedClient = _clients.last;
                           });
                         },
@@ -344,7 +449,7 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.teal,
                         ),
-                      ),
+                      ),*/
                     ],
                   ),
                 ),
@@ -374,7 +479,8 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                                 if (value!.isEmpty) {
                                   return 'Champ requis';
                                 }
-                                if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                                if (double.tryParse(value) == null ||
+                                    double.parse(value) <= 0) {
                                   return 'Montant invalide';
                                 }
                                 return null;
@@ -390,7 +496,9 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.payment),
                               ),
-                              validator: (value) => value!.isEmpty ? 'Champ requis' : null,
+                              validator:
+                                  (value) =>
+                                      value!.isEmpty ? 'Champ requis' : null,
                             ),
                           ),
                         ],
@@ -398,16 +506,26 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         value: _statutPaiementController.text,
-                        onChanged: (value) => setState(() => _statutPaiementController.text = value!),
-                        items: ['Payé', 'Partiellement payé', 'En attente']
-                            .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                            .toList(),
+                        onChanged:
+                            (value) => setState(
+                              () => _statutPaiementController.text = value!,
+                            ),
+                        items:
+                            ['Payé', 'Partiellement payé', 'En attente']
+                                .map(
+                                  (status) => DropdownMenuItem(
+                                    value: status,
+                                    child: Text(status),
+                                  ),
+                                )
+                                .toList(),
                         decoration: InputDecoration(
                           labelText: 'Statut du paiement',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.assignment_turned_in),
                         ),
-                        validator: (value) => value == null ? 'Champ requis' : null,
+                        validator:
+                            (value) => value == null ? 'Champ requis' : null,
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -415,7 +533,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.teal,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                         child: const Text('Ajouter le paiement'),
                       ),
@@ -436,9 +557,12 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       children: [
                         for (var i = 0; i < _paiements.length; i++)
                           ListTile(
-                            title: Text('Montant reçu: ${currencyFormat.format(_paiements[i]['montantRecu'])}'),
+                            title: Text(
+                              'Montant reçu: ${currencyFormat.format(_paiements[i]['montantRecu'])}',
+                            ),
                             subtitle: Text(
-                                'Date: ${DateFormat('dd/MM/yyyy').format(_paiements[i]['date'])} - Mode: ${_paiements[i]['modePaiement']} - Statut: ${_paiements[i]['statut']}'),
+                              'Date: ${DateFormat('dd/MM/yyyy').format(_paiements[i]['date'])} - Mode: ${_paiements[i]['modePaiement']} - Statut: ${_paiements[i]['statut']}',
+                            ),
                             trailing: IconButton(
                               icon: Icon(Icons.delete, color: Colors.red),
                               onPressed: () => _supprimerPaiement(i),
@@ -462,7 +586,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total vente:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            'Total vente:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           Text(currencyFormat.format(_totalVente)),
                         ],
                       ),
@@ -470,7 +597,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Total reçu:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            'Total reçu:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           Text(currencyFormat.format(_totalRecu)),
                         ],
                       ),
@@ -478,7 +608,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Reste à recevoir:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            'Reste à recevoir:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           Text(currencyFormat.format(_resteARecvoir)),
                         ],
                       ),
@@ -496,7 +629,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text('Enregistrer'),
                   ),
@@ -505,7 +641,10 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text('Générer PDF'),
                   ),
@@ -513,13 +652,18 @@ class _FormulaireVenteScreenState extends State<FormulaireVenteScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HistoriqueVentesScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => HistoriqueVentesScreen(),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueGrey,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text('Historique'),
                   ),
@@ -555,28 +699,24 @@ class HistoriqueVentesScreen extends StatefulWidget {
 
 class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
   // Liste simulée pour l'historique des ventes
-  List<Map<String, dynamic>> _historiqueVentes = [
-    {
-      'id': '1',
-      'reference': 'VENTE-2023-001',
-      'client': 'Client A',
-      'date': DateTime(2023, 5, 15),
-      'totalVente': 1500.0,
-      'totalRecu': 1500.0,
-      'statut': 'Payé',
-    },
-    {
-      'id': '2',
-      'reference': 'VENTE-2023-002',
-      'client': 'Client B',
-      'date': DateTime(2023, 5, 10),
-      'totalVente': 2500.0,
-      'totalRecu': 1500.0,
-      'statut': 'Partiellement payé',
-    },
-  ];
+  List<Paiement> _payment = [];
+  bool _isLoading = true;
+  final currencyFormat = NumberFormat.currency(
+    locale: 'fr_FR',
+    symbol: '€',
+    decimalDigits: 2,
+  );
+  Future<void> _loadData() async {
+    final peiementService = PaiementService();
+    _payment = await peiementService.fetchVentePaiements();
+    setState(() => _isLoading = false);
+  }
 
-  final currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: '€', decimalDigits: 2);
+  @override
+  void initState() {
+    _loadData();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -595,19 +735,21 @@ class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
         ],
       ),
       body: ListView.builder(
-        itemCount: _historiqueVentes.length,
+        itemCount: _payment.length,
         itemBuilder: (context, index) {
-          final vente = _historiqueVentes[index];
+          final vente = _payment[index];
           return Card(
             margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: ListTile(
-              title: Text('Réf: ${vente['reference']} - ${vente['client']}'),
+              title: Text('Réf: ${vente.reference} -'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Date: ${DateFormat('dd/MM/yyyy').format(vente['date'])}'),
-                  Text('Total: ${currencyFormat.format(vente['totalVente'])}'),
-                  Text('Statut: ${vente['statut']}'),
+                  Text(
+                    'Date: ${DateFormat('dd/MM/yyyy').format(vente.datePaiement)}',
+                  ),
+                  Text('Total: ${currencyFormat.format(vente.totalAPayer)}'),
+                  Text('resteAPayer: ${vente.resteAPayer}'),
                 ],
               ),
               trailing: Row(
@@ -617,17 +759,18 @@ class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
                     icon: Icon(Icons.remove_red_eye, color: Colors.blue),
                     onPressed: () => _voirDetails(vente),
                   ),
-                  IconButton(
+                  /*   IconButton(
                     icon: Icon(Icons.edit, color: Colors.green),
                     onPressed: () => _modifierVente(vente),
                   ),
+                  */
                   IconButton(
                     icon: Icon(Icons.picture_as_pdf, color: Colors.orange),
                     onPressed: () => _genererPDF(vente),
                   ),
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _supprimerVente(vente['id']),
+                    onPressed: () => _supprimerVente(vente.id),
                   ),
                 ],
               ),
@@ -638,44 +781,46 @@ class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
     );
   }
 
-  void _voirDetails(Map<String, dynamic> vente) {
+  void _voirDetails(Paiement vente) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Détails de la vente'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Référence: ${vente['reference']}'),
-              Text('Client: ${vente['client']}'),
-              Text('Date: ${DateFormat('dd/MM/yyyy').format(vente['date'])}'),
-              Text('Total vente: ${currencyFormat.format(vente['totalVente'])}'),
-              Text('Total reçu: ${currencyFormat.format(vente['totalRecu'])}'),
-              Text('Statut: ${vente['statut']}'),
+      builder:
+          (context) => AlertDialog(
+            title: Text('Détails de la vente'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Référence: ${vente.reference}'),
+                  Text('Client: ${vente.clientId}'),
+                  Text(
+                    'Date: ${DateFormat('dd/MM/yyyy').format(vente.datePaiement)}',
+                  ),
+                  Text(
+                    'Total vente: ${currencyFormat.format(vente.totalAPayer)}',
+                  ),
+                  Text('Total reçu: ${currencyFormat.format(vente.totalPaye)}'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Fermer'),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Fermer'),
-          ),
-        ],
-      ),
     );
   }
 
   void _modifierVente(Map<String, dynamic> vente) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => FormulaireVenteScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => FormulaireVenteScreen()),
     );
   }
 
-  void _genererPDF(Map<String, dynamic> vente) async {
+  void _genererPDF(Paiement vente) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -686,15 +831,21 @@ class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
             children: [
               pw.Header(
                 level: 0,
-                child: pw.Text('DÉTAIL DE LA VENTE', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                child: pw.Text(
+                  'DÉTAIL DE LA VENTE',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
               ),
               pw.SizedBox(height: 20),
-              pw.Text('Référence: ${vente['reference']}'),
-              pw.Text('Client: ${vente['client']}'),
-              pw.Text('Date: ${DateFormat('dd/MM/yyyy').format(vente['date'])}'),
-              pw.Text('Total vente: ${currencyFormat.format(vente['totalVente'])}'),
-              pw.Text('Total reçu: ${currencyFormat.format(vente['totalRecu'])}'),
-              pw.Text('Statut: ${vente['statut']}'),
+              pw.Text('Référence: ${vente.reference}'),
+              pw.Text('Client: ${vente.clientId}'),
+              pw.Text(
+                'Date: ${DateFormat('dd/MM/yyyy').format(vente.datePaiement)}',
+              ),
+              pw.Text(
+                'Total vente: ${currencyFormat.format(vente.totalAPayer)}',
+              ),
+              pw.Text('Total reçu: ${currencyFormat.format(vente.totalPaye)}'),
             ],
           );
         },
@@ -702,7 +853,7 @@ class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
     );
 
     final output = await getTemporaryDirectory();
-    final file = File("${output.path}/detail_vente_${vente['reference']}.pdf");
+    final file = File("${output.path}/detail_vente_${vente.reference}.pdf");
     await file.writeAsBytes(await pdf.save());
     OpenFile.open(file.path);
   }
@@ -710,31 +861,32 @@ class _HistoriqueVentesScreenState extends State<HistoriqueVentesScreen> {
   void _supprimerVente(String id) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirmer la suppression'),
-        content: Text('Voulez-vous vraiment supprimer cette vente ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
+      builder:
+          (context) => AlertDialog(
+            title: Text('Confirmer la suppression'),
+            content: Text('Voulez-vous vraiment supprimer cette vente ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _payment.removeWhere((v) => v.id == id);
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Vente supprimée avec succès'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                },
+                child: Text('Supprimer', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _historiqueVentes.removeWhere((v) => v['id'] == id);
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Vente supprimée avec succès'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: Text('Supprimer', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 }

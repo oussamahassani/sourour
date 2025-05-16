@@ -17,21 +17,21 @@ exports.createDevisComplete = async (req, res) => {
 
     // Traiter les articles
     const processedArticles = await Promise.all(articles.map(async article => {
-      const articleData = await Article.findById(article.article);
+      const articleData = await Article.findById(article.nom);
       if (!articleData) {
         throw new Error(`Article ${article.article} non trouvé`);
       }
 
-      const prixHT = article.prixHT || articleData.prixVente;
-      const tva = article.tva || 20.0;
+      const prixHT = article.prixHT || articleData.prix_vente;
+      const tva = articleData.tva || 20.0;
       const quantite = article.quantite || 1;
       const montantHT = prixHT * quantite;
       const montantTVA = montantHT * (tva / 100);
       const montantTTC = montantHT + montantTVA;
 
       return {
-        article: article.article,
-        nom: articleData.nomArticle,
+        article: article.nom,
+        nom: articleData.article,
         description: article.description || articleData.description,
         quantite,
         prixHT,
@@ -48,10 +48,11 @@ exports.createDevisComplete = async (req, res) => {
     const remise = devisData.remise || 0;
     const totalHT = sousTotalHT - remise;
     const totalTTC = totalHT + totalTVA;
-
+ let adresse = req.body.adresse
     const newDevis = new Devis({
       ...devisData,
       client,
+     adresseLivraison:adresse,
       articles: processedArticles,
       sousTotalHT,
       totalTVA,
