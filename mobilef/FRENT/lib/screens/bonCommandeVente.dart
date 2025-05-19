@@ -23,24 +23,35 @@ import 'package:intl/intl.dart';
 // Models
 import 'article.dart';
 import 'client.dart';
+import '../services/achat_service.dart';
+import '../models/Vente.dart';
 
 class BonCommandeMobileScreen extends StatefulWidget {
   @override
-  _BonCommandeMobileScreenState createState() => _BonCommandeMobileScreenState();
+  _BonCommandeMobileScreenState createState() =>
+      _BonCommandeMobileScreenState();
 }
 
-class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with SingleTickerProviderStateMixin {
+class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen>
+    with SingleTickerProviderStateMixin {
   // Contrôleurs pour la méthode complète
   final TextEditingController _clientController = TextEditingController();
   final TextEditingController _referenceController = TextEditingController();
-  final TextEditingController _adresseLivraisonController = TextEditingController();
-  final TextEditingController _remiseController = TextEditingController(text: '0');
-  final TextEditingController _delaiLivraisonController = TextEditingController(text: '15');
-  final TextEditingController _conditionsPaiementController = TextEditingController(text: '30 jours fin de mois');
+  final TextEditingController _adresseLivraisonController =
+      TextEditingController();
+  final TextEditingController _remiseController = TextEditingController(
+    text: '0',
+  );
+  final TextEditingController _delaiLivraisonController = TextEditingController(
+    text: '15',
+  );
+  final TextEditingController _conditionsPaiementController =
+      TextEditingController(text: '30 jours fin de mois');
 
   // Contrôleurs pour la méthode rapide
   final TextEditingController _rapideClientController = TextEditingController();
-  final TextEditingController _rapideReferenceController = TextEditingController();
+  final TextEditingController _rapideReferenceController =
+      TextEditingController();
 
   // Variables d'état
   DateTime _selectedDate = DateTime.now();
@@ -54,21 +65,23 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
   TabController? _tabController;
 
   // Données
-  List<String> _clients = ['Client 1', 'Client 2', 'Client 3'];
-  List<Map<String, dynamic>> _listeArticles = [
-    {'nom': 'Produit A', 'prixHT': 100.0},
-    {'nom': 'Produit B', 'prixHT': 75.0},
-    {'nom': 'Service C', 'prixHT': 50.0},
-  ];
+  List<Map<String, String>> _clients = [];
+  List<Map<String, dynamic>> _listeArticles = [];
 
-  List<Map<String, dynamic>> _historiqueCommandes = [];
+  List<VenteBonCommande> _historiqueCommandes = [];
   String? _selectedArticle;
   final TextEditingController _prixController = TextEditingController();
   final TextEditingController _quantiteController = TextEditingController();
-  final TextEditingController _tvaController = TextEditingController(text: '20.0');
+  final TextEditingController _tvaController = TextEditingController(
+    text: '20.0',
+  );
   final TextEditingController _descriptionController = TextEditingController();
 
-  final currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: '€', decimalDigits: 2);
+  final currencyFormat = NumberFormat.currency(
+    locale: 'fr_FR',
+    symbol: '€',
+    decimalDigits: 2,
+  );
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _formRapideKey = GlobalKey<FormState>();
 
@@ -77,6 +90,7 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _chargerHistorique();
+    _refreshData();
   }
 
   @override
@@ -85,39 +99,13 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
     super.dispose();
   }
 
-  void _chargerHistorique() {
-    setState(() {
-      _historiqueCommandes = [
-        {
-          'reference': 'BC-2023-001',
-          'client': 'Client 1',
-          'date': '15/06/2023',
-          'total': 1200.0,
-          'statut': 'En cours',
-          'articles': [
-            {'nom': 'Produit A', 'quantite': 2, 'prixHT': 100.0},
-          ],
-          'adresse': 'Adresse de livraison',
-          'conditions': '30 jours fin de mois',
-          'delaiLivraison': '15',
-          'remise': '0',
-          'methode': 'complète',
-        },
-        {
-          'reference': 'BC-2023-002',
-          'client': 'Client 2',
-          'date': '20/06/2023',
-          'total': 850.0,
-          'statut': 'Validé',
-          'articles': [],
-          'adresse': 'Adresse principale',
-          'conditions': '45 jours',
-          'delaiLivraison': '10',
-          'remise': '5',
-          'methode': 'rapide',
-          'image': 'assets/placeholder_bon.png',
-        },
-      ];
+  void _chargerHistorique() async {
+    final venteService = PurchaseService();
+
+    venteService.fetchVentes("?method=complete").then((result) {
+      setState(() {
+        _historiqueCommandes = result;
+      });
     });
   }
 
@@ -151,8 +139,14 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
   }
 
   void _calculerTotal() {
-    double sousTotal = _articles.fold(0.0, (sum, article) => sum + article['montantHT']);
-    double totalTVA = _articles.fold(0.0, (sum, article) => sum + article['montantTVA']);
+    double sousTotal = _articles.fold(
+      0.0,
+      (sum, article) => sum + article['montantHT'],
+    );
+    double totalTVA = _articles.fold(
+      0.0,
+      (sum, article) => sum + article['montantTVA'],
+    );
     double remise = double.tryParse(_remiseController.text) ?? 0.0;
 
     setState(() {
@@ -185,24 +179,41 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
     }
   }
 
-  void _enregistrerCommande() {
+  final PurchaseService _purchaseService = PurchaseService();
+
+  void _enregistrerCommande() async {
     if (_formKey.currentState!.validate() && _articles.isNotEmpty) {
       setState(() {
-        _historiqueCommandes.insert(0, {
-          'reference': _referenceController.text,
-          'client': _selectedClient,
-          'date': DateFormat('dd/MM/yyyy').format(_selectedDate),
-          'total': _totalCommande,
-          'statut': 'En attente',
-          'articles': List.from(_articles),
-          'adresse': _adresseLivraisonController.text,
-          'conditions': _conditionsPaiementController.text,
-          'delaiLivraison': _delaiLivraisonController.text,
-          'remise': _remiseController.text,
-          'methode': 'complète',
-        });
+        _historiqueCommandes.insert(
+          0,
+          VenteBonCommande.fromJson({
+            'reference': _referenceController.text,
+            'client': _selectedClient,
+            'date': DateFormat('dd/MM/yyyy').format(_selectedDate),
+            'total': _totalCommande,
+            'statut': 'En attente',
+            'articles': List.from(_articles),
+            'adresse': _adresseLivraisonController.text,
+            'conditions': _conditionsPaiementController.text,
+            'delaiLivraison': _delaiLivraisonController.text,
+            'remise': _remiseController.text,
+            'methode': 'complète',
+          }),
+        );
       });
-
+      await _purchaseService.saveVente({
+        'reference': _referenceController.text,
+        'client': _selectedClient ?? "",
+        'date': DateFormat('dd/MM/yyyy').format(_selectedDate),
+        'total': _totalCommande,
+        'statut': 'En attente',
+        'articles': List.from(_articles),
+        'adresse': _adresseLivraisonController.text,
+        'conditions': _conditionsPaiementController.text,
+        'delaiLivraison': _delaiLivraisonController.text,
+        'remise': _remiseController.text,
+        'methode': 'complète',
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Bon de commande enregistré avec succès"),
@@ -232,20 +243,23 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
       }
 
       setState(() {
-        _historiqueCommandes.insert(0, {
-          'reference': _rapideReferenceController.text,
-          'client': _rapideClientController.text,
-          'date': DateFormat('dd/MM/yyyy').format(DateTime.now()),
-          'total': 0.0,
-          'statut': 'En attente',
-          'articles': [],
-          'adresse': 'À déterminer',
-          'conditions': 'À déterminer',
-          'delaiLivraison': 'À déterminer',
-          'remise': '0',
-          'methode': 'rapide',
-          'image': _imageBonCommande!.path,
-        });
+        _historiqueCommandes.insert(
+          0,
+          VenteBonCommande.fromJson({
+            'reference': _rapideReferenceController.text,
+            'client': _rapideClientController.text,
+            'date': DateFormat('dd/MM/yyyy').format(DateTime.now()),
+            'total': 0.0,
+            'statut': 'En attente',
+            'articles': [],
+            'adresse': 'À déterminer',
+            'conditions': 'À déterminer',
+            'delaiLivraison': 'À déterminer',
+            'remise': '0',
+            'methode': 'rapide',
+            'image': _imageBonCommande!.path,
+          }),
+        );
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -292,23 +306,23 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
   Future<void> _navigateToAddArticle() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) =>  ArticleFormScreen(
-    onSave: (article) async {
-      // Handle saving the article here
-      print('Saving article: $article');
-      // You can return something if needed
-      return;
-    },
-  ),),
+      MaterialPageRoute(
+        builder:
+            (context) => ArticleFormScreen(
+              onSave: (article) async {
+                // Handle saving the article here
+                print('Saving article: $article');
+                // You can return something if needed
+                return;
+              },
+            ),
+      ),
     );
-    
+
     if (result != null) {
       _ajouterArticle(result);
       setState(() {
-        _listeArticles.add({
-          'nom': result['nom'],
-          'prixHT': result['prixHT'],
-        });
+        _listeArticles.add({'nom': result['nom'], 'prixHT': result['prixHT']});
       });
     }
   }
@@ -316,7 +330,7 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
   Future<void> _navigateToAddClient() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => Client(clientData: {},)),
+      MaterialPageRoute(builder: (context) => Client(clientData: {})),
     );
 
     if (result != null && result.isNotEmpty) {
@@ -325,6 +339,22 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
         _selectedClient = result;
       });
     }
+  }
+
+  void _refreshData() {
+    setState(() {
+      _purchaseService.getfetchClient().then((clients) {
+        setState(() {
+          _clients = clients;
+        });
+      });
+      ;
+      _purchaseService.getArticles().then((articles) {
+        setState(() {
+          _listeArticles = articles;
+        });
+      });
+    });
   }
 
   @override
@@ -336,10 +366,7 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
       appBar: AppBar(
         title: Text(
           'Création de bon de commande',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: Colors.teal,
         elevation: 0,
@@ -347,20 +374,18 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
         actions: [
           IconButton(
             icon: Icon(Icons.history),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => HistoriqueVenteScreen(),
-              ),
-            ),
+            onPressed:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoriqueVenteScreen(),
+                  ),
+                ),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: [
-            Tab(icon: Icon(Icons.list_alt)), 
-            Tab(icon: Icon(Icons.bolt)),
-          ],
+          tabs: [Tab(icon: Icon(Icons.list_alt)), Tab(icon: Icon(Icons.bolt))],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
@@ -396,15 +421,23 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                     if (isSmallScreen) ...[
                       TextFormField(
                         controller: _referenceController,
-                        decoration: _inputDecoration('Référence du bon', Icons.numbers),
+                        decoration: _inputDecoration(
+                          'Référence du bon',
+                          Icons.numbers,
+                        ),
                         validator: _requiredValidator,
                       ),
                       SizedBox(height: 8),
                       InkWell(
                         onTap: () => _selectDate(context),
                         child: InputDecorator(
-                          decoration: _inputDecoration('Date', Icons.calendar_today),
-                          child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
+                          decoration: _inputDecoration(
+                            'Date',
+                            Icons.calendar_today,
+                          ),
+                          child: Text(
+                            DateFormat('dd/MM/yyyy').format(_selectedDate),
+                          ),
                         ),
                       ),
                     ] else
@@ -413,7 +446,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                           Expanded(
                             child: TextFormField(
                               controller: _referenceController,
-                              decoration: _inputDecoration('Référence du bon', Icons.numbers),
+                              decoration: _inputDecoration(
+                                'Référence du bon',
+                                Icons.numbers,
+                              ),
                               validator: _requiredValidator,
                             ),
                           ),
@@ -422,8 +458,15 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                             child: InkWell(
                               onTap: () => _selectDate(context),
                               child: InputDecorator(
-                                decoration: _inputDecoration('Date', Icons.calendar_today),
-                                child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate)),
+                                decoration: _inputDecoration(
+                                  'Date',
+                                  Icons.calendar_today,
+                                ),
+                                child: Text(
+                                  DateFormat(
+                                    'dd/MM/yyyy',
+                                  ).format(_selectedDate),
+                                ),
                               ),
                             ),
                           ),
@@ -432,14 +475,20 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     TextFormField(
                       controller: _delaiLivraisonController,
-                      decoration: _inputDecoration('Délai de livraison (jours)', Icons.local_shipping),
+                      decoration: _inputDecoration(
+                        'Délai de livraison (jours)',
+                        Icons.local_shipping,
+                      ),
                       keyboardType: TextInputType.number,
                       validator: _requiredValidator,
                     ),
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     TextFormField(
                       controller: _conditionsPaiementController,
-                      decoration: _inputDecoration('Conditions de paiement', Icons.payment),
+                      decoration: _inputDecoration(
+                        'Conditions de paiement',
+                        Icons.payment,
+                      ),
                       validator: _requiredValidator,
                     ),
                   ],
@@ -459,19 +508,33 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: _selectedClient,
-                            onChanged: (String? newValue) => setState(() => _selectedClient = newValue),
-                            items: _clients.map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                            decoration: _inputDecoration('Sélectionner un client', Icons.person),
-                            validator: (value) => value == null ? 'Veuillez sélectionner un client' : null,
+                            onChanged:
+                                (String? newValue) =>
+                                    setState(() => _selectedClient = newValue),
+                            items:
+                                _clients.map((value) {
+                                  print(value);
+                                  return DropdownMenuItem<String>(
+                                    value: value['id'],
+                                    child: Text(value['name'] ?? "inconu"),
+                                  );
+                                }).toList(),
+                            decoration: _inputDecoration(
+                              'Sélectionner un client',
+                              Icons.person,
+                            ),
+                            validator:
+                                (value) =>
+                                    value == null
+                                        ? 'Veuillez sélectionner un client'
+                                        : null,
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.add_circle_outline, color: Colors.teal),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.teal,
+                          ),
                           onPressed: _navigateToAddClient,
                         ),
                       ],
@@ -479,7 +542,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     TextFormField(
                       controller: _adresseLivraisonController,
-                      decoration: _inputDecoration('Adresse de livraison', Icons.location_on),
+                      decoration: _inputDecoration(
+                        'Adresse de livraison',
+                        Icons.location_on,
+                      ),
                       validator: _requiredValidator,
                       maxLines: 2,
                     ),
@@ -504,23 +570,30 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                               setState(() {
                                 _selectedArticle = value;
                                 var article = _listeArticles.firstWhere(
-                                  (article) => article['nom'] == value,
-                                  orElse: () => {'prixHT': 0.0},
+                                  (article) => article['id'] == value,
                                 );
-                                _prixController.text = article['prixHT'].toString();
+                                _prixController.text =
+                                    article['prixHT'].toString();
                               });
                             },
-                            items: _listeArticles.map((article) {
-                              return DropdownMenuItem<String>(
-                                value: article['nom'],
-                                child: Text(article['nom']),
-                              );
-                            }).toList(),
-                            decoration: _inputDecoration('Sélectionner un article', Icons.list),
+                            items:
+                                _listeArticles.map((article) {
+                                  return DropdownMenuItem<String>(
+                                    value: article['id'],
+                                    child: Text(article['name'] ?? "inconu"),
+                                  );
+                                }).toList(),
+                            decoration: _inputDecoration(
+                              'Sélectionner un article',
+                              Icons.list,
+                            ),
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.add_circle_outline, color: Colors.teal),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.teal,
+                          ),
                           onPressed: _navigateToAddArticle,
                         ),
                       ],
@@ -529,20 +602,29 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                     if (isSmallScreen) ...[
                       TextFormField(
                         controller: _descriptionController,
-                        decoration: _inputDecoration('Description détaillée', Icons.description),
+                        decoration: _inputDecoration(
+                          'Description détaillée',
+                          Icons.description,
+                        ),
                         maxLines: 2,
                       ),
                       SizedBox(height: 8),
                       TextFormField(
                         controller: _quantiteController,
-                        decoration: _inputDecoration('Quantité', Icons.format_list_numbered),
+                        decoration: _inputDecoration(
+                          'Quantité',
+                          Icons.format_list_numbered,
+                        ),
                         keyboardType: TextInputType.number,
                         validator: _quantityValidator,
                       ),
                       SizedBox(height: 8),
                       TextFormField(
                         controller: _prixController,
-                        decoration: _inputDecoration('Prix unitaire HT', Icons.attach_money),
+                        decoration: _inputDecoration(
+                          'Prix unitaire HT',
+                          Icons.attach_money,
+                        ),
                         keyboardType: TextInputType.number,
                         validator: _priceValidator,
                       ),
@@ -560,7 +642,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                             flex: 2,
                             child: TextFormField(
                               controller: _descriptionController,
-                              decoration: _inputDecoration('Description détaillée', Icons.description),
+                              decoration: _inputDecoration(
+                                'Description détaillée',
+                                Icons.description,
+                              ),
                               maxLines: 2,
                             ),
                           ),
@@ -568,7 +653,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                           Expanded(
                             child: TextFormField(
                               controller: _quantiteController,
-                              decoration: _inputDecoration('Quantité', Icons.format_list_numbered),
+                              decoration: _inputDecoration(
+                                'Quantité',
+                                Icons.format_list_numbered,
+                              ),
                               keyboardType: TextInputType.number,
                               validator: _quantityValidator,
                             ),
@@ -577,7 +665,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                           Expanded(
                             child: TextFormField(
                               controller: _prixController,
-                              decoration: _inputDecoration('Prix HT', Icons.attach_money),
+                              decoration: _inputDecoration(
+                                'Prix HT',
+                                Icons.attach_money,
+                              ),
                               keyboardType: TextInputType.number,
                               validator: _priceValidator,
                             ),
@@ -586,7 +677,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                           Expanded(
                             child: TextFormField(
                               controller: _tvaController,
-                              decoration: _inputDecoration('TVA (%)', Icons.percent),
+                              decoration: _inputDecoration(
+                                'TVA (%)',
+                                Icons.percent,
+                              ),
                               keyboardType: TextInputType.number,
                               validator: _tvaValidator,
                             ),
@@ -596,7 +690,8 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
                     ElevatedButton(
                       onPressed: () {
-                        if (_selectedArticle != null && _formKey.currentState!.validate()) {
+                        if (_selectedArticle != null &&
+                            _formKey.currentState!.validate()) {
                           _ajouterArticle({
                             'nom': _selectedArticle!,
                             'description': _descriptionController.text,
@@ -618,33 +713,38 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
             ),
             if (_articles.isNotEmpty) ...[
               SizedBox(height: 16),
-              _buildSectionHeader('Détail des articles commandés', isSmallScreen),
+              _buildSectionHeader(
+                'Détail des articles commandés',
+                isSmallScreen,
+              ),
               Card(
                 elevation: 2,
                 child: Padding(
                   padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
                   child: Column(
-                    children: _articles.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final article = entry.value;
-                      return ListTile(
-                        title: Text(article['nom']),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (article['description'] != null && article['description'].isNotEmpty)
-                              Text(article['description']),
-                            Text(
-                              'Quantité: ${article['quantite']} - Prix HT: ${currencyFormat.format(article['prixHT'])} - TVA: ${article['tva']}%',
+                    children:
+                        _articles.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final article = entry.value;
+                          return ListTile(
+                            title: Text(article['nom']),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (article['description'] != null &&
+                                    article['description'].isNotEmpty)
+                                  Text(article['description']),
+                                Text(
+                                  'Quantité: ${article['quantite']} - Prix HT: ${currencyFormat.format(article['prixHT'])} - TVA: ${article['tva']}%',
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _supprimerArticle(index),
-                        ),
-                      );
-                    }).toList(),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _supprimerArticle(index),
+                            ),
+                          );
+                        }).toList(),
                   ),
                 ),
               ),
@@ -659,7 +759,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                   children: [
                     TextFormField(
                       controller: _remiseController,
-                      decoration: _inputDecoration('Remise (€)', Icons.discount),
+                      decoration: _inputDecoration(
+                        'Remise (€)',
+                        Icons.discount,
+                      ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _calculerTotal(),
                       validator: _discountValidator,
@@ -668,7 +771,11 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                     _buildTotalLine('Sous-total HT:', _sousTotal),
                     _buildTotalLine('TVA:', _totalTVA),
                     if (double.parse(_remiseController.text) > 0)
-                      _buildTotalLine('Remise:', -double.parse(_remiseController.text), isDiscount: true),
+                      _buildTotalLine(
+                        'Remise:',
+                        -double.parse(_remiseController.text),
+                        isDiscount: true,
+                      ),
                     Divider(),
                     _buildTotalLine('Total HT:', _totalHT, isBold: true),
                     _buildTotalLine('Total TTC:', _totalCommande, isBold: true),
@@ -691,11 +798,17 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate() && _articles.isNotEmpty) {
+                    if (_formKey.currentState!.validate() &&
+                        _articles.isNotEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("PDF généré avec succès"),
-                          backgroundColor: const Color.fromARGB(255, 66, 73, 66),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            66,
+                            73,
+                            66,
+                          ),
                         ),
                       );
                     }
@@ -738,7 +851,10 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                   children: [
                     TextFormField(
                       controller: _rapideReferenceController,
-                      decoration: _inputDecoration('Référence du bon', Icons.numbers),
+                      decoration: _inputDecoration(
+                        'Référence du bon',
+                        Icons.numbers,
+                      ),
                       validator: _requiredValidator,
                     ),
                     SizedBox(height: isSmallScreen ? 8.0 : 16.0),
@@ -764,16 +880,24 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: _imageBonCommande == null
-                            ? Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-                                  SizedBox(height: 8),
-                                  Text('Appuyez pour prendre une photo'),
-                                ],
-                              )
-                            : Image.file(_imageBonCommande!, fit: BoxFit.cover),
+                        child:
+                            _imageBonCommande == null
+                                ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.camera_alt,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text('Appuyez pour prendre une photo'),
+                                  ],
+                                )
+                                : Image.file(
+                                  _imageBonCommande!,
+                                  fit: BoxFit.cover,
+                                ),
                       ),
                     ),
                     SizedBox(height: 10),
@@ -801,11 +925,17 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (_formRapideKey.currentState!.validate() && _imageBonCommande != null) {
+                    if (_formRapideKey.currentState!.validate() &&
+                        _imageBonCommande != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("PDF généré avec succès"),
-                          backgroundColor: const Color.fromARGB(255, 66, 73, 66),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            66,
+                            73,
+                            66,
+                          ),
                         ),
                       );
                     }
@@ -848,7 +978,12 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
     );
   }
 
-  Widget _buildTotalLine(String label, double value, {bool isBold = false, bool isDiscount = false}) {
+  Widget _buildTotalLine(
+    String label,
+    double value, {
+    bool isBold = false,
+    bool isDiscount = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -873,25 +1008,29 @@ class _BonCommandeMobileScreenState extends State<BonCommandeMobileScreen> with 
 
   String? _quantityValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (int.tryParse(value) == null || int.parse(value) <= 0) return 'Quantité invalide';
+    if (int.tryParse(value) == null || int.parse(value) <= 0)
+      return 'Quantité invalide';
     return null;
   }
 
   String? _priceValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (double.tryParse(value) == null || double.parse(value) <= 0) return 'Prix invalide';
+    if (double.tryParse(value) == null || double.parse(value) <= 0)
+      return 'Prix invalide';
     return null;
   }
 
   String? _tvaValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (double.tryParse(value) == null || double.parse(value) < 0) return 'TVA invalide';
+    if (double.tryParse(value) == null || double.parse(value) < 0)
+      return 'TVA invalide';
     return null;
   }
 
   String? _discountValidator(String? value) {
     if (value == null || value.isEmpty) return 'Champ requis';
-    if (double.tryParse(value) == null || double.parse(value) < 0) return 'Remise invalide';
+    if (double.tryParse(value) == null || double.parse(value) < 0)
+      return 'Remise invalide';
     return null;
   }
 }
@@ -902,8 +1041,8 @@ class HistoriqueVenteScreen extends StatefulWidget {
 }
 
 class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
-  List<Map<String, dynamic>> _allCommandes = [];
-  List<Map<String, dynamic>> _filteredCommandes = [];
+  List<VenteBonCommande> _allCommandes = [];
+  List<VenteBonCommande> _filteredCommandes = [];
   final TextEditingController _searchController = TextEditingController();
   final currencyFormat = NumberFormat.currency(
     locale: 'fr_FR',
@@ -926,55 +1065,13 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
   }
 
   void _loadCommandes() {
-    setState(() {
-      _allCommandes = [
-        {
-          'reference': 'CMD-2023-001',
-          'client': 'Client 1',
-          'date': '15/06/2023',
-          'total': 1200.0,
-          'statut': 'Livré',
-          'articles': [
-            {'nom': 'Produit A', 'quantite': 2, 'prixHT': 100.0},
-            {'nom': 'Produit B', 'quantite': 1, 'prixHT': 1000.0},
-          ],
-          'adresse': '123 Rue des Exemples, 75000 Paris',
-          'livraison': '48h',
-          'remise': '0',
-          'photo': null,
-          'type': 'formulaire',
-        },
-        {
-          'reference': 'CMD-2023-002',
-          'client': 'Client 2',
-          'date': '20/06/2023',
-          'total': 850.0,
-          'statut': 'En préparation',
-          'articles': [
-            {'nom': 'Produit B', 'quantite': 3, 'prixHT': 75.0},
-            {'nom': 'Accessoire C', 'quantite': 5, 'prixHT': 125.0},
-          ],
-          'adresse': '456 Avenue des Tests, 69000 Lyon',
-          'livraison': '72h',
-          'remise': '5',
-          'photo': null,
-          'type': 'formulaire',
-        },
-        {
-          'reference': 'CMD-RAP-2023-001',
-          'client': 'Client 3',
-          'date': '25/06/2023',
-          'total': 1500.0,
-          'statut': 'Validé',
-          'articles': [],
-          'adresse': '789 Boulevard des Démonstrations, 13000 Marseille',
-          'livraison': '24h',
-          'remise': '0',
-          'photo': 'https://via.placeholder.com/600x400?text=Bon+Commande',
-          'type': 'photo',
-        },
-      ];
-      _filteredCommandes = List.from(_allCommandes);
+    final venteService = PurchaseService();
+
+    venteService.fetchVentes("?method=complete").then((result) {
+      setState(() {
+        _allCommandes = result;
+        _filteredCommandes = List.from(_allCommandes);
+      });
     });
   }
 
@@ -984,14 +1081,11 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
       _filteredCommandes =
           _allCommandes.where((commande) {
             final matchesSearch =
-                commande['reference'].toLowerCase().contains(query) ||
-                commande['client'].toLowerCase().contains(query);
+                commande.reference.toLowerCase().contains(query) ||
+                commande.client.toLowerCase().contains(query);
 
             final matchesFilter =
-                _currentFilter == 'Tous' ||
-                (_currentFilter == 'Formulaire' &&
-                    commande['type'] == 'formulaire') ||
-                (_currentFilter == 'Photo' && commande['type'] == 'photo');
+                _currentFilter == 'Tous' || (_currentFilter == 'Formulaire');
 
             return matchesSearch && matchesFilter;
           }).toList();
@@ -1051,9 +1145,7 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
       // Navigation vers l'écran d'édition pour les commandes formulaire
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => BonCommandeMobileScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => BonCommandeMobileScreen()),
       ).then((value) {
         if (value != null) {
           setState(() {
@@ -1222,267 +1314,289 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
   }
 
   Future<void> _generatePdf(Map<String, dynamic> commande) async {
-  try {
-    // Couleurs & styles
-    final tealColor = PdfColor.fromInt(Colors.teal.value);
-    final blackColor = PdfColor.fromInt(Colors.black.value);
-
-    final headerStyle = pw.TextStyle(
-      fontSize: 24,
-      fontWeight: pw.FontWeight.bold,
-      color: tealColor,
-    );
-    final subtitleStyle = pw.TextStyle(
-      fontSize: 14,
-      fontWeight: pw.FontWeight.bold,
-      color: blackColor,
-    );
-    final normalStyle = pw.TextStyle(fontSize: 12, color: blackColor);
-    final totalStyle = pw.TextStyle(
-      fontSize: 16,
-      fontWeight: pw.FontWeight.bold,
-      color: tealColor,
-    );
-
-    // Logo
-    pw.MemoryImage? logoImage;
     try {
-      final ByteData logoData = await rootBundle.load('images/logo.png');
-      final Uint8List logoBytes = logoData.buffer.asUint8List();
-      logoImage = pw.MemoryImage(logoBytes);
-    } catch (e) {
-      print('Erreur de chargement du logo: $e');
-    }
+      // Couleurs & styles
+      final tealColor = PdfColor.fromInt(Colors.teal.value);
+      final blackColor = PdfColor.fromInt(Colors.black.value);
 
-    final pdf = pw.Document();
+      final headerStyle = pw.TextStyle(
+        fontSize: 24,
+        fontWeight: pw.FontWeight.bold,
+        color: tealColor,
+      );
+      final subtitleStyle = pw.TextStyle(
+        fontSize: 14,
+        fontWeight: pw.FontWeight.bold,
+        color: blackColor,
+      );
+      final normalStyle = pw.TextStyle(fontSize: 12, color: blackColor);
+      final totalStyle = pw.TextStyle(
+        fontSize: 16,
+        fontWeight: pw.FontWeight.bold,
+        color: tealColor,
+      );
 
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.all(30),
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // En-tête avec logo et informations de l'entreprise
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  logoImage != null
-                      ? pw.Container(
-                          height: 80,
-                          child: pw.Image(logoImage),
-                        )
-                      : pw.Container(
+      // Logo
+      pw.MemoryImage? logoImage;
+      try {
+        final ByteData logoData = await rootBundle.load('images/logo.png');
+        final Uint8List logoBytes = logoData.buffer.asUint8List();
+        logoImage = pw.MemoryImage(logoBytes);
+      } catch (e) {
+        print('Erreur de chargement du logo: $e');
+      }
+
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(30),
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // En-tête avec logo et informations de l'entreprise
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    logoImage != null
+                        ? pw.Container(height: 80, child: pw.Image(logoImage))
+                        : pw.Container(
                           height: 80,
                           child: pw.Text('LOGO', style: headerStyle),
                         ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.SizedBox(height: 5),
-                      pw.Text('Adresse: Rue dela nouvelle Delhi , Belvédére Tunis'),
-                      pw.Text('Tél: 9230991'),
-                      pw.Text('Email: contact@esprit-climatique.tn'),
-                      pw.Text('Matricule fiscale: 1883626X/A/M/000'),
-                    ],
-                  ),
-                ],
-              ),
-              
-              pw.Divider(color: tealColor, thickness: 2),
-              pw.SizedBox(height: 20),
-
-              // Titre
-              pw.Center(
-                child: pw.Text(
-                  'DEVIS / BON DE COMMANDE',
-                  style: pw.TextStyle(
-                    fontSize: 20,
-                    fontWeight: pw.FontWeight.bold,
-                    color: tealColor,
-                    decoration: pw.TextDecoration.underline,
-                  ),
-                ),
-              ),
-              pw.SizedBox(height: 20),
-
-              // Infos commande
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Référence: ${commande['reference'] ?? 'N/A'}', style: normalStyle),
-                      pw.Text('Date: ${commande['date'] ?? 'N/A'}', style: normalStyle),
-                      pw.Text('Statut: ${commande['statut'] ?? 'N/A'}', style: normalStyle),
-                      pw.Text('Type: ${commande['type'] == 'formulaire' ? 'Formulaire' : 'Photo'}', style: normalStyle),
-                    ],
-                  ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Client: ${commande['client'] ?? 'N/A'}', style: normalStyle),
-                      pw.Text('Adresse: ${commande['adresse'] ?? 'N/A'}', style: normalStyle),
-                      if (commande['livraison'] != null)
-                        pw.Text('Livraison: ${commande['livraison']}', style: normalStyle),
-                    ],
-                  ),
-                ],
-              ),
-
-              // Articles ou image scannée
-              if (commande['type'] == 'formulaire' && 
-                  commande['articles'] is List && 
-                  (commande['articles'] as List).isNotEmpty) ...[
-                pw.SizedBox(height: 30),
-                pw.Text('Articles commandés:', style: subtitleStyle),
-                pw.SizedBox(height: 10),
-                pw.Table(
-                  border: pw.TableBorder.all(color: tealColor, width: 1),
-                  columnWidths: {
-                    0: pw.FlexColumnWidth(3),
-                    1: pw.FlexColumnWidth(1),
-                    2: pw.FlexColumnWidth(1.5),
-                    3: pw.FlexColumnWidth(1.5),
-                  },
-                  children: [
-                    pw.TableRow(
-                      decoration: pw.BoxDecoration(color: tealColor),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
-                        _headerCell('Article'),
-                        _headerCell('Qté'),
-                        _headerCell('Prix HT (Dinars)'),
-                        _headerCell('Total (Dinars)'),
+                        pw.SizedBox(height: 5),
+                        pw.Text(
+                          'Adresse: Rue dela nouvelle Delhi , Belvédére Tunis',
+                        ),
+                        pw.Text('Tél: 9230991'),
+                        pw.Text('Email: contact@esprit-climatique.tn'),
+                        pw.Text('Matricule fiscale: 1883626X/A/M/000'),
                       ],
                     ),
-                    ...(commande['articles'] as List).map<pw.TableRow>((article) {
-                      final nom = article['nom'] ?? '';
-                      final quantite = (article['quantite'] as num?) ?? 0;
-                      final prixHT = (article['prixHT'] as num?) ?? 0.0;
-                      final total = quantite * prixHT;
-
-                      return pw.TableRow(
-                        children: [
-                          _dataCell(nom),
-                          _dataCell(quantite.toString()),
-                          _dataCell('${prixHT.toStringAsFixed(3)} dt'),
-                          _dataCell('${total.toStringAsFixed(3)} dt'),
-                        ],
-                      );
-                    }).toList(),
                   ],
                 ),
-              ] else if (commande['photo'] != null) ...[
-                pw.SizedBox(height: 30),
-                pw.Text('Bon de commande scanné:', style: subtitleStyle),
-                pw.SizedBox(height: 10),
+
+                pw.Divider(color: tealColor, thickness: 2),
+                pw.SizedBox(height: 20),
+
+                // Titre
                 pw.Center(
-                  child: pw.Container(
-                    width: 200,
-                    height: 150,
-                    decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: tealColor),
+                  child: pw.Text(
+                    'DEVIS / BON DE COMMANDE',
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.bold,
+                      color: tealColor,
+                      decoration: pw.TextDecoration.underline,
                     ),
-                    child: pw.Center(
-                      child: pw.Text(
-                        'Image du bon de commande',
-                        style: pw.TextStyle(
-                          fontStyle: pw.FontStyle.italic,
-                          color: tealColor,
+                  ),
+                ),
+                pw.SizedBox(height: 20),
+
+                // Infos commande
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Référence: ${commande['reference'] ?? 'N/A'}',
+                          style: normalStyle,
+                        ),
+                        pw.Text(
+                          'Date: ${commande['date'] ?? 'N/A'}',
+                          style: normalStyle,
+                        ),
+                        pw.Text(
+                          'Statut: ${commande['statut'] ?? 'N/A'}',
+                          style: normalStyle,
+                        ),
+                        pw.Text(
+                          'Type: ${commande['type'] == 'formulaire' ? 'Formulaire' : 'Photo'}',
+                          style: normalStyle,
+                        ),
+                      ],
+                    ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Client: ${commande['client'] ?? 'N/A'}',
+                          style: normalStyle,
+                        ),
+                        pw.Text(
+                          'Adresse: ${commande['adresse'] ?? 'N/A'}',
+                          style: normalStyle,
+                        ),
+                        if (commande['livraison'] != null)
+                          pw.Text(
+                            'Livraison: ${commande['livraison']}',
+                            style: normalStyle,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                // Articles ou image scannée
+                if (commande['type'] == 'formulaire' &&
+                    commande['articles'] is List &&
+                    (commande['articles'] as List).isNotEmpty) ...[
+                  pw.SizedBox(height: 30),
+                  pw.Text('Articles commandés:', style: subtitleStyle),
+                  pw.SizedBox(height: 10),
+                  pw.Table(
+                    border: pw.TableBorder.all(color: tealColor, width: 1),
+                    columnWidths: {
+                      0: pw.FlexColumnWidth(3),
+                      1: pw.FlexColumnWidth(1),
+                      2: pw.FlexColumnWidth(1.5),
+                      3: pw.FlexColumnWidth(1.5),
+                    },
+                    children: [
+                      pw.TableRow(
+                        decoration: pw.BoxDecoration(color: tealColor),
+                        children: [
+                          _headerCell('Article'),
+                          _headerCell('Qté'),
+                          _headerCell('Prix HT (Dinars)'),
+                          _headerCell('Total (Dinars)'),
+                        ],
+                      ),
+                      ...(commande['articles'] as List).map<pw.TableRow>((
+                        article,
+                      ) {
+                        final nom = article['nom'] ?? '';
+                        final quantite = (article['quantite'] as num?) ?? 0;
+                        final prixHT = (article['prixHT'] as num?) ?? 0.0;
+                        final total = quantite * prixHT;
+
+                        return pw.TableRow(
+                          children: [
+                            _dataCell(nom),
+                            _dataCell(quantite.toString()),
+                            _dataCell('${prixHT.toStringAsFixed(3)} dt'),
+                            _dataCell('${total.toStringAsFixed(3)} dt'),
+                          ],
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ] else if (commande['photo'] != null) ...[
+                  pw.SizedBox(height: 30),
+                  pw.Text('Bon de commande scanné:', style: subtitleStyle),
+                  pw.SizedBox(height: 10),
+                  pw.Center(
+                    child: pw.Container(
+                      width: 200,
+                      height: 150,
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: tealColor),
+                      ),
+                      child: pw.Center(
+                        child: pw.Text(
+                          'Image du bon de commande',
+                          style: pw.TextStyle(
+                            fontStyle: pw.FontStyle.italic,
+                            color: tealColor,
+                          ),
                         ),
                       ),
+                    ),
+                  ),
+                ],
+
+                // Totaux
+                pw.SizedBox(height: 30),
+                pw.Container(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Container(
+                    width: 300,
+                    padding: pw.EdgeInsets.all(15),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: tealColor),
+                      borderRadius: pw.BorderRadius.circular(5),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        if ((commande['remise'] as String?) != null &&
+                            double.tryParse((commande['remise'] as String?)!) !=
+                                null &&
+                            double.parse((commande['remise'] as String?)!) > 0)
+                          _totalLine('Remise:', '${commande['remise']} dt'),
+                        _totalLine(
+                          'Total HT:',
+                          '${(commande['total'] as num?)?.toStringAsFixed(3) ?? '0'} dt',
+                        ),
+                        _totalLine(
+                          'TVA (20%):',
+                          '${((commande['total'] as num?) ?? 0) * 0.2} dt',
+                        ),
+                        pw.Divider(color: tealColor),
+                        _totalLine(
+                          'Total TTC:',
+                          '${((commande['total'] as num?) ?? 0) * 1.2} dt',
+                          isBold: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Pied de page
+                pw.SizedBox(height: 40),
+                pw.Divider(color: tealColor),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'Conditions de paiement: 30 jours fin de mois',
+                      style: pw.TextStyle(fontStyle: pw.FontStyle.italic),
+                    ),
+                    pw.Text(
+                      'Page ${context.pageNumber}/${context.pagesCount}',
+                      style: normalStyle,
+                    ),
+                  ],
+                ),
+                pw.SizedBox(height: 10),
+                pw.Center(
+                  child: pw.Text(
+                    'Merci pour votre confiance !',
+                    style: pw.TextStyle(
+                      color: tealColor,
+                      fontWeight: pw.FontWeight.bold,
                     ),
                   ),
                 ),
               ],
+            );
+          },
+        ),
+      );
 
-              // Totaux
-              pw.SizedBox(height: 30),
-              pw.Container(
-                alignment: pw.Alignment.centerRight,
-                child: pw.Container(
-                  width: 300,
-                  padding: pw.EdgeInsets.all(15),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: tealColor),
-                    borderRadius: pw.BorderRadius.circular(5),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      if ((commande['remise'] as String?) != null && 
-                          double.tryParse((commande['remise'] as String?)!) != null && 
-                          double.parse((commande['remise'] as String?)!) > 0)
-                        _totalLine('Remise:', '${commande['remise']} dt'),
-                      _totalLine(
-                        'Total HT:',
-                        '${(commande['total'] as num?)?.toStringAsFixed(3) ?? '0'} dt',
-                      ),
-                      _totalLine(
-                        'TVA (20%):',
-                        '${((commande['total'] as num?) ?? 0) * 0.2} dt',
-                      ),
-                      pw.Divider(color: tealColor),
-                      _totalLine(
-                        'Total TTC:',
-                        '${((commande['total'] as num?) ?? 0) * 1.2} dt',
-                        isBold: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Pied de page
-              pw.SizedBox(height: 40),
-              pw.Divider(color: tealColor),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'Conditions de paiement: 30 jours fin de mois',
-                    style: pw.TextStyle(fontStyle: pw.FontStyle.italic),
-                  ),
-                  pw.Text(
-                    'Page ${context.pageNumber}/${context.pagesCount}',
-                    style: normalStyle,
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 10),
-              pw.Center(
-                child: pw.Text(
-                  'Merci pour votre confiance !',
-                  style: pw.TextStyle(
-                    color: tealColor,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-
-    // Afficher le PDF en mode aperçu
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'commande_${commande['reference']}.pdf',
-    );
-  } catch (e) {
-    print('Erreur lors de la génération du PDF: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Erreur lors de la génération du PDF'),
-        backgroundColor: Colors.red,
-      ),
-    );
+      // Afficher le PDF en mode aperçu
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: 'commande_${commande['reference']}.pdf',
+      );
+    } catch (e) {
+      print('Erreur lors de la génération du PDF: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la génération du PDF'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
-}
-
 
   Color _getStatusColor(String status) {
     switch (status) {
@@ -1501,7 +1615,7 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
     }
   }
 
-  Widget _buildCommandeCard(Map<String, dynamic> commande, int index) {
+  Widget _buildCommandeCard(VenteBonCommande commande, int index) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 3,
@@ -1516,7 +1630,7 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    commande['reference'],
+                    commande.reference,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -1526,13 +1640,11 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
                 ),
                 Chip(
                   label: Text(
-                    commande['type'] == 'formulaire' ? 'Formulaire' : 'Photo',
+                    'Formulaire',
                     style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
-                  backgroundColor:
-                      commande['type'] == 'formulaire'
-                          ? Colors.blueGrey
-                          : Colors.purple,
+                  backgroundColor: Colors.blueGrey,
+
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 ),
               ],
@@ -1543,61 +1655,38 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    commande['client'],
+                    commande.client,
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ),
                 Chip(
                   label: Text(
-                    commande['statut'],
+                    commande.statut,
                     style: TextStyle(color: Colors.white),
                   ),
-                  backgroundColor: _getStatusColor(commande['statut']),
+                  backgroundColor: _getStatusColor(commande.statut),
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 ),
               ],
             ),
             SizedBox(height: 8),
-            if (commande['type'] == 'photo' && commande['photo'] != null) ...[
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey[200],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
-                    imageUrl: commande['photo'],
-                    placeholder:
-                        (context, url) =>
-                            Center(child: CircularProgressIndicator()),
-                    errorWidget:
-                        (context, url, error) =>
-                            Icon(Icons.error, color: Colors.red),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              SizedBox(height: 8),
-            ],
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Date: ${commande['date']}',
+                  'Date: ${commande.date}',
                   style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
                 Text(
-                  'Livraison: ${commande['livraison']}',
+                  'Livraison: ${commande.delaiLivraison}',
                   style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 ),
               ],
             ),
             SizedBox(height: 8),
             Text(
-              'Total: ${currencyFormat.format(commande['total'])}',
+              'Total: ${currencyFormat.format(commande.total)}',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1610,17 +1699,18 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
               children: [
                 IconButton(
                   icon: Icon(Icons.remove_red_eye, color: Colors.blue),
-                  onPressed: () => _showCommandeDetails(commande),
+                  onPressed: () => _showCommandeDetails(commande.toJson()),
                 ),
                 IconButton(
                   icon: Icon(Icons.picture_as_pdf, color: Colors.orange),
-                  onPressed: () => _generatePdf(commande),
+                  onPressed: () => _generatePdf(commande.toJson()),
                 ),
-                if (commande['type'] == 'formulaire')
+                /* if (commande['type'] == 'formulaire')
                   IconButton(
                     icon: Icon(Icons.edit, color: Colors.purple),
                     onPressed: () => _editCommande(commande),
                   ),
+                  */
                 IconButton(
                   icon: Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _deleteCommande(index),
@@ -1726,8 +1816,6 @@ class _HistoriqueVenteScreenState extends State<HistoriqueVenteScreen> {
     );
   }
 }
-
-
 
 class EditPhotoScreen extends StatelessWidget {
   final Map<String, dynamic> commande;

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 import '../models/achat.dart';
+import '../models/Vente.dart';
 
 class PurchaseService {
   static const String _baseUrl = '${AppConfig.baseUrl}/achat';
@@ -36,10 +37,10 @@ class PurchaseService {
             .map<Map<String, String>>((supplier) {
               final id = supplier['_id'].toString();
               final name =
-                  '${supplier['prenom'] ?? ''} ${supplier['nom'] ?? ''}'.trim();
+                  '${supplier['nom'] ?? ''} ${supplier['prenom'] ?? ''}'.trim();
               return {
                 'id': id,
-                'name': name.isEmpty ? 'Fournisseur ID: $id' : name,
+                'name': name.isEmpty ? supplier['email'] : name,
               };
             })
             .toList();
@@ -176,6 +177,39 @@ class PurchaseService {
       print('Erreur savePurchase: $e');
       return false;
     }
+  }
+
+  Future<List<VenteBonCommande>> fetchVentes(String query) async {
+    /* try {*/
+    final response = await http
+        .get(Uri.parse('$_baseUrlVente${query}'), headers: _headers)
+        .timeout(_timeout);
+    print('Raw purchase response: ${response.body}'); // Log raw response
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      List<dynamic> purchaseList;
+      if (data is List) {
+        purchaseList = data;
+      } else if (data is Map && data.containsKey('data')) {
+        purchaseList = data['data'] as List<dynamic>;
+      } else if (data is Map) {
+        // Handle single object case
+        purchaseList = [data];
+      } else {
+        throw Exception('Unexpected response format: $data');
+      }
+      return purchaseList
+          .map((json) => VenteBonCommande.fromJsonApi(json))
+          .toList();
+    } else {
+      throw Exception(
+        'Échec du chargement (${response.statusCode}): ${response.body}',
+      );
+    }
+    /*} catch (e) {
+      print('Erreur fetchPurchases: $e');
+      throw Exception('Erreur réseau: $e');
+    }*/
   }
 
   Future<bool> saveVente(Map<String, Object> purchase) async {

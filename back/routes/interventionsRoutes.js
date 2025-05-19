@@ -5,7 +5,8 @@ const { ajouterInterventionRepport,
      mettreAJourIntervention, supprimerIntervention,
      mettreAJourInterventionRepport,
      listeInterventionRepport,
-     getoneInterventionRepport
+     getoneInterventionRepport,
+     supprimerInterventionRepport
      } = require('../controllers/interventions.contoller');
 
 
@@ -13,6 +14,8 @@ const { ajouterInterventionRepport,
 router.post('/ajouter', ajouterIntervention);
 router.post('/ajouterRepport', ajouterInterventionRepport);
 router.get('/all/report', listeInterventionRepport);
+router.delete('/delete/report/:id', supprimerInterventionRepport);
+
 router.get('/all/report/:id', getoneInterventionRepport);
 
 router.put('/all/report/:id', mettreAJourInterventionRepport);

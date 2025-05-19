@@ -6,6 +6,7 @@ import 'article.dart';
 import 'client.dart';
 import 'historiqueDevis.dart';
 import '../services/achat_service.dart';
+import '../models/Vente.dart';
 
 class DevisMobileScreen extends StatefulWidget {
   @override
@@ -47,9 +48,9 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
   // Données
   List<Map<String, String>> _clients = [];
 
-  List<Map<String, String>> _listeArticles = [];
+  List<Map<String, dynamic>> _listeArticles = [];
 
-  List<Map<String, dynamic>> _historiqueDevis = [];
+  List<VenteBonCommande> _historiqueDevis = [];
   String? _selectedArticle;
   final TextEditingController _prixController = TextEditingController();
   final TextEditingController _quantiteController = TextEditingController();
@@ -97,39 +98,13 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
     });
   }
 
-  void _chargerHistorique() {
-    setState(() {
-      _historiqueDevis = [
-        {
-          'reference': 'DEV-2023-001',
-          'client': 'Client 1',
-          'date': '15/06/2023',
-          'total': 1200.0,
-          'statut': 'En attente',
-          'articles': [
-            {'nom': 'Produit A', 'quantite': 2, 'prixHT': 100.0},
-          ],
-          'adresse': 'Adresse de livraison',
-          'conditions': '30 jours fin de mois',
-          'validite': '30',
-          'remise': '0',
-          'methode': 'complète',
-        },
-        {
-          'reference': 'DEV-2023-002',
-          'client': 'Client 2',
-          'date': '20/06/2023',
-          'total': 850.0,
-          'statut': 'Accepté',
-          'articles': [],
-          'adresse': 'Adresse principale',
-          'conditions': '45 jours',
-          'validite': '15',
-          'remise': '5',
-          'methode': 'rapide',
-          'image': 'assets/placeholder_devis.png',
-        },
-      ];
+  void _chargerHistorique() async {
+    final venteService = PurchaseService();
+
+    venteService.fetchVentes("?method=complete").then((result) {
+      setState(() {
+        _historiqueDevis = result;
+      });
     });
   }
 
@@ -205,19 +180,22 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
   void _enregistrerDevis() async {
     if (_formKey.currentState!.validate() && _articles.isNotEmpty) {
       setState(() {
-        _historiqueDevis.insert(0, {
-          'reference': _referenceController.text,
-          'client': _selectedClient,
-          'date': DateFormat('dd/MM/yyyy').format(_selectedDate),
-          'total': _totalDevis,
-          'statut': 'En attente',
-          'articles': List.from(_articles),
-          'adresse': _adresseLivraisonController.text,
-          'conditions': _conditionsPaiementController.text,
-          'validite': _validiteController.text,
-          'remise': _remiseController.text,
-          'methode': 'complète',
-        });
+        _historiqueDevis.insert(
+          0,
+          VenteBonCommande.fromJson({
+            'reference': _referenceController.text,
+            'client': _selectedClient,
+            'date': DateFormat('dd/MM/yyyy').format(_selectedDate),
+            'total': _totalDevis,
+            'statut': 'En attente',
+            'articles': List.from(_articles),
+            'adresse': _adresseLivraisonController.text,
+            'conditions': _conditionsPaiementController.text,
+            'validite': _validiteController.text,
+            'remise': _remiseController.text,
+            'methode': 'rapide',
+          }),
+        );
       });
       await _purchaseService.saveVente({
         'reference': _referenceController.text,
@@ -230,7 +208,7 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
         'conditions': _conditionsPaiementController.text,
         'validite': _validiteController.text,
         'remise': _remiseController.text,
-        'methode': 'complète',
+        'methode': 'rapide',
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -261,20 +239,23 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
       }
 
       setState(() {
-        _historiqueDevis.insert(0, {
-          'reference': _rapideReferenceController.text,
-          'client': _rapideClientController.text,
-          'date': DateFormat('dd/MM/yyyy').format(DateTime.now()),
-          'total': 0.0,
-          'statut': 'En attente',
-          'articles': [],
-          'adresse': 'À déterminer',
-          'conditions': 'À déterminer',
-          'validite': '30',
-          'remise': '0',
-          'methode': 'rapide',
-          'image': _imageDevis!.path,
-        });
+        _historiqueDevis.insert(
+          0,
+          VenteBonCommande.fromJson({
+            'reference': _rapideReferenceController.text,
+            'client': _rapideClientController.text,
+            'date': DateFormat('dd/MM/yyyy').format(DateTime.now()),
+            'total': 0.0,
+            'statut': 'En attente',
+            'articles': [],
+            'adresse': 'À déterminer',
+            'conditions': 'À déterminer',
+            'validite': '30',
+            'remise': '0',
+            'methode': 'rapide',
+            'image': _imageDevis!.path,
+          }),
+        );
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -563,7 +544,7 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
                               setState(() {
                                 _selectedArticle = value;
                                 var article = _listeArticles.firstWhere(
-                                  (article) => article['name'] == value,
+                                  (article) => article['id'] == value,
                                 );
                                 _prixController.text =
                                     article['prixHT'].toString();
@@ -573,7 +554,7 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
                                 _listeArticles.map((article) {
                                   return DropdownMenuItem<String>(
                                     value: article['id'],
-                                    child: Text(article['nom'] ?? "inconu"),
+                                    child: Text(article['name'] ?? "inconu"),
                                   );
                                 }).toList(),
                             decoration: _inputDecoration(

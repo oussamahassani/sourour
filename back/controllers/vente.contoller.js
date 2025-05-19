@@ -106,7 +106,7 @@ exports.createDevisRapide = async (req, res) => {
 
 // Get all devis
 exports.getAllDevis = async (req, res) => {
-  try {
+ /* try {*/
     const { status, method, client, startDate, endDate } = req.query;
     const filter = {};
     
@@ -122,13 +122,13 @@ exports.getAllDevis = async (req, res) => {
 
     const devis = await Devis.find(filter)
       .populate('client', 'nom prenom entreprise')
-      .populate('createdBy', 'name')
+    
       .sort({ dateCreation: -1 });
 
     res.json(devis);
-  } catch (error) {
+  /*} catch (error) {
     res.status(500).json({ message: error.message });
-  }
+  }*/
 };
 
 // Get single devis

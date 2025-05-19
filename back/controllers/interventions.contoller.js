@@ -19,6 +19,24 @@ exports.ajouterInterventionRepport= async (req, res) => {
     res.status(500).json({ error: "Erreur lors de l'ajout de l'intervention" });
   }
 }
+
+// Supprimer une intervention
+exports.supprimerInterventionRepport = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const intervention = await InterventionRepport.findByIdAndDelete(id);
+
+    if (!intervention) {
+      return res.status(404).json({ message: "Intervention non trouvée" });
+    }
+
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ error: "Erreur lors de la suppression de l'intervention" });
+  }
+};
 exports.getoneInterventionRepport = async (req, res) => {
   try {
     const { id } = req.params;

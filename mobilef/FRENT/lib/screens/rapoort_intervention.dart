@@ -3,6 +3,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import '../models/Intervention.dart';
+import '../services/intervention_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -47,14 +49,18 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
   final TextEditingController _technicianController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _interventionTypeController = TextEditingController();
+  final TextEditingController _interventionTypeController =
+      TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _actionsTakenController = TextEditingController();
-  final TextEditingController _materialsUsedController = TextEditingController();
+  final TextEditingController _materialsUsedController =
+      TextEditingController();
   final TextEditingController _durationController = TextEditingController();
   final TextEditingController _observationsController = TextEditingController();
-  final TextEditingController _recommendationsController = TextEditingController();
-  final TextEditingController _clientSignatureController = TextEditingController();
+  final TextEditingController _recommendationsController =
+      TextEditingController();
+  final TextEditingController _clientSignatureController =
+      TextEditingController();
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -97,7 +103,9 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
     _addressController.text = intervention.address ?? '';
     _technicianController.text = intervention.technicianName ?? '';
     if (intervention.date != null) {
-      _dateController.text = DateFormat('dd/MM/yyyy').format(intervention.date!);
+      _dateController.text = DateFormat(
+        'dd/MM/yyyy',
+      ).format(intervention.date!);
       _selectedDate = intervention.date;
     }
     if (intervention.time != null) {
@@ -170,12 +178,24 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
   Future<void> _saveReport() async {
     if (_formKey.currentState!.validate()) {
       final newReport = Intervention(
-        clientName: _clientController.text,
-        address: _addressController.text,
-        technicianName: _technicianController.text,
+        clientName:
+            _clientController.text.trim().isNotEmpty
+                ? _clientController.text.trim()
+                : "client",
+        address:
+            _addressController.text.trim().isNotEmpty
+                ? _addressController.text.trim()
+                : "adress",
+        technicianName:
+            _technicianController.text.trim().isNotEmpty
+                ? _technicianController.text.trim()
+                : "technicien",
         date: _selectedDate,
         time: _selectedTime,
-        interventionType: _interventionTypeController.text,
+        interventionType:
+            _interventionTypeController.text.trim().isNotEmpty
+                ? _interventionTypeController.text.trim()
+                : "Reparation",
         description: _descriptionController.text,
         actionsTaken: _actionsTakenController.text,
         materialsUsed: _materialsUsedController.text,
@@ -186,6 +206,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
         clientSatisfied: _clientSatisfied,
       );
 
+      final data = await InterventionService.createReport(newReport);
       if (widget.onSave != null) {
         widget.onSave!(newReport);
       }
@@ -216,21 +237,33 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
           return [
             _buildPDFHeader(),
             _buildPDFClientInfo(),
-            _buildPDFSection('Description de l\'intervention', _descriptionController.text),
+            _buildPDFSection(
+              'Description de l\'intervention',
+              _descriptionController.text,
+            ),
             _buildPDFSection('Actions réalisées', _actionsTakenController.text),
             pw.Row(
               children: [
                 pw.Expanded(
-                  child: _buildPDFSection('Matériels utilisés', _materialsUsedController.text),
+                  child: _buildPDFSection(
+                    'Matériels utilisés',
+                    _materialsUsedController.text,
+                  ),
                 ),
                 pw.SizedBox(width: 15),
                 pw.Expanded(
-                  child: _buildPDFSection('Durée de l\'intervention', _durationController.text),
+                  child: _buildPDFSection(
+                    'Durée de l\'intervention',
+                    _durationController.text,
+                  ),
                 ),
               ],
             ),
             _buildPDFSection('Observations', _observationsController.text),
-            _buildPDFSection('Recommandations', _recommendationsController.text),
+            _buildPDFSection(
+              'Recommandations',
+              _recommendationsController.text,
+            ),
             _buildClientSatisfaction(),
             _buildSignatures(),
           ];
@@ -290,7 +323,11 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    _buildPDFInfoRow('Client:', _clientController.text, bold: true),
+                    _buildPDFInfoRow(
+                      'Client:',
+                      _clientController.text,
+                      bold: true,
+                    ),
                     _buildPDFInfoRow('Adresse:', _addressController.text),
                   ],
                 ),
@@ -311,11 +348,17 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
           pw.Row(
             children: [
               pw.Expanded(
-                child: _buildPDFInfoRow('Technicien:', _technicianController.text),
+                child: _buildPDFInfoRow(
+                  'Technicien:',
+                  _technicianController.text,
+                ),
               ),
               pw.SizedBox(width: 20),
               pw.Expanded(
-                child: _buildPDFInfoRow('Type d\'intervention:', _interventionTypeController.text),
+                child: _buildPDFInfoRow(
+                  'Type d\'intervention:',
+                  _interventionTypeController.text,
+                ),
               ),
             ],
           ),
@@ -397,7 +440,9 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
             ),
           ),
           pw.SizedBox(height: 5),
-          pw.Text('Le client est satisfait de l\'intervention: ${_clientSatisfied ? 'Oui' : 'Non'}'),
+          pw.Text(
+            'Le client est satisfait de l\'intervention: ${_clientSatisfied ? 'Oui' : 'Non'}',
+          ),
         ],
       ),
     );
@@ -418,11 +463,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
             children: [
               pw.Text('Signature du technicien'),
               pw.SizedBox(height: 40),
-              pw.Container(
-                width: 150,
-                height: 1,
-                color: PdfColors.black,
-              ),
+              pw.Container(width: 150, height: 1, color: PdfColors.black),
               pw.SizedBox(height: 5),
               pw.Text(_technicianController.text),
             ],
@@ -431,15 +472,13 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
             children: [
               pw.Text('Signature du client'),
               pw.SizedBox(height: 40),
-              pw.Container(
-                width: 150,
-                height: 1,
-                color: PdfColors.black,
-              ),
+              pw.Container(width: 150, height: 1, color: PdfColors.black),
               pw.SizedBox(height: 5),
-              pw.Text(_clientSignatureController.text.isNotEmpty 
-                  ? _clientSignatureController.text 
-                  : _clientController.text),
+              pw.Text(
+                _clientSignatureController.text.isNotEmpty
+                    ? _clientSignatureController.text
+                    : _clientController.text,
+              ),
             ],
           ),
         ],
@@ -449,112 +488,109 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
 
   @override
   Widget build(BuildContext context) {
-  if (!_isInitialized) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Center(
-        child: CircularProgressIndicator(color: primaryColor),
-      ),
-    );
-  }
+    if (!_isInitialized) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(child: CircularProgressIndicator(color: primaryColor)),
+      );
+    }
 
-  return Theme(
-    data: ThemeData(
-      primaryColor: primaryColor,
-      colorScheme: ColorScheme.fromSwatch().copyWith(
-        primary: primaryColor,
-        secondary: secondaryColor,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: primaryColor, width: 2),
+    return Theme(
+      data: ThemeData(
+        primaryColor: primaryColor,
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+          primary: primaryColor,
+          secondary: secondaryColor,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: secondaryColor),
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
+        inputDecorationTheme: InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: primaryColor, width: 2),
           ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: secondaryColor),
+          ),
+          filled: true,
+          fillColor: Colors.grey[50],
         ),
-      ),
-    ),
-    child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Rapport d\'Intervention'),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.picture_as_pdf),
-            onPressed: _generatePDF,
-            tooltip: 'Générer PDF',
-          ),
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveReport,
-            tooltip: 'Enregistrer',
-          ),
-        ],
-      ),
-      body: Container(
-        color: backgroundColor,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInterventionDetailsSection(),
-                const SizedBox(height: 16),
-                _buildInterventionDetailsSection(),
-                const SizedBox(height: 16),
-                _buildObservationsSection(),
-                const SizedBox(height: 16),
-                _buildClientSection(),
-                const SizedBox(height: 20),
-                _buildActionButtons(),
-                const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const InterventionListScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.list),
-                    label: const Text('Voir la liste des interventions'),
-                  ),
-                ),
-              ],
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Rapport d\'Intervention'),
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              onPressed: _generatePDF,
+              tooltip: 'Générer PDF',
+            ),
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveReport,
+              tooltip: 'Enregistrer',
+            ),
+          ],
+        ),
+        body: Container(
+          color: backgroundColor,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInterventionDetailsSection(),
+                  const SizedBox(height: 16),
+                  _buildInterventionDetailsSection(),
+                  const SizedBox(height: 16),
+                  _buildObservationsSection(),
+                  const SizedBox(height: 16),
+                  _buildClientSection(),
+                  const SizedBox(height: 20),
+                  _buildActionButtons(),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => const InterventionListScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.list),
+                      label: const Text('Voir la liste des interventions'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildInterventionDetailsSection() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -569,10 +605,33 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildTextField(_descriptionController, 'Description', Icons.description, false, maxLines: 3),
-            _buildTextField(_actionsTakenController, 'Actions réalisées', Icons.build, false, maxLines: 3),
-            _buildTextField(_materialsUsedController, 'Matériels utilisés', Icons.inventory, false, maxLines: 2),
-            _buildTextField(_durationController, 'Durée de l\'intervention', Icons.timer, true),
+            _buildTextField(
+              _descriptionController,
+              'Description',
+              Icons.description,
+              false,
+              maxLines: 3,
+            ),
+            _buildTextField(
+              _actionsTakenController,
+              'Actions réalisées',
+              Icons.build,
+              false,
+              maxLines: 3,
+            ),
+            _buildTextField(
+              _materialsUsedController,
+              'Matériels utilisés',
+              Icons.inventory,
+              false,
+              maxLines: 2,
+            ),
+            _buildTextField(
+              _durationController,
+              'Durée de l\'intervention',
+              Icons.timer,
+              true,
+            ),
           ],
         ),
       ),
@@ -582,9 +641,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
   Widget _buildObservationsSection() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -599,8 +656,20 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildTextField(_observationsController, 'Observations', Icons.visibility, false, maxLines: 3),
-            _buildTextField(_recommendationsController, 'Recommandations', Icons.recommend, false, maxLines: 3),
+            _buildTextField(
+              _observationsController,
+              'Observations',
+              Icons.visibility,
+              false,
+              maxLines: 3,
+            ),
+            _buildTextField(
+              _recommendationsController,
+              'Recommandations',
+              Icons.recommend,
+              false,
+              maxLines: 3,
+            ),
           ],
         ),
       ),
@@ -610,9 +679,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
   Widget _buildClientSection() {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -637,7 +704,12 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
                 });
               },
             ),
-            _buildTextField(_clientSignatureController, 'Nom du signataire (client)', Icons.person, false),
+            _buildTextField(
+              _clientSignatureController,
+              'Nom du signataire (client)',
+              Icons.person,
+              false,
+            ),
           ],
         ),
       ),
@@ -668,9 +740,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: primaryColor),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           filled: true,
           fillColor: Colors.grey[50],
         ),
@@ -691,9 +761,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
       decoration: InputDecoration(
         labelText: 'Date',
         prefixIcon: Icon(Icons.calendar_today, color: primaryColor),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
         fillColor: Colors.grey[50],
       ),
@@ -714,9 +782,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
       decoration: InputDecoration(
         labelText: 'Heure',
         prefixIcon: Icon(Icons.access_time, color: primaryColor),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
         fillColor: Colors.grey[50],
       ),
@@ -750,40 +816,6 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
   }
 }
 
-class Intervention {
-  final String? clientName;
-  final String? address;
-  final String? technicianName;
-  final DateTime? date;
-  final TimeOfDay? time;
-  final String? interventionType;
-  final String? description;
-  final String? actionsTaken;
-  final String? materialsUsed;
-  final String? actualDuration;
-  final String? observations;
-  final String? recommendations;
-  final String? clientSignature;
-  final bool? clientSatisfied;
-
-  Intervention({
-    this.clientName,
-    this.address,
-    this.technicianName,
-    this.date,
-    this.time,
-    this.interventionType,
-    this.description,
-    this.actionsTaken,
-    this.materialsUsed,
-    this.actualDuration,
-    this.observations,
-    this.recommendations,
-    this.clientSignature,
-    this.clientSatisfied,
-  });
-}
-
 class InterventionListScreen extends StatefulWidget {
   const InterventionListScreen({Key? key}) : super(key: key);
 
@@ -792,7 +824,7 @@ class InterventionListScreen extends StatefulWidget {
 }
 
 class _InterventionListScreenState extends State<InterventionListScreen> {
-  final List<Intervention> _interventions = [];
+  List<Intervention> _interventions = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -804,43 +836,21 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
   void initState() {
     super.initState();
     // Ajout de données de démonstration
-    _interventions.addAll([
-      Intervention(
-        clientName: "Entreprise ABC",
-        address: "123 Rue des Exemples, Paris",
-        technicianName: "Jean Dupont",
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        time: const TimeOfDay(hour: 14, minute: 30),
-        interventionType: "Maintenance préventive",
-        description: "Contrôle annuel des systèmes électriques",
-        actionsTaken: "Vérification des tableaux électriques, test des disjoncteurs",
-        materialsUsed: "Multimètre, tournevis isolant",
-        actualDuration: "2 heures",
-        observations: "Tout est en bon état, un disjoncteur à surveiller",
-        recommendations: "Remplacer le disjoncteur C32 dans 6 mois",
-        clientSatisfied: true,
-      ),
-      Intervention(
-        clientName: "Société XYZ",
-        address: "456 Avenue des Tests, Lyon",
-        technicianName: "Marie Martin",
-        date: DateTime.now().subtract(const Duration(days: 5)),
-        time: const TimeOfDay(hour: 9, minute: 0),
-        interventionType: "Dépannage urgent",
-        description: "Panne de courant dans le bureau principal",
-        actionsTaken: "Identification du court-circuit, remplacement du câble défectueux",
-        materialsUsed: "Câble électrique 2.5mm, pince à dénuder",
-        actualDuration: "3 heures 30",
-        observations: "Ancienne installation électrique à revoir complètement",
-        recommendations: "Refaire l'installation électrique dans 12 mois",
-        clientSatisfied: true,
-      ),
-    ]);
+    _loadData();
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
+    });
+  }
+
+  Future<void> _loadData() async {
+    List<Intervention> intervention =
+        await InterventionService.fetchAllRepport();
+
+    setState(() {
+      _interventions = intervention;
     });
   }
 
@@ -854,7 +864,11 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     });
   }
 
-  void _deleteIntervention(int index) {
+  void _deleteIntervention(int index) async {
+    String id = _interventions[index].id ?? "";
+    if (id != "") {
+      await InterventionService.deleteRepport(id);
+    }
     setState(() {
       _interventions.removeAt(index);
     });
@@ -871,7 +885,8 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
       return _interventions;
     }
     return _interventions.where((intervention) {
-      return intervention.clientName?.toLowerCase().contains(_searchQuery) ?? false;
+      return intervention.clientName?.toLowerCase().contains(_searchQuery) ??
+          false;
     }).toList();
   }
 
@@ -909,8 +924,15 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            _buildPDFInfoRow('Client:', intervention.clientName ?? '', bold: true),
-                            _buildPDFInfoRow('Adresse:', intervention.address ?? ''),
+                            _buildPDFInfoRow(
+                              'Client:',
+                              intervention.clientName ?? '',
+                              bold: true,
+                            ),
+                            _buildPDFInfoRow(
+                              'Adresse:',
+                              intervention.address ?? '',
+                            ),
                           ],
                         ),
                       ),
@@ -919,10 +941,21 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
                           children: [
-                            _buildPDFInfoRow('Date:', intervention.date != null 
-                                ? DateFormat('dd/MM/yyyy').format(intervention.date!) 
-                                : ''),
-                            _buildPDFInfoRow('Heure:', intervention.time?.format(context as BuildContext) ?? ''),
+                            _buildPDFInfoRow(
+                              'Date:',
+                              intervention.date != null
+                                  ? DateFormat(
+                                    'dd/MM/yyyy',
+                                  ).format(intervention.date!)
+                                  : '',
+                            ),
+                            _buildPDFInfoRow(
+                              'Heure:',
+                              intervention.time?.format(
+                                    context as BuildContext,
+                                  ) ??
+                                  '',
+                            ),
                           ],
                         ),
                       ),
@@ -932,11 +965,17 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
                   pw.Row(
                     children: [
                       pw.Expanded(
-                        child: _buildPDFInfoRow('Technicien:', intervention.technicianName ?? ''),
+                        child: _buildPDFInfoRow(
+                          'Technicien:',
+                          intervention.technicianName ?? '',
+                        ),
                       ),
                       pw.SizedBox(width: 20),
                       pw.Expanded(
-                        child: _buildPDFInfoRow('Type d\'intervention:', intervention.interventionType ?? ''),
+                        child: _buildPDFInfoRow(
+                          'Type d\'intervention:',
+                          intervention.interventionType ?? '',
+                        ),
                       ),
                     ],
                   ),
@@ -944,21 +983,36 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
               ),
             ),
             pw.SizedBox(height: 20),
-            _buildPDFSection('Description de l\'intervention', intervention.description ?? ''),
-            _buildPDFSection('Actions réalisées', intervention.actionsTaken ?? ''),
+            _buildPDFSection(
+              'Description de l\'intervention',
+              intervention.description ?? '',
+            ),
+            _buildPDFSection(
+              'Actions réalisées',
+              intervention.actionsTaken ?? '',
+            ),
             pw.Row(
               children: [
                 pw.Expanded(
-                  child: _buildPDFSection('Matériels utilisés', intervention.materialsUsed ?? ''),
+                  child: _buildPDFSection(
+                    'Matériels utilisés',
+                    intervention.materialsUsed ?? '',
+                  ),
                 ),
                 pw.SizedBox(width: 15),
                 pw.Expanded(
-                  child: _buildPDFSection('Durée de l\'intervention', intervention.actualDuration ?? ''),
+                  child: _buildPDFSection(
+                    'Durée de l\'intervention',
+                    intervention.actualDuration ?? '',
+                  ),
                 ),
               ],
             ),
             _buildPDFSection('Observations', intervention.observations ?? ''),
-            _buildPDFSection('Recommandations', intervention.recommendations ?? ''),
+            _buildPDFSection(
+              'Recommandations',
+              intervention.recommendations ?? '',
+            ),
             _buildClientSatisfaction(intervention),
             _buildSignatures(intervention),
           ];
@@ -1044,7 +1098,9 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
             ),
           ),
           pw.SizedBox(height: 5),
-          pw.Text('Le client est satisfait de l\'intervention: ${intervention.clientSatisfied ?? true ? 'Oui' : 'Non'}'),
+          pw.Text(
+            'Le client est satisfait de l\'intervention: ${intervention.clientSatisfied ?? true ? 'Oui' : 'Non'}',
+          ),
         ],
       ),
     );
@@ -1065,11 +1121,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
             children: [
               pw.Text('Signature du technicien'),
               pw.SizedBox(height: 40),
-              pw.Container(
-                width: 150,
-                height: 1,
-                color: PdfColors.black,
-              ),
+              pw.Container(width: 150, height: 1, color: PdfColors.black),
               pw.SizedBox(height: 5),
               pw.Text(intervention.technicianName ?? ''),
             ],
@@ -1078,15 +1130,13 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
             children: [
               pw.Text('Signature du client'),
               pw.SizedBox(height: 40),
-              pw.Container(
-                width: 150,
-                height: 1,
-                color: PdfColors.black,
-              ),
+              pw.Container(width: 150, height: 1, color: PdfColors.black),
               pw.SizedBox(height: 5),
-              pw.Text(intervention.clientSignature?.isNotEmpty == true 
-                  ? intervention.clientSignature! 
-                  : intervention.clientName ?? ''),
+              pw.Text(
+                intervention.clientSignature?.isNotEmpty == true
+                    ? intervention.clientSignature!
+                    : intervention.clientName ?? '',
+              ),
             ],
           ),
         ],
@@ -1102,10 +1152,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: primaryColor,
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
           ),
           const SizedBox(height: 4),
           Text(
@@ -1120,47 +1167,81 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
   void _showInterventionDetails(Intervention intervention) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Détails de l\'intervention',
-          style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('Client:', intervention.clientName ?? ''),
-              _buildDetailRow('Adresse:', intervention.address ?? ''),
-              _buildDetailRow('Technicien:', intervention.technicianName ?? ''),
-              _buildDetailRow('Date:', intervention.date != null
-                  ? DateFormat('dd/MM/yyyy').format(intervention.date!)
-                  : ''),
-              _buildDetailRow('Heure:', intervention.time?.format(context) ?? ''),
-              _buildDetailRow('Type d\'intervention:', intervention.interventionType ?? ''),
-              _buildDetailRow('Description:', intervention.description ?? ''),
-              _buildDetailRow('Actions réalisées:', intervention.actionsTaken ?? ''),
-              _buildDetailRow('Matériels utilisés:', intervention.materialsUsed ?? ''),
-              _buildDetailRow('Durée:', intervention.actualDuration ?? ''),
-              _buildDetailRow('Observations:', intervention.observations ?? ''),
-              _buildDetailRow('Recommandations:', intervention.recommendations ?? ''),
-              _buildDetailRow('Satisfaction client:', intervention.clientSatisfied ?? true ? 'Oui' : 'Non'),
-              _buildDetailRow('Signature client:', intervention.clientSignature?.isNotEmpty == true
-                  ? intervention.clientSignature!
-                  : intervention.clientName ?? ''),
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              'Détails de l\'intervention',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDetailRow('Client:', intervention.clientName ?? ''),
+                  _buildDetailRow('Adresse:', intervention.address ?? ''),
+                  _buildDetailRow(
+                    'Technicien:',
+                    intervention.technicianName ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Date:',
+                    intervention.date != null
+                        ? DateFormat('dd/MM/yyyy').format(intervention.date!)
+                        : '',
+                  ),
+                  _buildDetailRow(
+                    'Heure:',
+                    intervention.time?.format(context) ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Type d\'intervention:',
+                    intervention.interventionType ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Description:',
+                    intervention.description ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Actions réalisées:',
+                    intervention.actionsTaken ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Matériels utilisés:',
+                    intervention.materialsUsed ?? '',
+                  ),
+                  _buildDetailRow('Durée:', intervention.actualDuration ?? ''),
+                  _buildDetailRow(
+                    'Observations:',
+                    intervention.observations ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Recommandations:',
+                    intervention.recommendations ?? '',
+                  ),
+                  _buildDetailRow(
+                    'Satisfaction client:',
+                    intervention.clientSatisfied ?? true ? 'Oui' : 'Non',
+                  ),
+                  _buildDetailRow(
+                    'Signature client:',
+                    intervention.clientSignature?.isNotEmpty == true
+                        ? intervention.clientSignature!
+                        : intervention.clientName ?? '',
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Fermer', style: TextStyle(color: primaryColor)),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Fermer',
-              style: TextStyle(color: primaryColor),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1179,9 +1260,12 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => InterventionReportForm(
-                    onSave: (intervention) => _addOrUpdateIntervention(intervention),
-                  ),
+                  builder:
+                      (context) => InterventionReportForm(
+                        onSave:
+                            (intervention) =>
+                                _addOrUpdateIntervention(intervention),
+                      ),
                 ),
               );
             },
@@ -1209,72 +1293,95 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
               ),
             ),
             Expanded(
-              child: _filteredInterventions.isEmpty
-                  ? const Center(child: Text('Aucun rapport trouvé'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _filteredInterventions.length,
-                      itemBuilder: (context, index) {
-                        final intervention = _filteredInterventions[index];
-                        return Card(
-                          elevation: 2,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: ListTile(
-                            title: Text(
-                              intervention.clientName ?? 'Sans nom',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: primaryColor,
+              child:
+                  _filteredInterventions.isEmpty
+                      ? const Center(child: Text('Aucun rapport trouvé'))
+                      : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _filteredInterventions.length,
+                        itemBuilder: (context, index) {
+                          final intervention = _filteredInterventions[index];
+                          return Card(
+                            elevation: 2,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                intervention.clientName ?? 'Sans nom',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Date: ${intervention.date != null ? DateFormat('dd/MM/yyyy').format(intervention.date!) : 'N/A'}',
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.info,
+                                      color: Colors.green,
+                                    ),
+                                    onPressed:
+                                        () => _showInterventionDetails(
+                                          intervention,
+                                        ),
+                                    tooltip: 'Voir les détails',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.blue,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (
+                                                context,
+                                              ) => InterventionReportForm(
+                                                intervention: intervention,
+                                                onSave:
+                                                    (updatedIntervention) =>
+                                                        _addOrUpdateIntervention(
+                                                          updatedIntervention,
+                                                          index,
+                                                        ),
+                                                index: index,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    tooltip: 'Modifier',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.picture_as_pdf,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () => _generatePDF(intervention),
+                                    tooltip: 'Générer PDF',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () => _deleteIntervention(index),
+                                    tooltip: 'Supprimer',
+                                  ),
+                                ],
                               ),
                             ),
-                            subtitle: Text(
-                              'Date: ${intervention.date != null ? DateFormat('dd/MM/yyyy').format(intervention.date!) : 'N/A'}',
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.info, color: Colors.green),
-                                  onPressed: () => _showInterventionDetails(intervention),
-                                  tooltip: 'Voir les détails',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => InterventionReportForm(
-                                          intervention: intervention,
-                                          onSave: (updatedIntervention) =>
-                                              _addOrUpdateIntervention(updatedIntervention, index),
-                                          index: index,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  tooltip: 'Modifier',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                                  onPressed: () => _generatePDF(intervention),
-                                  tooltip: 'Générer PDF',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteIntervention(index),
-                                  tooltip: 'Supprimer',
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),  
+                          );
+                        },
+                      ),
+            ),
           ],
         ),
       ),
