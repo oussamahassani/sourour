@@ -6,16 +6,16 @@ const InterventionSchema = new mongoose.Schema({
     idI: { type: mongoose.Schema.Types.ObjectId, auto: true },
     
     // Identifiant du plan de maintenance ou de l'ordre de travail
-    idPL: { type: mongoose.Schema.Types.ObjectId, required: true },
+    idPL: { type: mongoose.Schema.Types.ObjectId },
     
     // Date de l'intervention
     date_intervention: { type: Date, required: true },
     
     // Description de l'intervention
     description: { type: String },
-    
+    referenceNumber: { type: String },
     // Statut de l'intervention (en cours, terminé, annulé, etc.)
-    statut: { type: String, required: true },
+    statut: { type: String},
     
     // Rapport détaillé de l'intervention
     rapport_intervention: { type: String }, 
@@ -24,8 +24,16 @@ const InterventionSchema = new mongoose.Schema({
     duree_reelle: { type: Number },
     
     // Identifiant du technicien ayant effectué l'intervention
-    id_technicien: { type: mongoose.Schema.Types.ObjectId, required: true },
-    
+    id_technicien: { type: mongoose.Schema.Types.ObjectId },
+    technicianName: { type: String },
+    technicianAddress: { type: String },
+    actualDuration: { type: String },
+    estimatedDuration: { type: String },
+    interventionType: { type: String },
+    contactPerson: { type: String },
+    clientName: { type: String },
+    address: { type: String },
+
     // Signature du client en confirmation de l'intervention
     signature_client: { type: String },
     

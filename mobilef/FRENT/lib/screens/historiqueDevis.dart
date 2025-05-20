@@ -48,11 +48,8 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
     venteService.fetchVentes("?method=complete").then((result) {
       setState(() {
         _allDevis = result;
+        _filteredDevis = List.from(_allDevis);
       });
-    });
-    setState(() {
-      _allDevis = [];
-      _filteredDevis = List.from(_allDevis);
     });
   }
 
@@ -147,6 +144,7 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
   }
 
   void _showDevisDetails(Map<String, dynamic> devis) {
+    print(devis);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -160,31 +158,6 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (devis['type'] == 'photo' && devis['photo'] != null) ...[
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.grey[200],
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: devis['photo'],
-                      placeholder:
-                          (context, url) =>
-                              Center(child: CircularProgressIndicator()),
-                      errorWidget:
-                          (context, url, error) =>
-                              Icon(Icons.error, color: Colors.red),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Divider(),
-                ],
-                _buildDetailItem(
-                  'Type:',
-                  devis['type'] == 'formulaire' ? 'Formulaire' : 'Photo',
-                ),
                 _buildDetailItem('Référence:', devis['reference']),
                 _buildDetailItem('Client:', devis['client']),
                 _buildDetailItem('Date:', devis['date']),
@@ -194,30 +167,28 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
                   currencyFormat.format(devis['total']),
                 ),
                 _buildDetailItem('Adresse:', devis['adresse']),
-                _buildDetailItem('Validité:', devis['validite']),
+
                 _buildDetailItem('Remise:', '${devis['remise']} €'),
 
-                if (devis['type'] == 'formulaire') ...[
-                  SizedBox(height: 16),
-                  Text(
-                    'Articles:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
+                SizedBox(height: 16),
+                Text(
+                  'Articles:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal,
                   ),
-                  ...devis['articles']
-                      .map<Widget>(
-                        (article) => Padding(
-                          padding: EdgeInsets.symmetric(vertical: 4.0),
-                          child: Text(
-                            '- ${article['nom']} (x${article['quantite']}) - ${currencyFormat.format(article['prixHT'])} HT',
-                            style: TextStyle(color: Colors.grey.shade700),
-                          ),
+                ),
+                ...devis['articles']
+                    .map<Widget>(
+                      (article) => Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text(
+                          '- ${article['nom']} (x${article['quantite']}) - ${currencyFormat.format(article['prixHT'])} HT',
+                          style: TextStyle(color: Colors.grey.shade700),
                         ),
-                      )
-                      .toList(),
-                ],
+                      ),
+                    )
+                    .toList(),
               ],
             ),
           ),
@@ -501,11 +472,11 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
               children: [
                 IconButton(
                   icon: Icon(Icons.remove_red_eye, color: Colors.blue),
-                  onPressed: () => _showDevisDetails(devis.toJson()),
+                  onPressed: () => _showDevisDetails(devis.toJsonVente()),
                 ),
                 IconButton(
                   icon: Icon(Icons.picture_as_pdf, color: Colors.orange),
-                  onPressed: () => _generatePdf(devis.toJson()),
+                  onPressed: () => _generatePdf(devis.toJsonVente()),
                 ),
                 /*  if (devis['type'] == 'formulaire')
                   IconButton(

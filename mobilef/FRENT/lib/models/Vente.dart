@@ -19,6 +19,7 @@ class Article {
 }
 
 class VenteBonCommande {
+  final String id;
   final String reference;
   final String client;
   final String date;
@@ -33,6 +34,7 @@ class VenteBonCommande {
 
   VenteBonCommande({
     required this.reference,
+    required this.id,
     required this.client,
     required this.date,
     required this.total,
@@ -47,6 +49,7 @@ class VenteBonCommande {
 
   factory VenteBonCommande.fromJson(Map<String, dynamic> json) {
     return VenteBonCommande(
+      id: json['_id'] ?? "",
       reference: json['reference'] ?? "",
       client: json['client'] as String,
       date: json['date'] as String,
@@ -65,6 +68,7 @@ class VenteBonCommande {
   }
   factory VenteBonCommande.fromJsonApi(Map<String, dynamic> json) {
     return VenteBonCommande(
+      id: json['_id'] ?? "",
       reference: json['reference'] ?? "",
       client:
           json['client'] != null
@@ -101,6 +105,22 @@ class VenteBonCommande {
       'delaiLivraison': delaiLivraison,
       'remise': remise,
       'methode': methode,
+    };
+  }
+
+  Map<String, dynamic> toJsonVente() {
+    return {
+      'reference': reference ?? "",
+      'client': client ?? "",
+      'date': date ?? "",
+      'total': total ?? "",
+      'statut': statut ?? "",
+      'articles': articles.map((article) => article.toJson()).toList(),
+      'adresse': adresse ?? "",
+      'conditions': conditions ?? "",
+      'delaiLivraison': delaiLivraison ?? "",
+      'remise': remise ?? "",
+      'methode': methode ?? "",
     };
   }
 }

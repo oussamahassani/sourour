@@ -6,42 +6,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'dart:io';
-
-class Client {
-  final String id;
-  final String name;
-  final String address;
-  final String phone;
-  final String email;
-
-  Client({
-    required this.id,
-    required this.name,
-    required this.address,
-    required this.phone,
-    required this.email,
-  });
-}
-
-class Intervention {
-  // Client information
-  String clientId = '';
-  String clientName = '';
-  String address = '';
-  String phone = '';
-  String email = '';
-  String contactPerson = '';
-
-  // Intervention information
-  String referenceNumber = '';
-  DateTime? date;
-  TimeOfDay? time;
-  String interventionType = '';
-  String estimatedDuration = '';
-  String actualDuration = '';
-  String technicianName = '';
-  String technicianAddress = '';
-}
+import '../models/Client.dart';
+import '../services/client_service.dart';
+import '../services/intervention_service.dart';
+import '../models/Intervention.dart';
 
 class InterventionApp extends StatelessWidget {
   const InterventionApp({Key? key}) : super(key: key);
@@ -82,8 +50,9 @@ class InterventionApp extends StatelessWidget {
 
 class InterventionScreen extends StatefulWidget {
   final Intervention intervention;
-  
-  const InterventionScreen({Key? key, required this.intervention}) : super(key: key);
+
+  const InterventionScreen({Key? key, required this.intervention})
+    : super(key: key);
 
   @override
   _InterventionScreenState createState() => _InterventionScreenState();
@@ -97,22 +66,7 @@ class _InterventionScreenState extends State<InterventionScreen> {
   bool _isLoading = false;
 
   // Clients data - exemple avec quelques clients
-  final List<Client> _clients = [
-    Client(
-      id: '1',
-      name: 'Client 1',
-      address: 'Adresse 1',
-      phone: '0123456789',
-      email: 'client1@example.com',
-    ),
-    Client(
-      id: '2', 
-      name: 'Client 2',
-      address: 'Adresse 2',
-      phone: '0987654321',
-      email: 'client2@example.com',
-    ),
-  ];
+  List<Client> _clients = [];
 
   Client? _selectedClient;
 
@@ -129,10 +83,12 @@ class _InterventionScreenState extends State<InterventionScreen> {
 
   @override
   void initState() {
+    _loadDevis();
     super.initState();
     _intervention = widget.intervention;
     // Générer un numéro de référence par défaut
-    _intervention.referenceNumber = 'INT-${DateFormat('yyyyMMdd').format(DateTime.now())}-${UniqueKey().toString().substring(0, 4)}';
+    _intervention.referenceNumber =
+        'INT-${DateFormat('yyyyMMdd').format(DateTime.now())}-${UniqueKey().toString().substring(0, 4)}';
   }
 
   @override
@@ -142,13 +98,19 @@ class _InterventionScreenState extends State<InterventionScreen> {
     super.dispose();
   }
 
+  void _loadDevis() async {
+    ClientService.fetchClients().then((result) {
+      setState(() {
+        _clients = result;
+      });
+    });
+  }
+
   void _updateClientFields(Client client) {
     setState(() {
       _intervention.clientId = client.id;
-      _intervention.clientName = client.name;
-      _intervention.address = client.address;
-      _intervention.phone = client.phone;
-      _intervention.email = client.email;
+      _intervention.clientName = client.nom;
+      _intervention.address = client.adresse;
     });
   }
 
@@ -264,16 +226,18 @@ class _InterventionScreenState extends State<InterventionScreen> {
 
     try {
       final output = await getTemporaryDirectory();
-      final file = File('${output.path}/intervention_${_intervention.referenceNumber}.pdf');
+      final file = File(
+        '${output.path}/intervention_${_intervention.referenceNumber}.pdf',
+      );
       await file.writeAsBytes(await pdf.save());
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('PDF généré avec succès: ${file.path}'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       await OpenFile.open(file.path);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -292,37 +256,38 @@ class _InterventionScreenState extends State<InterventionScreen> {
   pw.Widget _buildPdfInfoSection(List<List<String>> data) {
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.grey300),
-      children: data.map((row) {
-        return pw.TableRow(
-          children: [
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(8),
-              child: pw.Text(
-                row[0],
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
-            ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(8),
-              child: pw.Text(row[1]),
-            ),
-          ],
-        );
-      }).toList(),
+      children:
+          data.map((row) {
+            return pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    row[0],
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(row[1]),
+                ),
+              ],
+            );
+          }).toList(),
     );
   }
 
   Future<void> _saveIntervention() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      
+      await InterventionService.createIntervention(_intervention);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Intervention enregistrée avec succès'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       await _generatePdf();
     }
   }
@@ -344,51 +309,52 @@ class _InterventionScreenState extends State<InterventionScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('Informations sur le client'),
-                      _buildClientInfoFields(),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Informations sur le client'),
+                        _buildClientInfoFields(),
 
-                      const SizedBox(height: 24),
-                      _buildSectionTitle('Informations sur l\'intervention'),
-                      _buildInterventionInfoFields(),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('Informations sur l\'intervention'),
+                        _buildInterventionInfoFields(),
 
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _saveIntervention,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: _saveIntervention,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                          ),
-                          child: const Text(
-                            'ENREGISTRER L\'INTERVENTION',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                            child: const Text(
+                              'ENREGISTRER L\'INTERVENTION',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
     );
   }
 
@@ -420,12 +386,13 @@ class _InterventionScreenState extends State<InterventionScreen> {
                 prefixIcon: Icon(Icons.business),
               ),
               value: _selectedClient,
-              items: _clients.map((client) {
-                return DropdownMenuItem<Client>(
-                  value: client,
-                  child: Text(client.name),
-                );
-              }).toList(),
+              items:
+                  _clients.map((client) {
+                    return DropdownMenuItem<Client>(
+                      value: client,
+                      child: Text(client.nom),
+                    );
+                  }).toList(),
               validator: (value) {
                 if (value == null) {
                   return 'Veuillez sélectionner un client';
@@ -564,15 +531,17 @@ class _InterventionScreenState extends State<InterventionScreen> {
                 labelText: 'Type d\'intervention *',
                 prefixIcon: Icon(Icons.category),
               ),
-              value: _intervention.interventionType.isNotEmpty 
-                  ? _intervention.interventionType 
-                  : null,
-              items: _interventionTypes.map((String type) {
-                return DropdownMenuItem<String>(
-                  value: type,
-                  child: Text(type),
-                );
-              }).toList(),
+              value:
+                  _intervention.interventionType.isNotEmpty
+                      ? _intervention.interventionType
+                      : null,
+              items:
+                  _interventionTypes.map((String type) {
+                    return DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(type),
+                    );
+                  }).toList(),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Veuillez sélectionner un type d\'intervention';
@@ -594,7 +563,9 @@ class _InterventionScreenState extends State<InterventionScreen> {
                       labelText: 'Durée estimée',
                       prefixIcon: Icon(Icons.timer),
                     ),
-                    onSaved: (value) => _intervention.estimatedDuration = value ?? '',
+                    onSaved:
+                        (value) =>
+                            _intervention.estimatedDuration = value ?? '',
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -604,7 +575,8 @@ class _InterventionScreenState extends State<InterventionScreen> {
                       labelText: 'Durée réelle',
                       prefixIcon: Icon(Icons.timer_off),
                     ),
-                    onSaved: (value) => _intervention.actualDuration = value ?? '',
+                    onSaved:
+                        (value) => _intervention.actualDuration = value ?? '',
                   ),
                 ),
               ],

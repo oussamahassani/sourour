@@ -618,7 +618,7 @@ class EmployeeListScreen extends StatefulWidget {
 class _EmployeeListScreenState extends State<EmployeeListScreen> {
   String _searchQuery = '';
 
-  void _deleteEmployee(String id) {
+  void _deleteEmployee(String id) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -635,10 +635,12 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             ElevatedButton(
               child: Text("Supprimer"),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
                   dummyEmployees.removeWhere((employee) => employee.id == id);
                 });
+                await UserRhService.deleteEmployee(id);
+
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

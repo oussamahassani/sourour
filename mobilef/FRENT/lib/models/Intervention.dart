@@ -1,95 +1,118 @@
 import 'package:flutter/material.dart';
 
 class Intervention {
-  final String? id;
-  final String? clientName;
-  final String? address;
-  final String? technicianName;
-  final DateTime? date;
-  final TimeOfDay? time;
-  final String? interventionType;
-  final String? description;
-  final String? actionsTaken;
-  final String? materialsUsed;
-  final String? actualDuration;
-  final String? observations;
-  final String? recommendations;
-  final String? clientSignature;
-  final bool? clientSatisfied;
+  // Client information
+  String clientId;
+  String clientName;
+  String address;
+  String phone;
+  String email;
+  String contactPerson;
+
+  // Intervention information
+  String referenceNumber;
+  DateTime? date;
+  TimeOfDay? time;
+  String interventionType;
+  String estimatedDuration;
+  String actualDuration;
+  String technicianName;
+  String technicianAddress;
 
   Intervention({
-    this.clientName,
-    this.address,
-    this.technicianName,
+    this.clientId = '',
+    this.clientName = '',
+    this.address = '',
+    this.phone = '',
+    this.email = '',
+    this.contactPerson = '',
+    this.referenceNumber = '',
     this.date,
     this.time,
-    this.interventionType,
-    this.description,
-    this.actionsTaken,
-    this.materialsUsed,
-    this.actualDuration,
-    this.observations,
-    this.recommendations,
-    this.clientSignature,
-    this.clientSatisfied,
-    this.id,
+    this.interventionType = '',
+    this.estimatedDuration = '',
+    this.actualDuration = '',
+    this.technicianName = '',
+    this.technicianAddress = '',
   });
 
-  Map<String, dynamic> toJson() => {
-    'clientName': clientName,
-    'address': address,
-    'technicianName': technicianName,
-    'date':
-        date != null
-            ? date?.toIso8601String()
-            : DateTime.now().toIso8601String(),
-    'time':
-        time != null
-            ? '${time?.hour.toString().padLeft(2, '0')}:${time?.minute.toString().padLeft(2, '0')}'
-            : "10:00",
-
-    'interventionType': interventionType,
-    'description': description,
-    'actionsTaken': actionsTaken,
-    'materialsUsed': materialsUsed,
-    'actualDuration': actualDuration,
-    'observations': observations,
-    'recommendations': recommendations,
-    'clientSignature': clientSignature,
-    'clientSatisfied': clientSatisfied,
-  };
-  static TimeOfDay parseTimeOfDay(String timeString) {
-    final parts = timeString.split(":");
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
-    return TimeOfDay(hour: hour, minute: minute);
+  factory Intervention.fromJson(Map<String, dynamic> json) {
+    return Intervention(
+      clientId: json['clientId'] ?? '',
+      clientName: json['clientName'] ?? '',
+      address: json['address'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+      contactPerson: json['contactPerson'] ?? '',
+      referenceNumber: json['referenceNumber'] ?? '',
+      date: json['date'] != null ? DateTime.parse(json['date']) : null,
+      time: json['time'] != null ? _parseTime(json['time']) : null,
+      interventionType: json['interventionType'] ?? '',
+      estimatedDuration: json['estimatedDuration'] ?? '',
+      actualDuration: json['actualDuration'] ?? '',
+      technicianName: json['technicianName'] ?? '',
+      technicianAddress: json['technicianAddress'] ?? '',
+    );
   }
 
-  factory Intervention.fromJson(Map<String, dynamic> json) {
-    try {
-      return Intervention(
-        id: json['_id'],
-        clientName: json['clientName']?.toString(),
-        address: json['address'],
-        technicianName: json['technicianName']?.toString(),
-        date:
-            json['date'] != null
-                ? DateTime.parse(json['date'])
-                : DateTime.now(),
-        time: json['time'] != null ? parseTimeOfDay(json['time']) : null,
-        interventionType: json['interventionType']?.toString() ?? '',
-        description: json['description']?.toString() ?? '',
-        actionsTaken: json['actionsTaken']?.toString() ?? '',
-        materialsUsed: json['materialsUsed'],
-        actualDuration: json['actualDuration'],
-        observations: json['observations']?.toString(),
-        recommendations: json['recommendations']?.toString(),
-        clientSignature: json['clientSignature']?.toString(),
-      );
-    } catch (e) {
-      throw FormatException(
-        "Erreur lors de la conversion JSON en Fournisseur: ${e.toString()}",
-      );
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'clientId': clientId,
+      'clientName': clientName,
+      'address': address,
+      'phone': phone,
+      'email': email,
+      'contactPerson': contactPerson,
+      'referenceNumber': referenceNumber,
+      'date_intervention': date?.toIso8601String(),
+      'time':
+          time != null
+              ? '${time!.hour.toString().padLeft(2, '0')}:${time!.minute.toString().padLeft(2, '0')}'
+              : null,
+      'interventionType': interventionType,
+      'estimatedDuration': estimatedDuration,
+      'actualDuration': actualDuration,
+      'technicianName': technicianName,
+      'technicianAddress': technicianAddress,
+    };
+  }
+
+  static TimeOfDay _parseTime(String timeStr) {
+    final parts = timeStr.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  Intervention copyWith({
+    String? clientId,
+    String? clientName,
+    String? address,
+    String? phone,
+    String? email,
+    String? contactPerson,
+    String? referenceNumber,
+    DateTime? date,
+    TimeOfDay? time,
+    String? interventionType,
+    String? estimatedDuration,
+    String? actualDuration,
+    String? technicianName,
+    String? technicianAddress,
+  }) {
+    return Intervention(
+      clientId: clientId ?? this.clientId,
+      clientName: clientName ?? this.clientName,
+      address: address ?? this.address,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      contactPerson: contactPerson ?? this.contactPerson,
+      referenceNumber: referenceNumber ?? this.referenceNumber,
+      date: date ?? this.date,
+      time: time ?? this.time,
+      interventionType: interventionType ?? this.interventionType,
+      estimatedDuration: estimatedDuration ?? this.estimatedDuration,
+      actualDuration: actualDuration ?? this.actualDuration,
+      technicianName: technicianName ?? this.technicianName,
+      technicianAddress: technicianAddress ?? this.technicianAddress,
+    );
   }
 }

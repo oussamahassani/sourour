@@ -3,7 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import '../models/Intervention.dart';
+import '../models/InterventionReport.dart';
 import '../services/intervention_service.dart';
 
 void main() {
@@ -27,8 +27,8 @@ class MyApp extends StatelessWidget {
 }
 
 class InterventionReportForm extends StatefulWidget {
-  final Intervention? intervention;
-  final Function(Intervention)? onSave;
+  final InterventionReport? intervention;
+  final Function(InterventionReport)? onSave;
   final int? index;
 
   const InterventionReportForm({
@@ -177,7 +177,7 @@ class _InterventionReportFormState extends State<InterventionReportForm> {
 
   Future<void> _saveReport() async {
     if (_formKey.currentState!.validate()) {
-      final newReport = Intervention(
+      final newReport = InterventionReport(
         clientName:
             _clientController.text.trim().isNotEmpty
                 ? _clientController.text.trim()
@@ -824,7 +824,7 @@ class InterventionListScreen extends StatefulWidget {
 }
 
 class _InterventionListScreenState extends State<InterventionListScreen> {
-  List<Intervention> _interventions = [];
+  List<InterventionReport> _interventions = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -846,7 +846,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
   }
 
   Future<void> _loadData() async {
-    List<Intervention> intervention =
+    List<InterventionReport> intervention =
         await InterventionService.fetchAllRepport();
 
     setState(() {
@@ -854,7 +854,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     });
   }
 
-  void _addOrUpdateIntervention(Intervention intervention, [int? index]) {
+  void _addOrUpdateIntervention(InterventionReport intervention, [int? index]) {
     setState(() {
       if (index != null) {
         _interventions[index] = intervention;
@@ -880,7 +880,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     );
   }
 
-  List<Intervention> get _filteredInterventions {
+  List<InterventionReport> get _filteredInterventions {
     if (_searchQuery.isEmpty) {
       return _interventions;
     }
@@ -890,7 +890,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     }).toList();
   }
 
-  Future<void> _generatePDF(Intervention intervention) async {
+  Future<void> _generatePDF(InterventionReport intervention) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -1079,7 +1079,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     );
   }
 
-  pw.Widget _buildClientSatisfaction(Intervention intervention) {
+  pw.Widget _buildClientSatisfaction(InterventionReport intervention) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
@@ -1106,7 +1106,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     );
   }
 
-  pw.Widget _buildSignatures(Intervention intervention) {
+  pw.Widget _buildSignatures(InterventionReport intervention) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       margin: const pw.EdgeInsets.only(top: 20),
@@ -1164,7 +1164,7 @@ class _InterventionListScreenState extends State<InterventionListScreen> {
     );
   }
 
-  void _showInterventionDetails(Intervention intervention) {
+  void _showInterventionDetails(InterventionReport intervention) {
     showDialog(
       context: context,
       builder:

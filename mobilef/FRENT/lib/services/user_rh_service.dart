@@ -31,6 +31,15 @@ class UserRhService {
     }
   }
 
+  static Future<void> deleteEmployee(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/employees/$id');
+      final response = await http.delete(url);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   static Future<void> createEmployee(Employee employee) async {
     final response = await http.post(
       Uri.parse('${baseUrl}/employees'),
