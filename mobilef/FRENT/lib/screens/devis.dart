@@ -101,7 +101,7 @@ class _DevisMobileScreenState extends State<DevisMobileScreen>
   void _chargerHistorique() async {
     final venteService = PurchaseService();
 
-    venteService.fetchVentes("?method=complete").then((result) {
+    venteService.fetchVentes("?method=rapide").then((result) {
       setState(() {
         _historiqueDevis = result;
       });

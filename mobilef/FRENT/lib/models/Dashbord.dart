@@ -10,9 +10,9 @@ class Dashbord {
 
   factory Dashbord.fromJson(Map<dynamic, dynamic> json) {
     return Dashbord(
-      totalPrixTTC: json['totalPrixTTC'],
-      totalTTcVente: json['totalTTcVente'],
-      sumTva: json['sumTva'],
+      totalPrixTTC: json['totalTTcVente'].toString(),
+      totalTTcVente: json['totalTTcAchat'].toString(),
+      sumTva: json['sumTva'].toString(),
     );
   }
 }

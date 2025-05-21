@@ -54,18 +54,38 @@ class VenteBonCommande {
       client: json['client'] as String,
       date: json['date'] as String,
       total: (json['total'] as num).toDouble(),
-      statut: json['statut'] as String,
-      adresse: json['adresse'] as String,
-      conditions: json['conditions'] as String,
-      delaiLivraison: json['delaiLivraison'] as String,
-      remise: json['remise'] as String,
-      methode: json['methode'] as String,
+      statut: json['statut'] ?? "",
+      adresse: json['adresse'] ?? "",
+      conditions: json['conditions'] ?? "",
+      delaiLivraison: json['delaiLivraison'] ?? "",
+      remise: json['remise'] ?? "",
+      methode: json['methode'] ?? "",
       articles:
           (json['articles'] as List<dynamic>)
               .map((item) => Article.fromJson(item as Map<String, dynamic>))
               .toList(),
     );
   }
+  factory VenteBonCommande.fromJsonApidelete(Map<String, dynamic> json) {
+    return VenteBonCommande(
+      id: json['id'] ?? "",
+      reference: json['reference'] ?? "",
+      client: json['client'] != null ? json['client'] : "",
+      date: json['date'] ?? "",
+      total: (json['total'] as num).toDouble() ?? 0.0,
+      statut: json['statut'] ?? "en Attente",
+      adresse: json['adresse'] ?? "Adresse",
+      conditions: json['conditions'] ?? "",
+      delaiLivraison:
+          json['delaiLivraison'] != null
+              ? json['delaiLivraison'].toString()
+              : "20",
+      remise: json['methode'] != null ? json['remise'].toString() : "0",
+      methode: "complete",
+      articles: [],
+    );
+  }
+
   factory VenteBonCommande.fromJsonApi(Map<String, dynamic> json) {
     return VenteBonCommande(
       id: json['_id'] ?? "",
@@ -94,6 +114,23 @@ class VenteBonCommande {
 
   Map<String, dynamic> toJson() {
     return {
+      'reference': reference,
+      'client': client,
+      'date': date,
+      'total': total,
+      'statut': statut,
+      'articles': articles.map((article) => article.toJson()).toList(),
+      'adresse': adresse,
+      'conditions': conditions,
+      'delaiLivraison': delaiLivraison,
+      'remise': remise,
+      'methode': methode,
+    };
+  }
+
+  Map<String, dynamic> toJsonDelete() {
+    return {
+      'id': id,
       'reference': reference,
       'client': client,
       'date': date,

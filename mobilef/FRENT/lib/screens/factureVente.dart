@@ -707,9 +707,38 @@ class _FactureVenteFormState extends State<FactureVenteForm> {
 
   void _sauvegarderFacture() async {
     if (_formKey.currentState!.validate()) {
-      final int prixHT = int.parse(_prixHTController.text);
-      final int tva = int.parse(_tvaController.text);
-      final int prixTTC = int.parse(_prixTTCController.text);
+        var prixHt;
+      var tva;
+      var ttc;
+     if (_prixHTController.text.contains('.')) {
+        double numeroFactureDouble = double.parse(
+          _prixHTController.text,
+        ); // Conversion en double
+
+        prixHt = numeroFactureDouble.toInt();
+      } else {
+        prixHt = int.parse(_prixHTController.text);
+      }
+            if (_tvaController.text.contains('.')) {
+        double numeroFactureDouble = double.parse(
+          _tvaController.text,
+        ); // Conversion en double
+        // Si tu veux, tu peux également convertir en entier après troncature
+        tva = numeroFactureDouble.toInt();
+      } else {
+        tva = int.parse(_tvaController.text);
+      }
+  
+      if (_prixTTCController.text.contains('.')) {
+        double numeroFactureDouble = double.parse(
+          _prixTTCController.text,
+        ); // Conversion en double
+        // Si tu veux, tu peux également convertir en entier après troncature
+        ttc = numeroFactureDouble.toInt();
+      } else {
+        ttc = int.parse(_prixTTCController.text);
+      }
+    
 
       if (widget.facture == null) {
         // Créer une nouvelle facture
@@ -718,9 +747,9 @@ class _FactureVenteFormState extends State<FactureVenteForm> {
           numeroFacture: _numeroFactureController.text,
           client: _selectedClient!,
           produit: _selectedProduit!,
-          prixHT: prixHT,
+          prixHT: prixHt,
           tva: tva,
-          prixTTC: prixTTC,
+          prixTTC: ttc,
           statut: _selectedStatut!,
           dateCreation: DateTime.now(),
           dateEcheance: _dateEcheance!,
@@ -741,9 +770,9 @@ class _FactureVenteFormState extends State<FactureVenteForm> {
           numeroFacture: _numeroFactureController.text,
           client: _selectedClient,
           produit: _selectedProduit,
-          prixHT: prixHT,
+          prixHT: prixHt,
           tva: tva,
-          prixTTC: prixTTC,
+          prixTTC: ttc,
           statut: _selectedStatut,
           dateEcheance: _dateEcheance,
           createur: _selectedCreateur,

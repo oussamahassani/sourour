@@ -626,10 +626,10 @@ class FactureAchatForm extends StatefulWidget {
 
 class _FactureAchatFormState extends State<FactureAchatForm> {
   final _formKey = GlobalKey<FormState>();
-  final _numeroFactureController = TextEditingController();
-  final _prixHTController = TextEditingController();
-  final _tvaController = TextEditingController();
-  final _prixTTCController = TextEditingController();
+  var _numeroFactureController = TextEditingController();
+  var _prixHTController = TextEditingController();
+  var _tvaController = TextEditingController();
+  var _prixTTCController = TextEditingController();
 
   DateTime? _dateEcheance;
   String? _selectedFournisseur;
@@ -717,23 +717,58 @@ class _FactureAchatFormState extends State<FactureAchatForm> {
 
   void _enregistrerFacture() async {
     if (_formKey.currentState!.validate()) {
+      var prixHt;
+      var tva;
+      var ttc;
+      if (_prixHTController.text.contains('.')) {
+        double numeroFactureDouble = double.parse(
+          _prixHTController.text,
+        ); // Conversion en double
+
+        prixHt = numeroFactureDouble.toInt();
+      } else {
+        prixHt = int.parse(_prixHTController.text);
+      }
+      if (_tvaController.text.contains('.')) {
+        double numeroFactureDouble = double.parse(
+          _tvaController.text,
+        ); // Conversion en double
+        // Si tu veux, tu peux également convertir en entier après troncature
+        tva = numeroFactureDouble.toInt();
+      } else {
+        tva = int.parse(_tvaController.text);
+      }
+  
+      if (_prixTTCController.text.contains('.')) {
+        double numeroFactureDouble = double.parse(
+          _prixTTCController.text,
+        ); // Conversion en double
+        // Si tu veux, tu peux également convertir en entier après troncature
+        ttc = numeroFactureDouble.toInt();
+      } else {
+        ttc = int.parse(_prixTTCController.text);
+      }
+
       final facture = FactureAchat(
-        id:
-            widget.facture?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.facture?.id ?? "1747839885818",
         numeroFacture: _numeroFactureController.text,
         fournisseur: _selectedFournisseur!,
         produit: _selectedProduit!,
-        prixHT: int.parse(_prixHTController.text),
-        tva: int.parse(_tvaController.text),
-        prixTTC: int.parse(_prixTTCController.text),
+        prixHT: prixHt,
+        tva: tva,
+        prixTTC: ttc,
         statut: _selectedStatut,
         dateCreation: widget.facture?.dateCreation ?? DateTime.now(),
         dateEcheance: _dateEcheance!,
         createur: _selectedCreateur!,
       );
-      final success = await FactureService().saveFactureAchat(facture);
-      widget.onFactureAdded(facture);
+      if (facture.id != "1747839885818") {
+        await FactureService().UpdateFactureAchat(facture);
+      } else {
+        final success = await FactureService().saveFactureAchat(facture);
+        widget.onFactureAdded(facture);
+      }
+
       Navigator.pop(context);
     }
   }

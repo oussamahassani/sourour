@@ -214,6 +214,7 @@ class PurchaseService {
 
   Future<bool> saveVente(Map<String, Object> purchase) async {
     try {
+      print(purchase);
       final response = await http
           .post(
             Uri.parse('$_baseUrlVente'),
@@ -238,6 +239,23 @@ class PurchaseService {
     try {
       final response = await http
           .delete(Uri.parse('$_baseUrl/supprimer/$id'), headers: _headers)
+          .timeout(_timeout);
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Erreur API: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Erreur deletePurchase: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteVente(String id) async {
+    try {
+      final response = await http
+          .delete(Uri.parse('$_baseUrlVente/$id'), headers: _headers)
           .timeout(_timeout);
       if (response.statusCode == 200) {
         return true;

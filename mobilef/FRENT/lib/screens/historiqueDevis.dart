@@ -45,7 +45,7 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
   void _loadDevis() async {
     final venteService = PurchaseService();
 
-    venteService.fetchVentes("?method=complete").then((result) {
+    venteService.fetchVentes("?method=rapide").then((result) {
       setState(() {
         _allDevis = result;
         _filteredDevis = List.from(_allDevis);
@@ -79,7 +79,11 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
     }
   }
 
-  void _deleteDevis(int index) {
+  void _deleteDevis(VenteBonCommande index) async {
+    final venteService = PurchaseService();
+
+    print(index.id);
+    print(index.reference);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -92,9 +96,16 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
               child: Text('Annuler', style: TextStyle(color: Colors.teal)),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                bool success = await venteService.deleteVente(index.id);
                 setState(() {
-                  _allDevis.removeAt(index);
+                  for (int i = 0; i < _allDevis.length; i++) {
+                    if (_allDevis[i].reference == index.reference) {
+                      _allDevis.removeAt(i);
+                      break; // On sort de la boucle après suppression
+                    }
+                  }
+
                   _filterDevis();
                 });
                 Navigator.of(context).pop();
@@ -488,8 +499,8 @@ class _HistoriqueDevisScreenState extends State<HistoriqueDevisScreen> {
                   icon: Icon(Icons.delete, color: Colors.red),
                   onPressed:
                       () => _deleteDevis(
-                        _allDevis.indexOf(
-                          VenteBonCommande.fromJsonApi(devis.toJson()),
+                        VenteBonCommande.fromJsonApidelete(
+                          devis.toJsonDelete(),
                         ),
                       ),
                 ),

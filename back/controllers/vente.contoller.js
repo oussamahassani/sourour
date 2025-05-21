@@ -58,7 +58,7 @@ exports.createDevisComplete = async (req, res) => {
       totalTVA,
       totalHT,
       totalTTC,
-      methode: 'complete'
+      methode:req.body.methode
     });
 
     await newDevis.save();

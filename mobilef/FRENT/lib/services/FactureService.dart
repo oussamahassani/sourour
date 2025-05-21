@@ -50,10 +50,26 @@ class FactureService {
     _facturesVente.add(facture);
   }
 
-  static void mettreAJourFactureVente(FactureVente facture) {
+  static void mettreAJourFactureVente(FactureVente facture) async {
     final index = _facturesVente.indexWhere((f) => f.id == facture.id);
     if (index != -1) {
       _facturesVente[index] = facture;
+    }
+    final url = Uri.parse(
+      '${AppConfig.baseUrl}/factures/${facture.id}',
+    ); // adapte l'URL à ton backend
+    final headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response = await http.put(
+        url,
+        headers: headers,
+        body: jsonEncode(
+          facture.toJson()..remove('id'),
+        ), // retire l'id si généré par backend
+      );
+    } catch (e) {
+      print('Erreur de connexion: $e');
     }
   }
 
@@ -273,6 +289,33 @@ class FactureService {
 
     try {
       final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(
+          facture.toJson()..remove('id'),
+        ), // retire l'id si généré par backend
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        print('Erreur API: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Erreur de connexion: $e');
+      return false;
+    }
+  }
+
+  Future<bool> UpdateFactureAchat(FactureAchat facture) async {
+    final url = Uri.parse(
+      '${AppConfig.baseUrl}/factures/${facture.id}',
+    ); // adapte l'URL à ton backend
+    final headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response = await http.put(
         url,
         headers: headers,
         body: jsonEncode(
