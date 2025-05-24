@@ -174,7 +174,39 @@ function UpdateStaff() {
                   >
                     <Input />
                   </Form.Item>
+         <Form.Item
+                    style={{ marginBottom: "10px" }}
+                    fields={[{ name: "nom" }]}
+                    label="Status"
+                    name="status"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please input User Staus!",
+                      },
+                    ]}
+                  >
+                       <Select
+                        optionFilterProp="children"
+                        showSearch
+                        filterOption={(input, option) =>
+                          option.children
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        mode="single"
+                        allowClear
+                        style={{
+                          width: "100%",
+                        }}
+                        placeholder="Please select"
+                      >
+                      
+                            <Option key="true" value="true">activer</Option>
+                            <Option key="false" value="false">desactiver</Option>
 
+                      </Select>
+                  </Form.Item>
                 {/*  <Form.Item
                     style={{ marginBottom: "10px" }}
                     label="Change Password"

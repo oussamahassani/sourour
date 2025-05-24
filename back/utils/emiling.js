@@ -8,7 +8,7 @@ let transporter = nodemailer.createTransport({
     }
   });
 
-  const sendNotificationAdminClientCreation = (admin , client) => {
+  const sendNotificationAdminClientCreation = async (admin , client) => {
     const mailOptions = {
       from: 'system@gmail.com',
       to: admin.email,
@@ -27,7 +27,26 @@ let transporter = nodemailer.createTransport({
       return true
     });
   }
-  const sendCompteCreationConfirmationEmail = (customerEmail, user , pass) => {
+    const sendCompteCreationConfirmationEmailUser = async (customerEmail, user ) => {
+    const mailOptions = {
+      from: 'system@gmail.com',
+      to: customerEmail,
+      subject: 'Compte Creation Confirmation User',
+      html: `<p>Dear ${user.nom},</p>
+             <p>Your compte is created and is active Now )</p>
+             `
+    };
+  
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+      return true
+    });
+  };
+  const sendCompteCreationConfirmationEmail = async (customerEmail, user , pass) => {
     const mailOptions = {
       from: 'system@gmail.com',
       to: customerEmail,
@@ -47,7 +66,28 @@ let transporter = nodemailer.createTransport({
     });
   };
 
-  const sendCompteCreationActivation= (customerEmail, user,updatedClient ) => {
+ const  sendCompteCreationConfirmationEmailAdmin = async (admin , user)=> {
+        const mailOptions = {
+      from: 'system@gmail.com',
+      to: admin.email,
+      subject: 'Admin  Activation Compte',
+      html: `<p>Dear ${admin.nom},</p>
+      <p>le compte de ${user.email} : ${user.nom}  ${user.prenom} is  stil waiting to Active )</p>
+                  <p>to activate this  compte iin this app :  (<a href= ${process.env.UrlFontEnd}/hr/adminstaffs/${user._id}/update>activate  Compte </a>)</p>
+            `
+    };
+  
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('Error sending email:', error);
+
+      } else {
+        console.log('Email sent:', info.response);
+      }
+      return true
+    });
+  }
+  const sendCompteCreationActivation= async (customerEmail, user,updatedClient ) => {
     const mailOptions = {
       from: 'system@gmail.com',
       to: customerEmail,
@@ -72,6 +112,8 @@ let transporter = nodemailer.createTransport({
   module.exports = {
     sendCompteCreationConfirmationEmail,
     sendCompteCreationActivation,
+    sendCompteCreationConfirmationEmailUser,
+    sendCompteCreationConfirmationEmailAdmin,
     sendNotificationAdminClientCreation
   };
   

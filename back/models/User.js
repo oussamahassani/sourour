@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
   telephone: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   motDePasse: { type: String, required: true },
-  role: { type: String, required: true }
+  role: { type: String, required: true },
+  status: { type: Boolean,default:false }
 });
 
 // Méthode pour comparer les mots de passe

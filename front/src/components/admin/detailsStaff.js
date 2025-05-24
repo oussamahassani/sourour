@@ -108,7 +108,9 @@ const DetailStaff = () => {
                 <p>
                   <Typography.Text strong>email :</Typography.Text> {user.email}
                 </p>
-            
+                <p>
+                  <Typography.Text strong>status :</Typography.Text> {user.status ? "activer" : "desactiver"}
+                </p>
               
                 <p>
                   <Typography.Text strong>phone :</Typography.Text> {user.telephone}

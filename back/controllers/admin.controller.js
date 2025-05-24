@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const Admin = require('../models/User'); // Le modèle Mongoose
-const {sendCompteCreationConfirmationEmail} = require('../utils/emiling')
+const {sendCompteCreationConfirmationEmail,sendCompteCreationConfirmationEmailUser} = require('../utils/emiling')
+
 // Ajouter un administrateur
 exports.ajouterAdmin = async (req, res) => {
     try {
@@ -8,7 +9,7 @@ exports.ajouterAdmin = async (req, res) => {
 
         const hash = await bcrypt.hash(motDePasse, 10);
 
-        const nouvelAdmin = new Admin({ nom, prenom,role, email, motDePasse: hash, telephone });
+        const nouvelAdmin = new Admin({ nom, prenom,role, email, motDePasse: hash, telephone , status:true});
         const adminSauvegarde = await nouvelAdmin.save();
             const sendmail = await sendCompteCreationConfirmationEmail(email,nouvelAdmin,motDePasse)
         res.status(201).json({ message: "Admin ajouté avec succès", id: adminSauvegarde._id });
@@ -45,12 +46,17 @@ exports.getAdminById = async (req, res) => {
 exports.updateAdmin = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nom, prenom, email, telephone } = req.body;
+        const { nom, prenom, email, telephone,status
+ } = req.body;
+        const fisrtChek = await Admin.findById(id);
 
-        const admin = await Admin.findByIdAndUpdate(id, { nom, prenom, email, telephone }, { new: true });
+        const admin = await Admin.findByIdAndUpdate(id, { nom, prenom, email, telephone,status
+ }, { new: true });
 
         if (!admin) return res.status(404).json({ message: "Admin non trouvé" });
-
+ if(admin.status && !fisrtChek.status){
+          const sendmail = await sendCompteCreationConfirmationEmailUser(admin.email,admin)
+ }
         res.status(200).json({ message: "Admin mis à jour avec succès" });
     } catch (error) {
         res.status(500).json({ message: "Erreur serveur", error });

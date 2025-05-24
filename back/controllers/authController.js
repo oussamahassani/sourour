@@ -3,7 +3,7 @@ const Role = require('../models/Role');
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const {sendCompteCreationConfirmationEmail} = require('../utils/emiling')
+const {sendCompteCreationConfirmationEmailAdmin} = require('../utils/emiling')
 
 // Inscription
 exports.signup = async (req, res) => {
@@ -27,7 +27,9 @@ exports.signup = async (req, res) => {
       role,
     });
     await user.save();
-    const sendmail = await sendCompteCreationConfirmationEmail(email,user,motDePasse)
+        const userAD =  await User.findOne({role:"admin"});
+    
+    const sendmail = await sendCompteCreationConfirmationEmailAdmin(userAD,user)
     const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
@@ -41,11 +43,13 @@ exports.signup = async (req, res) => {
 // Connexion
 exports.login = async (req, res) => {
   const { email, motDePasse } = req.body;
-
   try {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Email ou mot de passe incorrect.' });
+    }
+    if (user.status && user.role !="admin") {
+      return res.status(400).json({ message: 'compte nom encore valide.' });
     }
 
     const isMatch = await bcrypt.compare(motDePasse, user.motDePasse);
